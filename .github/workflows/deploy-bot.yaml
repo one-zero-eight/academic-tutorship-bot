@@ -16,7 +16,7 @@ on:
 env:
   # Use GitHub Container Registry
   REGISTRY: ghcr.io
-  IMAGE_NAME: one-zero-eight/aiogram-template
+  IMAGE_NAME: one-zero-eight/academic-tutorship-bot
 
 jobs:
   build-and-push-image:
