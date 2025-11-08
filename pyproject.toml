@@ -1,30 +1,34 @@
-[tool.poetry]
+[project]
 name = "aiogram-template"
 version = "0.1.0"
 description = ""
-authors = ["one-zero-eight <https://t.me/one_zero_eight>"]
+authors = [{ name = "one-zero-eight" }]
+urls = { homepage = "https://t.me/one_zero_eight" }
 readme = "README.md"
-package-mode = false
+requires-python = ">=3.13,<3.14"
 
-[tool.poetry.dependencies]
-python = "^3.12"
-aiogram = "^3.13.1"
-aiogram-dialog = "^2.2.0"
-colorlog = "^6.8.2"
-pre-commit = "^4.0.1"
-pydantic = "^2.9.2"
-pyyaml = "^6.0.2"
-redis = "^5.1.0"
-ruff = "^0.8.2"
+
+dependencies = [
+    "aiogram>=3.4.1",
+    "aiogram-dialog>=2.2.0",
+    "aiohttp>=3.9.3",
+    "alembic>=1.13.3",
+    "asyncpg>=0.30.0",
+    "sqlalchemy>=2.0.23",
+    "babel>=2.16.0",
+    "fluent-runtime>=0.4.0",
+    "colorlog>=6.8.2",
+    "cryptography>=43.0.1",
+    "pre-commit>=4.0.1",
+    "pydantic[email]>=2.11.2",
+    "pyyaml>=6.0.2",
+    "redis>=5.1.0",
+    "ruff>=0.8.2",
+]
+
 
 [tool.ruff]
 line-length = 120
-lint.ignore = [
-    # wildcard imports are fine
-    "F403",
-    "F405",
-]
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+target-version = "py313"
+lint.extend-select = ["I", "UP", "PL"]
+lint.extend-ignore = ["PLC0415", "PLR"]
