@@ -26,6 +26,8 @@ class Meeting(BaseModel):
     duration: int | None = None
     # Assigned Tutor user_id in Database
     tutor_id: int | None = None
+    # Assigned Tutor username in Database
+    tutor_username: str | None = None
     # Room for the Meeting (any string)
     room: str | None = None
 
