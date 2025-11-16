@@ -38,6 +38,7 @@ async def open_admin_menu(query: CallbackQuery, button: Button, dialog_manager: 
 
 
 async def open_meeting_info(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    print("SHEEE", button)
     if not query.bot or not button.widget_id:
         return
     await clear_messages(query.bot, dialog_manager)
@@ -48,13 +49,16 @@ async def open_meeting_info(query: CallbackQuery, button: Button, dialog_manager
 
 
 async def get_title_of_meeting(message: Message, _: MessageInput, dialog_manager: DialogManager):
-    dialog_manager.dialog_data.update({"meeting": TEST_MEETINGS[0]})
+    if not message.text:
+        return
+    TEST_MEETINGS.append(Meeting(id=len(TEST_MEETINGS) + 1, title=message.text))
+    dialog_manager.dialog_data.update({"meeting": TEST_MEETINGS[-1]})
     await dialog_manager.switch_to(AdminStates.meeting_info)
 
 
 async def open_assign_tutor(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
     if not query.message:
-        return  # noqa
+        return
     to_delete = await query.message.answer(text="Click the button to choose a User 👇", reply_markup=CHOOSE_USER_KB)
     dialog_manager.dialog_data.update({"to_delete": to_delete})
     await dialog_manager.switch_to(AdminStates.assign_tutor)
@@ -81,4 +85,12 @@ async def confirm_tutor_open_meeting_info(query: CallbackQuery, button: Button, 
     meeting.tutor_id = tutor.user_id
     meeting.tutor_username = tutor.username
 
+    await dialog_manager.switch_to(AdminStates.meeting_info)
+
+
+async def on_meeting_selected(query: CallbackQuery, widget: Any, dialog_manager: DialogManager, item_id: str):
+    # TODO : add database fetch data here
+    meeting = TEST_MEETINGS[int(item_id)]
+
+    dialog_manager.dialog_data.update({"meeting": meeting})
     await dialog_manager.switch_to(AdminStates.meeting_info)

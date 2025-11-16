@@ -1,6 +1,6 @@
 from aiogram_dialog import Window
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Back, Button, Row, ScrollingGroup
+from aiogram_dialog.widgets.kbd import Back, Button, Row
 from aiogram_dialog.widgets.text import Const, Format
 
 from src.bot.filters import *
@@ -35,12 +35,7 @@ del omlot
 admin_meetings_list_ww: Window = Window(
     Format("{meetings_type} Meetings"),
     BTN_ROW_BACK,
-    ScrollingGroup(
-        *meeting_buttons(TEST_MEETINGS),
-        id="a_meetings_list",
-        width=1,
-        height=3,
-    ),
+    MEETINGS_SCROLLING_GROUP,
     state=AdminStates.meetings_list,
     getter=meetings_list_getter,
 )

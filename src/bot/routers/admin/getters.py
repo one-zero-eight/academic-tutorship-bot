@@ -34,7 +34,7 @@ TEST_MEETINGS = [
 
 
 async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
-    return {"meetings_type": str(dialog_manager.dialog_data["meetings_type"]).capitalize()}
+    return {"meetings_type": str(dialog_manager.dialog_data["meetings_type"]).capitalize(), "meetings": TEST_MEETINGS}
 
 
 async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):

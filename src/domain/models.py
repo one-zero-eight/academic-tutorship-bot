@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 # Meeting Status
@@ -30,6 +32,13 @@ class Meeting(BaseModel):
     tutor_username: str | None = None
     # Room for the Meeting (any string)
     room: str | None = None
+
+    @property
+    def date_human(self) -> str:
+        if self.date:
+            return datetime.fromtimestamp(self.date).strftime("%d.%m.%y")
+        else:
+            return "-.-.-"
 
 
 class User(BaseModel):
