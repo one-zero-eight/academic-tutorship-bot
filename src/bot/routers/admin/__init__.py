@@ -11,4 +11,5 @@ from .utils import get_windows
 
 router = Dialog(*get_windows(windows))
 
-router.message.register(open_menu, Command("admin"), StatusFilter("admin"))
+router.message.register(open_menu, Command("admin"))
+router.message.register(open_menu, Command("start"))

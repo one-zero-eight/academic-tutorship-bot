@@ -51,9 +51,10 @@ from src.bot.routers.commands import router as commands_router  # noqa: E402
 from src.bot.routers.registration import router as registration_router  # noqa: E402
 from src.bot.routers.user import router as user_router  # noqa: E402
 
+dp.include_router(admin_router)  # admin mode    # TODO: remove later
 dp.include_router(commands_router)  # start, help, menu commands
 dp.include_router(registration_router)  # sink for not registered users
-dp.include_router(admin_router)  # admin mode
+# dp.include_router(admin_router)  # admin mode  # TODO: uncomment later
 dp.include_router(user_router)  # user model
 
 setup_dialogs(dp)
