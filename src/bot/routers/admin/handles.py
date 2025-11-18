@@ -48,11 +48,19 @@ async def open_meeting_info(query: CallbackQuery, button: Button, dialog_manager
     await dialog_manager.switch_to(AdminStates.meeting_info)
 
 
-async def get_title_of_meeting(message: Message, _: MessageInput, dialog_manager: DialogManager):
+async def get_new_title(message: Message, _: MessageInput, dialog_manager: DialogManager):
     if not message.text:
         return
     TEST_MEETINGS.append(Meeting(id=len(TEST_MEETINGS) + 1, title=message.text))
     dialog_manager.dialog_data.update({"meeting": TEST_MEETINGS[-1]})
+    await dialog_manager.switch_to(AdminStates.meeting_info)
+
+
+async def on_meeting_selected(query: CallbackQuery, widget: Any, dialog_manager: DialogManager, item_id: str):
+    # TODO : add database fetch data here
+    meeting = TEST_MEETINGS[int(item_id)]
+
+    dialog_manager.dialog_data.update({"meeting": meeting})
     await dialog_manager.switch_to(AdminStates.meeting_info)
 
 
@@ -64,33 +72,85 @@ async def open_assign_tutor(query: CallbackQuery, button: Button, dialog_manager
     await dialog_manager.switch_to(AdminStates.assign_tutor)
 
 
+async def open_set_title(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    await dialog_manager.switch_to(AdminStates.set_title)
+
+
+async def open_set_description(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    await dialog_manager.switch_to(AdminStates.set_description)
+
+
+async def open_set_date(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    await dialog_manager.switch_to(AdminStates.set_date)
+
+
+async def open_set_duration(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    await dialog_manager.switch_to(AdminStates.set_duration)
+
+
 async def get_assigned_tutor(message: Message, _: MessageInput, dialog_manager: DialogManager):
     if not message.users_shared or not message.bot:
         return
     await clear_messages(message.bot, dialog_manager)
+
     tutor = message.users_shared.users[0]
-    dialog_manager.dialog_data.update({"tutor": tutor})
-    await dialog_manager.switch_to(AdminStates.confirm_tutor, show_mode=ShowMode.DELETE_AND_SEND)
-
-
-async def confirm_tutor_open_meeting_info(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
     meeting: Meeting | None = dialog_manager.dialog_data.get("meeting")
-    tutor: SharedUser | None = dialog_manager.dialog_data.get("tutor")
-    if not isinstance(meeting, Meeting):
-        raise Exception("No meeting in confirm_tutor wtf?")
-    if not isinstance(tutor, SharedUser):
-        raise Exception("No tutor in confirm_tutor wtf?")
 
+    dialog_manager.dialog_data.update({"tutor": tutor})
+
+    if not isinstance(meeting, Meeting):
+        raise Exception("No meeting in get_assigned_tutor wtf?")
+    if not isinstance(tutor, SharedUser):
+        raise Exception("No tutor in get_assigned_tutor wtf?")
     # TODO : changes to database
     meeting.tutor_id = tutor.user_id
     meeting.tutor_username = tutor.username
 
-    await dialog_manager.switch_to(AdminStates.meeting_info)
+    await dialog_manager.switch_to(AdminStates.meeting_change, show_mode=ShowMode.DELETE_AND_SEND)
 
 
-async def on_meeting_selected(query: CallbackQuery, widget: Any, dialog_manager: DialogManager, item_id: str):
-    # TODO : add database fetch data here
-    meeting = TEST_MEETINGS[int(item_id)]
+async def get_meeting_title(message: Message, _: MessageInput, dialog_manager: DialogManager):
+    # TODO : proper error handeling
+    meeting: Meeting | None = dialog_manager.dialog_data.get("meeting")
+    if not meeting or not message.text:
+        return
+    meeting.title = message.text
+    await message.delete()
+    await dialog_manager.switch_to(AdminStates.meeting_change, show_mode=ShowMode.DELETE_AND_SEND)
 
-    dialog_manager.dialog_data.update({"meeting": meeting})
-    await dialog_manager.switch_to(AdminStates.meeting_info)
+
+async def get_meeting_description(message: Message, _: MessageInput, dialog_manager: DialogManager):
+    # TODO : proper error handeling
+    meeting: Meeting | None = dialog_manager.dialog_data.get("meeting")
+    if not meeting or not message.text:
+        return
+    meeting.description = message.text
+    await message.delete()
+    await dialog_manager.switch_to(AdminStates.meeting_change, show_mode=ShowMode.DELETE_AND_SEND)
+
+
+async def get_meeting_date(message: Message, _: MessageInput, dialog_manager: DialogManager):
+    # TODO : proper error handeling
+    meeting: Meeting | None = dialog_manager.dialog_data.get("meeting")
+    if not meeting or not message.text:
+        return
+    try:
+        meeting.date = int(datetime.strptime(message.text, "%d.%m.%Y").timestamp())
+    except Exception:
+        return
+    await message.delete()
+    await dialog_manager.switch_to(AdminStates.meeting_change, show_mode=ShowMode.DELETE_AND_SEND)
+
+
+async def get_meeting_duration(message: Message, _: MessageInput, dialog_manager: DialogManager):
+    # TODO : proper error handeling
+    meeting: Meeting | None = dialog_manager.dialog_data.get("meeting")
+    if not meeting or not message.text:
+        return
+    try:
+        minutes, seconds = map(int, message.text.split(":"))
+        meeting.duration = (minutes * 60 + seconds) * 60
+    except Exception:
+        return
+    await message.delete()
+    await dialog_manager.switch_to(AdminStates.meeting_change, show_mode=ShowMode.DELETE_AND_SEND)

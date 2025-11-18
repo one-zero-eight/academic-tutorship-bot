@@ -34,7 +34,20 @@ TEST_MEETINGS = [
 
 
 async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
-    return {"meetings_type": str(dialog_manager.dialog_data["meetings_type"]).capitalize(), "meetings": TEST_MEETINGS}
+    meetings_type = dialog_manager.dialog_data["meetings_type"]
+    if meetings_type == "created":
+        allowed_statuses = {0}
+    elif meetings_type == "announced":
+        allowed_statuses = {1, 2, 3}
+    elif meetings_type == "closed":
+        allowed_statuses = {4}
+    else:
+        allowed_statuses = set()
+
+    return {
+        "meetings_type": meetings_type.capitalize(),
+        "meetings": list(filter(lambda m: m.status in allowed_statuses, TEST_MEETINGS)),
+    }
 
 
 async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):

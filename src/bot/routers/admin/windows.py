@@ -1,6 +1,6 @@
 from aiogram_dialog import Window
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Back, Button, Row
+from aiogram_dialog.widgets.kbd import Back, Button, Column, Row, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
 from src.bot.filters import *
@@ -44,7 +44,7 @@ admin_meetings_list_ww: Window = Window(
 admin_create_meeting_ww = Window(
     Const("Create New Meeting"),
     Const("Enter Title:"),
-    MessageInput(get_title_of_meeting),
+    MessageInput(get_new_title),
     Row(Button(Const("Back"), id="create_back", on_click=open_meetings_type_choice), BLANK_BUTTON),
     state=AdminStates.create_meeting,
 )
@@ -58,8 +58,28 @@ admin_meeting_info_ww = Window(
     Format("Tutor: {tutor_username}"),
     Format("{description}", when="description"),
     Row(Button(Const("Back"), id="back_window_info", on_click=open_meetings_type_choice), BLANK_BUTTON),
-    Button(Const("Assign Tutor"), id="assign_tutor", on_click=open_assign_tutor),
+    SwitchTo(Const("Change Info"), id="change_meeting", state=AdminStates.meeting_change),
     state=AdminStates.meeting_info,
+    getter=meeting_info_getter,
+)
+
+
+admin_meeting_change_ww = Window(
+    Const("Meeting Info"),
+    Format("{title}"),
+    Format("Date: {date}"),
+    Format("Duration: {duration}"),
+    Format("Tutor: {tutor_username}"),
+    Format("{description}", when="description"),
+    Row(SwitchTo(Const("Back"), id="back_window_change", state=AdminStates.meeting_info), BLANK_BUTTON),
+    Column(
+        Button(Const("Set Title"), id="change_title", on_click=open_set_title),
+        Button(Const("Set Description"), id="set_description", on_click=open_set_description),
+        Button(Const("Set Date"), id="choose_date", on_click=open_set_date),
+        Button(Const("Set Duration"), id="choose_duration", on_click=open_set_duration),
+        Button(Const("Assign Tutor"), id="assign_tutor", on_click=open_assign_tutor),
+    ),
+    state=AdminStates.meeting_change,
     getter=meeting_info_getter,
 )
 
@@ -73,12 +93,39 @@ admin_assign_tutor_ww = Window(
 )
 
 
-admin_confirm_tutor_ww = Window(
-    Format('Assign Tutor @{tutor} to "{title}"'),
-    Row(
-        Button(Const("Confirm"), id="confirm_tutor", on_click=confirm_tutor_open_meeting_info),
-        Button(Const("ReChoose"), id="rechoose_tutor", on_click=open_assign_tutor),
-    ),
-    state=AdminStates.confirm_tutor,
+admin_set_title_ww = Window(
+    Format('Enter new Title for "{title}"'),
+    Row(SwitchTo(Const("Back"), id="st1", state=AdminStates.meeting_change), BLANK_BUTTON),
+    MessageInput(get_meeting_title),
+    state=AdminStates.set_title,
+    getter=meeting_info_getter,
+)
+
+
+admin_set_description_ww = Window(
+    Format('Enter new Description for "{title}"'),
+    Row(SwitchTo(Const("Back"), id="st1", state=AdminStates.meeting_change), BLANK_BUTTON),
+    MessageInput(get_meeting_description),
+    state=AdminStates.set_description,
+    getter=meeting_info_getter,
+)
+
+
+admin_set_date_ww = Window(
+    Format('Enter new Date for "{title}"'),
+    Const('In format "DD.MM.YYYY"'),
+    Row(SwitchTo(Const("Back"), id="st1", state=AdminStates.meeting_change), BLANK_BUTTON),
+    MessageInput(get_meeting_date),
+    state=AdminStates.set_date,
+    getter=meeting_info_getter,
+)
+
+
+admin_set_duration_ww = Window(
+    Format('Enter new Duration for "{title}"'),
+    Const('In format "hh:mm"'),
+    Row(SwitchTo(Const("Back"), id="st1", state=AdminStates.meeting_change), BLANK_BUTTON),
+    MessageInput(get_meeting_duration),
+    state=AdminStates.set_duration,
     getter=meeting_info_getter,
 )
