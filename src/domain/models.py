@@ -41,10 +41,9 @@ class Meeting(BaseModel):
             return "-.-.-"
 
 
-class User(BaseModel):
-    """User (Student or Tutor)"""
-
-    # User id in Database
+class Tutor(BaseModel):
     id: int
-    # Flag if the User is tutor
-    is_tutor: bool
+    tg_id: int
+    username: str
+    first_name: str
+    last_name: str | None

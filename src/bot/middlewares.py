@@ -10,7 +10,7 @@ from aiogram.dispatcher.event.handler import HandlerObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Chat, Message, TelegramObject
 
-from src.bot.accounts_sdk import inh_accounts
+from src.accounts_sdk import inh_accounts
 from src.bot.exceptions import UnauthenticatedException
 from src.bot.filters import UserStatus
 from src.bot.logging_ import logger

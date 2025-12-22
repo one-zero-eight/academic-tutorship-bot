@@ -47,9 +47,11 @@ additionalProperties: false
 description: Settings for the application.
 properties:
   $schema:
+    anyOf:
+    - type: string
+    - type: 'null'
     default: null
     title: $Schema
-    type: string
   environment:
     $ref: '#/$defs/Environment'
     default: development
@@ -73,27 +75,35 @@ properties:
     type: string
     writeOnly: true
   bot_name:
+    anyOf:
+    - type: string
+    - type: 'null'
     default: null
     description: Desired bot name
     title: Bot Name
-    type: string
   bot_description:
+    anyOf:
+    - type: string
+    - type: 'null'
     default: null
     description: Bot description
     title: Bot Description
-    type: string
   bot_short_description:
+    anyOf:
+    - type: string
+    - type: 'null'
     default: null
     description: Bot short description
     title: Bot Short Description
-    type: string
   bot_commands:
+    anyOf:
+    - items:
+        $ref: '#/$defs/BotCommand'
+      type: array
+    - type: 'null'
     default: null
     description: Bot commands (displayed in telegram menu)
-    items:
-      $ref: '#/$defs/BotCommand'
     title: Bot Commands
-    type: array
   admins:
     default: []
     description: Admin' telegram IDs
@@ -115,6 +125,13 @@ properties:
     default: null
     description: URL for binding Telegram to InNoHassle Account
     title: Telegram Bind Url
+  db_conn_string:
+    anyOf:
+    - type: string
+    - type: 'null'
+    default: null
+    description: Connection String for SQLAlchemy
+    title: Db Conn String
 required:
 - bot_token
 title: Settings

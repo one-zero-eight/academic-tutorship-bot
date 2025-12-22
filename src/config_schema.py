@@ -29,20 +29,20 @@ class Settings(SettingBaseModel):
     Settings for the application.
     """
 
-    schema_: str = Field(None, alias="$schema")
+    schema_: str | None = Field(None, alias="$schema")
     environment: Environment = Environment.DEVELOPMENT
     "App environment flag"
     redis_url: SecretStr | None = Field(None, examples=["redis://localhost:6379/0", "redis://redis:6379/0"])
     "Redis URL"
     bot_token: SecretStr
     "Telegram bot token from @BotFather"
-    bot_name: str = None
+    bot_name: str | None = None
     "Desired bot name"
-    bot_description: str = None
+    bot_description: str | None = None
     "Bot description"
-    bot_short_description: str = None
+    bot_short_description: str | None = None
     "Bot short description"
-    bot_commands: list[BotCommand] = None
+    bot_commands: list[BotCommand] | None = None
     "Bot commands (displayed in telegram menu)"
     admins: list[int] = []
     "Admin' telegram IDs"
@@ -50,6 +50,8 @@ class Settings(SettingBaseModel):
     "Use production InNoHassle Accounts API for authentication in local development"
     telegram_bind_url: str | None = None
     "URL for binding Telegram to InNoHassle Account"
+    db_conn_string: str | None = None
+    "Connection String for SQLAlchemy"
 
     @classmethod
     def from_yaml(cls, path: Path) -> "Settings":

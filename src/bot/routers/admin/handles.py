@@ -5,7 +5,7 @@ from aiogram_dialog import DialogManager, ShowMode, StartMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 
-from src.bot.accounts_sdk import inh_accounts
+from src.accounts_sdk import inh_accounts
 
 from .getters import *
 from .keyboards import *
