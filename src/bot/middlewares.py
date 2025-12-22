@@ -7,9 +7,14 @@ from typing import Any
 
 from aiogram import BaseMiddleware
 from aiogram.dispatcher.event.handler import HandlerObject
-from aiogram.types import CallbackQuery, Message, TelegramObject
+from aiogram.fsm.context import FSMContext
+from aiogram.types import CallbackQuery, Chat, Message, TelegramObject
 
+from src.bot.accounts_sdk import inh_accounts
+from src.bot.exceptions import UnauthenticatedException
+from src.bot.filters import UserStatus
 from src.bot.logging_ import logger
+from src.config import settings
 
 
 # noinspection PyMethodMayBeStatic
@@ -84,3 +89,53 @@ class LogAllEventsMiddleware(BaseMiddleware):
         )
         record.relativePath = os.path.relpath(record.pathname)
         return record
+
+
+class AutoAuthMiddleware(LogAllEventsMiddleware):
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: dict[str, Any],
+    ) -> Any:
+        data["authenticated"] = await self._update_authenticated(data)
+        data["status"] = await self._update_status(data)
+        return await super().__call__(handler, event, data)
+
+    async def _update_authenticated(self, data: dict[str, Any]) -> bool:
+        state: FSMContext = data["state"]
+        chat: Chat = data["event_chat"]
+        authenticated = await state.get_value("authenticated", False)
+        if not authenticated:
+            user = await inh_accounts.get_user(telegram_id=chat.id)
+            if user is not None:
+                authenticated = True
+            await state.update_data({"authenticated": authenticated})
+        return authenticated
+
+    async def _update_status(self, data: dict[str, Any]) -> UserStatus:
+        state: FSMContext = data["state"]
+        chat: Chat = data["event_chat"]
+        status = await state.get_value("status")
+        if status is None:
+            if chat.id in settings.admins:
+                status = UserStatus.admin
+            elif False:  # TODO: add tutors check
+                status = UserStatus.tutor
+            else:
+                status = UserStatus.student
+            await state.update_data({"status": status})
+        return status
+
+
+class AuthGuardMiddleware(BaseMiddleware):
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: dict[str, Any],
+    ) -> Any:
+        authenticated = data.get("authenticated", False)
+        if not authenticated:
+            raise UnauthenticatedException
+        return await handler(event, data)

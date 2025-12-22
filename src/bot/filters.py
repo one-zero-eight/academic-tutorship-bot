@@ -1,28 +1,33 @@
-from typing import Any, Literal
+from typing import Any
 
 from aiogram.filters import Filter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import TelegramObject, User
 
 from src.config import settings
+from src.domain.enums import UserStatus
 
 
-class UserRegisteredFilter(Filter):
+class UserAuthenticatedFilter(Filter):
     async def __call__(self, event: TelegramObject, event_from_user: User, state: FSMContext) -> bool | dict[str, Any]:
-        data = await state.get_data()
-        is_registered = data.get("registered", False)
-        return is_registered
+        return await state.get_value("authenticated", False)
 
 
 class StatusFilter(Filter):
-    _status: Literal["admin", "user"] | None
+    _status: UserStatus | None
 
-    def __init__(self, status: Literal["admin", "user"] | None = None):
+    def __init__(self, status: UserStatus | None = None):
         self._status = status
 
     async def __call__(self, event: TelegramObject, event_from_user: User) -> bool | dict[str, Any]:
         telegram_id = event_from_user.id
-        status = "admin" if telegram_id in settings.admins else "user"
+
+        if telegram_id in settings.admins:
+            status = UserStatus.admin
+        elif False:  # TODO: add tutors check
+            status = UserStatus.tutor
+        else:
+            status = UserStatus.student
 
         if self._status is None:
             return {"status": status}
@@ -32,4 +37,4 @@ class StatusFilter(Filter):
         return False
 
 
-USER_REGISTERED_FILTER = UserRegisteredFilter()
+USER_AUTHENTICATED_FILTER = UserAuthenticatedFilter()

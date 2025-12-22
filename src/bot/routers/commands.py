@@ -1,38 +1,39 @@
 from aiogram import Bot, Router, types
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import Command, CommandStart, ExceptionTypeFilter
+from aiogram.fsm.context import FSMContext
 from aiogram.types import BotCommandScopeChat
 from aiogram_dialog import DialogManager, StartMode
 
-from src.bot.filters import USER_REGISTERED_FILTER, StatusFilter
-from src.bot.routers.admin import AdminStates
-from src.bot.routers.registration import RegisterStates
-from src.bot.routers.user import UserStates
+from src.bot.exceptions import UnauthenticatedException
+from src.bot.filters import StatusFilter
+from src.bot.routers.admin import AdminStates, test_accounts_api
+from src.bot.routers.authentication import AuthStates
+from src.bot.routers.student import StudentStates
 from src.config import settings
+from src.domain.enums import UserStatus as US
 
 router = Router(name="commands")
 
 
-@router.message(CommandStart(), USER_REGISTERED_FILTER)
-async def start(message: types.Message):
-    await message.answer("Welcome! You registered in the system. Use /help to see the list of available commands.")
+MATCHING_START_STATE = {
+    US.student: StudentStates.start,
+    # US.tutor: TutorStates.start,
+    US.admin: AdminStates.start,
+}
 
 
-@router.message(CommandStart(), ~USER_REGISTERED_FILTER)
-async def start_not_registered(message: types.Message, dialog_manager: DialogManager):
-    await dialog_manager.start(RegisterStates.enter_name, mode=StartMode.RESET_STACK)
+@router.message(CommandStart)
+@router.error(ExceptionTypeFilter(UnauthenticatedException))
+async def on_start(
+    message: types.Message, state: FSMContext, dialog_manager: DialogManager, authenticated: bool, status: US
+):
+    if not authenticated:
+        return await dialog_manager.start(AuthStates.bind_tg_inh)
+    else:
+        return await dialog_manager.start(MATCHING_START_STATE[status])
 
 
-@router.message(Command("help"))
-async def go_help(message: types.Message):
-    await message.answer("Available commands:\n/help - show this message\n/menu - show the main menu")
-
-
-@router.message(Command("menu"), USER_REGISTERED_FILTER)
-async def go_menu(message: types.Message, dialog_manager: DialogManager):
-    await dialog_manager.start(UserStates.menu, mode=StartMode.RESET_STACK)
-
-
-@router.message(Command("admin"), StatusFilter("admin"))
+@router.message(Command("admin"), StatusFilter(US.admin))
 async def enable_admin_mode(message: types.Message, bot: Bot, dialog_manager: DialogManager):
     text = "You are the Admin!"
     await message.answer(text)
@@ -42,16 +43,19 @@ async def enable_admin_mode(message: types.Message, bot: Bot, dialog_manager: Di
         + [
             types.BotCommand(command="admin", description="Enable admin mode"),
         ],
-        scope=BotCommandScopeChat(chat_id=message.from_user.id),
+        scope=BotCommandScopeChat(chat_id=message.chat.id),
     )
-    await dialog_manager.start(AdminStates.menu, mode=StartMode.RESET_STACK)
+    await dialog_manager.start(AdminStates.start, mode=StartMode.RESET_STACK)
 
 
-@router.message(Command("admin"), ~StatusFilter("admin"))
+@router.message(Command("admin"), ~StatusFilter(US.admin))
 async def failed_enable_admin_mode(message: types.Message, bot: Bot):
     text = "You are not the Admin!"
     await message.answer(text)
     await bot.set_my_commands(
         settings.bot_commands or [],
-        scope=BotCommandScopeChat(chat_id=message.from_user.id),
+        scope=BotCommandScopeChat(chat_id=message.chat.id),
     )
+
+
+router.message.register(test_accounts_api, Command("testapi"), StatusFilter(US.admin))

@@ -1,5 +1,24 @@
 $schema: http://json-schema.org/draft-07/schema#
 $defs:
+  Accounts:
+    additionalProperties: false
+    description: InNoHassle Accounts integration settings
+    properties:
+      api_url:
+        default: https://api.innohassle.ru/accounts/v0
+        description: API URL for InNoHassle Accounts
+        title: Api Url
+        type: string
+      api_jwt_token:
+        description: JWT token for accessing the Accounts API as a service
+        format: password
+        title: Api Jwt Token
+        type: string
+        writeOnly: true
+    required:
+    - api_jwt_token
+    title: Accounts
+    type: object
   BotCommand:
     additionalProperties: true
     description: 'This object represents a bot command.
@@ -82,6 +101,20 @@ properties:
       type: integer
     title: Admins
     type: array
+  accounts:
+    anyOf:
+    - $ref: '#/$defs/Accounts'
+    - type: 'null'
+    default: null
+    description: Use production InNoHassle Accounts API for authentication in local
+      development
+  telegram_bind_url:
+    anyOf:
+    - type: string
+    - type: 'null'
+    default: null
+    description: URL for binding Telegram to InNoHassle Account
+    title: Telegram Bind Url
 required:
 - bot_token
 title: Settings

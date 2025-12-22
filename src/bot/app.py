@@ -12,7 +12,7 @@ from aiogram_dialog.api.exceptions import UnknownIntent, UnknownState
 
 from src.bot.dispatcher import CustomDispatcher
 from src.bot.logging_ import logger
-from src.bot.middlewares import LogAllEventsMiddleware
+from src.bot.middlewares import AutoAuthMiddleware
 from src.bot.utils import check_commands_equality
 from src.config import settings
 
@@ -28,9 +28,10 @@ else:
     storage = MemoryStorage()
     logger.info("Using Memory storage")
 dp = CustomDispatcher(storage=storage)
-log_all_events_middleware = LogAllEventsMiddleware()
-dp.message.middleware(log_all_events_middleware)
-dp.callback_query.middleware(log_all_events_middleware)
+auto_auth_middleware = AutoAuthMiddleware()
+dp.message.middleware(auto_auth_middleware)
+dp.callback_query.middleware(auto_auth_middleware)
+dp.error.middleware(auto_auth_middleware)
 
 
 @dp.error(ExceptionTypeFilter(UnknownIntent), F.update.callback_query.as_("callback_query"))
@@ -47,15 +48,14 @@ async def on_unknown_state(event: ErrorEvent, state: FSMContext, dialog_manager:
 
 
 from src.bot.routers.admin import router as admin_router  # noqa: E402
+from src.bot.routers.authentication import router as authentication_router  # noqa: E402
 from src.bot.routers.commands import router as commands_router  # noqa: E402
-from src.bot.routers.registration import router as registration_router  # noqa: E402
-from src.bot.routers.user import router as user_router  # noqa: E402
+from src.bot.routers.student import router as student_router  # noqa: E402
 
-dp.include_router(admin_router)  # admin mode    # TODO: remove later
 dp.include_router(commands_router)  # start, help, menu commands
-dp.include_router(registration_router)  # sink for not registered users
-# dp.include_router(admin_router)  # admin mode  # TODO: uncomment later
-dp.include_router(user_router)  # user model
+dp.include_router(authentication_router)
+dp.include_router(student_router)
+dp.include_router(admin_router)  # admin mode
 
 setup_dialogs(dp)
 

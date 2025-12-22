@@ -11,10 +11,10 @@ from .getters import *
 from .handles import *
 from .states import *
 
-admin_menu_ww: Window = Window(
+admin_start_ww: Window = Window(
     Const("Admin Panel"),
     Button(Const("Meetings"), id="a_meetings", on_click=open_meetings_type_choice),
-    state=AdminStates.menu,
+    state=AdminStates.start,
 )
 
 

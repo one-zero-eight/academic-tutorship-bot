@@ -2,7 +2,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 
 class AdminStates(StatesGroup):
-    menu = State("menu")
+    start = State("start")
     meetings_type = State("meetings_type")
     meetings_list = State("meetings_list")
     create_meeting = State("create_meeting")

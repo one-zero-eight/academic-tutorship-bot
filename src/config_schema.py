@@ -15,6 +15,15 @@ class SettingBaseModel(BaseModel):
     model_config = ConfigDict(use_attribute_docstrings=True, extra="forbid")
 
 
+class Accounts(SettingBaseModel):
+    """InNoHassle Accounts integration settings"""
+
+    api_url: str = "https://api.innohassle.ru/accounts/v0"
+    "API URL for InNoHassle Accounts"
+    api_jwt_token: SecretStr
+    "JWT token for accessing the Accounts API as a service"
+
+
 class Settings(SettingBaseModel):
     """
     Settings for the application.
@@ -37,6 +46,10 @@ class Settings(SettingBaseModel):
     "Bot commands (displayed in telegram menu)"
     admins: list[int] = []
     "Admin' telegram IDs"
+    accounts: Accounts | None = None
+    "Use production InNoHassle Accounts API for authentication in local development"
+    telegram_bind_url: str | None = None
+    "URL for binding Telegram to InNoHassle Account"
 
     @classmethod
     def from_yaml(cls, path: Path) -> "Settings":
