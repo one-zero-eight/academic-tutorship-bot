@@ -103,15 +103,25 @@ class AutoAuthMiddleware(LogAllEventsMiddleware):
         return await super().__call__(handler, event, data)
 
     async def _update_authenticated(self, data: dict[str, Any]) -> bool:
+        (was_auth, become_auth) = (False, False)  # for _log_authenticated()
         state: FSMContext = data["state"]
         chat: Chat = data["event_chat"]
-        authenticated = await state.get_value("authenticated", False)
+        authenticated = was_auth = await state.get_value("authenticated", False)
         if not authenticated:
             user = await inh_accounts.get_user(telegram_id=chat.id)
             if user is not None:
-                authenticated = True
+                authenticated = become_auth = True
             await state.update_data({"authenticated": authenticated})
+        self._log_authenticated(chat, was_auth, become_auth)
         return authenticated
+
+    def _log_authenticated(self, chat: Chat, was_auth: bool, become_auth: bool):
+        if was_auth:
+            return logger.info(f"[{chat.id}] was authenticated")
+        elif become_auth:
+            return logger.info(f"[{chat.id}] become auto authenticated")
+        else:
+            return logger.info(f"[{chat.id}] failed to auto authenticate")
 
     async def _update_status(self, data: dict[str, Any]) -> UserStatus:
         state: FSMContext = data["state"]
@@ -135,7 +145,9 @@ class AuthGuardMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: dict[str, Any],
     ) -> Any:
+        chat: Chat = data["event_chat"]
         authenticated = data.get("authenticated", False)
         if not authenticated:
+            logger.info(f"[{chat.id}] un authenticated")
             raise UnauthenticatedException
         return await handler(event, data)
