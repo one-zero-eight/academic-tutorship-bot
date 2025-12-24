@@ -1,24 +1,19 @@
 from sqlalchemy import (
-    Column,
-    ColumnElement,
-    Integer,
-    MetaData,
-    String,
-    Table,
-    and_,
+    delete,
+    insert,
     select,
     update,
 )
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
-from src.config import settings
+from src.db.schema import tutors
 from src.domain.repositories import Tutor, TutorsRepository
 
 
 class SQLTutorsRepository(TutorsRepository):
     connection_string: str
     engine: AsyncEngine
-    tutors: Table
 
     def __init__(self, connection_string: str):
         self.connection_string = connection_string
@@ -30,28 +25,17 @@ class SQLTutorsRepository(TutorsRepository):
             future=True,
         )
 
-        metadata = MetaData()
-
-        self.tutors = Table(
-            "tutors",
-            metadata,
-            Column("id", Integer, primary_key=True),
-            Column("tg_id", Integer, unique=True, nullable=False),
-            Column("username", String, nullable=False),
-            Column("first_name", String, nullable=False),
-            Column("last_name", String, nullable=True),
-        )
-
     async def exists(
         self,
         *,
         id: int | None = None,
-        telegram_id: int | None = None,
+        tg_id: int | None = None,
+        username: str | None = None,
         tutor: Tutor | None = None,
     ) -> bool:
-        where = self._where_clause(id=id, telegram_id=telegram_id, tutor=tutor)
+        where = self._where_clause(id, tg_id, username, tutor)
 
-        stmt = select(self.tutors.c.id).where(where).limit(1)
+        stmt = select(tutors.c.id).where(where).limit(1)
 
         async with self.engine.connect() as conn:
             result = await conn.execute(stmt)
@@ -61,10 +45,11 @@ class SQLTutorsRepository(TutorsRepository):
         self,
         *,
         id: int | None = None,
-        telegram_id: int | None = None,
+        tg_id: int | None = None,
+        username: str | None = None,
     ) -> Tutor:
-        where = self._where_clause(id=id, telegram_id=telegram_id, tutor=None)
-        stmt = select(self.tutors).where(where).limit(1)
+        where = self._where_clause(id, tg_id, username, tutor=None)
+        stmt = select(tutors).where(where).limit(1)
 
         async with self.engine.connect() as conn:
             result = await conn.execute(stmt)
@@ -73,10 +58,52 @@ class SQLTutorsRepository(TutorsRepository):
                 raise LookupError("Tutor not found")
             return self._row_to_tutor(row)
 
+    async def list(
+        self,
+        *,
+        offset: int = 0,
+        limit: int | None = None,
+    ) -> list[Tutor]:
+        stmt = select(tutors).order_by(tutors.c.id).offset(offset)
+        if limit:
+            stmt = stmt.limit(limit)
+
+        async with self.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            return [self._row_to_tutor(row) for row in result.fetchall()]
+
+    async def create(
+        self,
+        *,
+        tg_id: int,
+        username: str | None = None,
+        first_name: str | None = None,
+        last_name: str | None = None,
+    ) -> Tutor:
+        stmt = insert(tutors).values(
+            tg_id=tg_id,
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+        )
+
+        async with self.engine.begin() as conn:
+            try:
+                result = await conn.execute(stmt)
+                if result.rowcount == 0 or result.inserted_primary_key is None:
+                    raise ValueError("Failed to insert tutor")
+                db_id = result.inserted_primary_key[0]
+            except IntegrityError as e:
+                if "UNIQUE constraint failed: tutors.tg_id" in str(e):
+                    raise ValueError(f"Tutor with tg_id {tg_id} already exists")
+                raise
+
+        return Tutor(id=db_id, tg_id=tg_id, username=username, first_name=first_name, last_name=last_name)
+
     async def update(self, tutor: Tutor) -> None:
         stmt = (
-            update(self.tutors)
-            .where(self.tutors.c.id == tutor.id)
+            update(tutors)
+            .where(tutors.c.id == tutor.id)
             .values(
                 tg_id=tutor.tg_id,
                 username=tutor.username,
@@ -90,26 +117,53 @@ class SQLTutorsRepository(TutorsRepository):
             if result.rowcount == 0:
                 raise LookupError("Tutor not found for update")
 
-    async def dispose(self) -> None:
+    async def remove(
+        self,
+        *,
+        id: int | None = None,
+        tg_id: int | None = None,
+        username: str | None = None,
+        tutor: Tutor | None = None,
+    ) -> Tutor:
+        where = self._where_clause(id, tg_id, username, tutor)
+
+        select_stmt = select(tutors).where(where).limit(1)
+        delete_stmt = delete(tutors).where(where)
+
+        async with self.engine.connect() as conn:
+            # SELECT
+            result = await conn.execute(select_stmt)
+            row = result.fetchone()
+            if row is None:
+                raise LookupError("Tutor not found")
+            deleted_tutor = self._row_to_tutor(row)
+
+            # DELETE
+            result = await conn.execute(delete_stmt)
+            if result.rowcount == 0:
+                raise LookupError("Tutor not found")
+
+        return deleted_tutor
+
+    async def dispose(self):
         await self.engine.dispose()
 
     def _where_clause(
         self,
-        *,
         id: int | None,
-        telegram_id: int | None,
+        tg_id: int | None,
+        username: str | None,
         tutor: Tutor | None,
     ):
-        conds: list[ColumnElement[bool]] = []
         if id is not None:
-            conds.append(self.tutors.c.id == id)
-        if telegram_id is not None:
-            conds.append(self.tutors.c.tg_id == telegram_id)
+            return tutors.c.id == id
+        if tg_id is not None:
+            return tutors.c.tg_id == tg_id
+        if username is not None:
+            return tutors.c.username == username
         if tutor is not None:
-            conds.append(self.tutors.c.id == tutor.id)
-        if not conds:
-            raise ValueError("At least one of id / telegram_id / tutor must be provided")
-        return and_(*conds)
+            return tutors.c.id == tutor.id
+        raise ValueError("At least one of id / telegram_id / tutor must be provided")
 
     def _row_to_tutor(self, row) -> Tutor:
         return Tutor(
@@ -119,9 +173,3 @@ class SQLTutorsRepository(TutorsRepository):
             first_name=row.first_name,
             last_name=row.last_name,
         )
-
-
-if conn_string := settings.db_conn_string:
-    tutors_repo: TutorsRepository = SQLTutorsRepository(conn_string)
-else:
-    raise ImportError("Database Connection String (db_conn_string) is not set in ./settings.yaml")

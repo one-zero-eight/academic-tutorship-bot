@@ -5,8 +5,6 @@ from aiogram_dialog import DialogManager, ShowMode, StartMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 
-from src.accounts_sdk import inh_accounts
-
 from .getters import *
 from .keyboards import *
 from .states import *
@@ -155,11 +153,3 @@ async def get_meeting_duration(message: Message, _: MessageInput, dialog_manager
         return
     await message.delete()
     await dialog_manager.switch_to(AdminStates.meeting_change, show_mode=ShowMode.DELETE_AND_SEND)
-
-
-async def test_accounts_api(message: Message, dialog_manager: DialogManager):
-    inh_user = await inh_accounts.get_user(telegram_id=message.from_user.id)
-    if inh_user is None:
-        await message.answer("You're not found :(")
-    else:
-        await message.answer(f"Here you are:\n{inh_user}")

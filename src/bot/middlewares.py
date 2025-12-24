@@ -15,6 +15,7 @@ from src.bot.exceptions import UnauthenticatedException
 from src.bot.filters import UserStatus
 from src.bot.logging_ import logger
 from src.config import settings
+from src.db.repositories import tutors_repo
 
 
 # noinspection PyMethodMayBeStatic
@@ -130,7 +131,7 @@ class AutoAuthMiddleware(LogAllEventsMiddleware):
         if status is None:
             if chat.id in settings.admins:
                 status = UserStatus.admin
-            elif False:  # TODO: add tutors check
+            elif await tutors_repo.exists(tg_id=chat.id):
                 status = UserStatus.tutor
             else:
                 status = UserStatus.student

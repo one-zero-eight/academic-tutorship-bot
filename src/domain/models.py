@@ -42,8 +42,8 @@ class Meeting(BaseModel):
 
 
 class Tutor(BaseModel):
-    id: int
+    id: int | None
     tg_id: int
-    username: str
-    first_name: str
+    username: str | None
+    first_name: str | None
     last_name: str | None

@@ -15,6 +15,7 @@ from src.bot.logging_ import logger
 from src.bot.middlewares import AutoAuthMiddleware
 from src.bot.utils import check_commands_equality
 from src.config import settings
+from src.db.repositories import tutors_repo
 
 _time1 = perf_counter()
 
@@ -91,6 +92,8 @@ async def on_startup():
 @dp.shutdown()
 async def on_shutdown():
     logger.info("Bot shutting down...")
+    logger.info("Disposing Tutors Repository...")
+    await tutors_repo.dispose()
 
 
 async def main():
