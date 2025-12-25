@@ -3,6 +3,7 @@ from datetime import datetime
 from aiogram_dialog import DialogManager
 
 from src.bot.filters import *
+from src.db.repositories import tutors_repo
 from src.domain.models import *
 
 TEST_MEETINGS = [
@@ -63,3 +64,16 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
         "tutor": tutor.username if (tutor := data.get("tutor")) else None,
         "tutor_username": "@" + str(meeting.tutor_username) if meeting.tutor_username else "Not Assigned",
     }
+
+
+async def tutors_list_getter(dialog_manager: DialogManager, **kwargs):
+    tutors = await tutors_repo.list()
+    return {
+        "tutors": list(enumerate(tutors)),
+    }
+
+
+async def tutor_info_getter(dialog_manager: DialogManager, **kwargs):
+    data = dialog_manager.dialog_data
+    tutor: Tutor = data["tutor"]
+    return tutor.model_dump()

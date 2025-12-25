@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 
 # Meeting Status
 CREATED = 0
@@ -47,3 +47,13 @@ class Tutor(BaseModel):
     username: str | None
     first_name: str | None
     last_name: str | None
+
+    @computed_field
+    @property
+    def full_name(self) -> str:
+        result = ""
+        if self.first_name:
+            result += self.first_name + " "
+        if self.last_name:
+            result += self.last_name
+        return result

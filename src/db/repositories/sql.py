@@ -126,24 +126,14 @@ class SQLTutorsRepository(TutorsRepository):
         tutor: Tutor | None = None,
     ) -> Tutor:
         where = self._where_clause(id, tg_id, username, tutor)
+        stmt = delete(tutors).where(where).returning(tutors)
 
-        select_stmt = select(tutors).where(where).limit(1)
-        delete_stmt = delete(tutors).where(where)
-
-        async with self.engine.connect() as conn:
-            # SELECT
-            result = await conn.execute(select_stmt)
+        async with self.engine.begin() as conn:
+            result = await conn.execute(stmt)
             row = result.fetchone()
             if row is None:
                 raise LookupError("Tutor not found")
-            deleted_tutor = self._row_to_tutor(row)
-
-            # DELETE
-            result = await conn.execute(delete_stmt)
-            if result.rowcount == 0:
-                raise LookupError("Tutor not found")
-
-        return deleted_tutor
+            return self._row_to_tutor(row)
 
     async def dispose(self):
         await self.engine.dispose()

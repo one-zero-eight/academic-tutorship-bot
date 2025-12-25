@@ -14,3 +14,7 @@ class AdminStates(StatesGroup):
     set_description = State("set_description")
     set_date = State("set_date")
     set_duration = State("set_duration")
+
+    tutors_list = State("tutors_list")
+    tutor_info = State("tutor_info")
+    add_tutor = State("add_tutor")

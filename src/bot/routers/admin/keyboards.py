@@ -4,6 +4,7 @@ request_users = KeyboardButtonRequestUsers(
     request_id=0,
     user_is_bot=False,
     request_username=True,
+    request_name=True,
     max_quantity=1,
 )
 

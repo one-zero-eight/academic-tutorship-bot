@@ -14,6 +14,7 @@ from .states import *
 admin_start_ww: Window = Window(
     Const("Admin Panel"),
     Button(Const("Meetings"), id="a_meetings", on_click=open_meetings_type_choice),
+    SwitchTo(Const("Tutors"), id="a_tutors", state=AdminStates.tutors_list),
     state=AdminStates.start,
 )
 
@@ -34,8 +35,8 @@ del omlot
 
 admin_meetings_list_ww: Window = Window(
     Format("{meetings_type} Meetings"),
-    BTN_ROW_BACK,
     MEETINGS_SCROLLING_GROUP,
+    BTN_ROW_BACK,
     state=AdminStates.meetings_list,
     getter=meetings_list_getter,
 )
@@ -57,8 +58,8 @@ admin_meeting_info_ww = Window(
     Format("Duration: {duration}"),
     Format("Tutor: {tutor_username}"),
     Format("{description}", when="description"),
-    Row(Button(Const("Back"), id="back_window_info", on_click=open_meetings_type_choice), BLANK_BUTTON),
     SwitchTo(Const("Change Info"), id="change_meeting", state=AdminStates.meeting_change),
+    Row(Button(Const("Back"), id="back_window_info", on_click=open_meetings_type_choice), BLANK_BUTTON),
     state=AdminStates.meeting_info,
     getter=meeting_info_getter,
 )
@@ -71,7 +72,6 @@ admin_meeting_change_ww = Window(
     Format("Duration: {duration}"),
     Format("Tutor: {tutor_username}"),
     Format("{description}", when="description"),
-    Row(SwitchTo(Const("Back"), id="back_window_change", state=AdminStates.meeting_info), BLANK_BUTTON),
     Column(
         Button(Const("Set Title"), id="change_title", on_click=open_set_title),
         Button(Const("Set Description"), id="set_description", on_click=open_set_description),
@@ -79,6 +79,7 @@ admin_meeting_change_ww = Window(
         Button(Const("Set Duration"), id="choose_duration", on_click=open_set_duration),
         Button(Const("Assign Tutor"), id="assign_tutor", on_click=open_assign_tutor),
     ),
+    Row(SwitchTo(Const("Back"), id="back_window_change", state=AdminStates.meeting_info), BLANK_BUTTON),
     state=AdminStates.meeting_change,
     getter=meeting_info_getter,
 )
@@ -128,4 +129,37 @@ admin_set_duration_ww = Window(
     MessageInput(get_meeting_duration),
     state=AdminStates.set_duration,
     getter=meeting_info_getter,
+)
+
+
+admin_tutors_list_ww = Window(
+    Const("Tutors List"),
+    TUTORS_SCROLLING_GROUP,
+    Row(
+        HOME_BUTTON,
+        Button(Const("Add New"), id="add_tutor", on_click=open_add_tutor),
+    ),
+    state=AdminStates.tutors_list,
+    getter=tutors_list_getter,
+)
+
+
+admin_tutor_info_ww = Window(
+    Format("Tutor [{id}] Info"),
+    Format("{full_name}"),
+    Format("@{username}"),
+    Format("telegram id: <code>{tg_id}</code>"),
+    Button(Const("Dismiss"), id="rm_tutor", on_click=on_remove_tutor),
+    Row(SwitchTo(Const("Back"), id="back_window_change", state=AdminStates.tutors_list), BLANK_BUTTON),
+    state=AdminStates.tutor_info,
+    getter=tutor_info_getter,
+    parse_mode="HTML",
+)
+
+
+admin_add_tutor_ww = Window(
+    Const("Share contact of the new Tutor"),
+    Row(Button(Const("Back"), id="back_add_tutor", on_click=open_tutors_list_with_clear), BLANK_BUTTON),
+    MessageInput(get_added_tutor),
+    state=AdminStates.add_tutor,
 )

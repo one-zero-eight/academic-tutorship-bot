@@ -153,3 +153,62 @@ async def get_meeting_duration(message: Message, _: MessageInput, dialog_manager
         return
     await message.delete()
     await dialog_manager.switch_to(AdminStates.meeting_change, show_mode=ShowMode.DELETE_AND_SEND)
+
+
+async def on_tutor_selected(query: CallbackQuery, widget: Any, dialog_manager: DialogManager, item_id: str):
+    tutor = await tutors_repo.get(id=int(item_id))
+    dialog_manager.dialog_data.update({"tutor": tutor})
+    await dialog_manager.switch_to(AdminStates.tutor_info)
+
+
+async def on_remove_tutor(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    data = dialog_manager.dialog_data
+    tutor: Tutor = data["tutor"]
+    await tutors_repo.remove(tutor=tutor)
+    await query.answer(f"@{tutor.username} is no longer a Tutor", show_alert=True)
+    await dialog_manager.switch_to(AdminStates.tutors_list)
+
+
+async def open_add_tutor(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    if not query.message:
+        return
+    to_delete = await query.message.answer(text="Click the button to choose a user 👇", reply_markup=CHOOSE_USER_KB)
+    dialog_manager.dialog_data.update({"to_delete": to_delete})
+    await dialog_manager.switch_to(AdminStates.add_tutor)
+
+
+async def get_added_tutor(message: Message, _: MessageInput, dialog_manager: DialogManager):
+    if not message.users_shared or not message.bot:
+        return
+    await clear_messages(message.bot, dialog_manager)
+
+    shared_user = message.users_shared.users[0]
+    if not isinstance(shared_user, SharedUser):
+        raise Exception("No tutor in get_added_tutor wtf?")
+
+    if shared_user.username is None:
+        to_delete = await message.answer(text="Tutor must have a username ⚠️", reply_markup=CHOOSE_USER_KB)
+        dialog_manager.dialog_data.update({"to_delete": to_delete})
+        return await dialog_manager.switch_to(AdminStates.add_tutor, show_mode=ShowMode.DELETE_AND_SEND)
+
+    if await tutors_repo.exists(tg_id=shared_user.user_id):
+        to_delete = await message.answer(text="User is already a Tutor ⚠️", reply_markup=CHOOSE_USER_KB)
+        dialog_manager.dialog_data.update({"to_delete": to_delete})
+        return await dialog_manager.switch_to(AdminStates.add_tutor, show_mode=ShowMode.DELETE_AND_SEND)
+
+    tutor = await tutors_repo.create(
+        tg_id=shared_user.user_id,
+        username=shared_user.username,
+        first_name=shared_user.first_name,
+        last_name=shared_user.last_name,
+    )
+    dialog_manager.dialog_data.update({"tutor": tutor})
+
+    await dialog_manager.switch_to(AdminStates.tutor_info, show_mode=ShowMode.DELETE_AND_SEND)
+
+
+async def open_tutors_list_with_clear(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    if not query.bot or not button.widget_id:
+        return
+    await clear_messages(query.bot, dialog_manager)
+    await dialog_manager.switch_to(AdminStates.tutors_list)
