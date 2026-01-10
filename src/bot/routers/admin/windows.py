@@ -56,7 +56,7 @@ admin_meeting_info_ww = Window(
     Format("{title}"),
     Format("Date: {date}"),
     Format("Duration: {duration}"),
-    Format("Tutor: {tutor_username}"),
+    Format("Tutor: @{tutor_username}"),
     Format("{description}", when="description"),
     SwitchTo(Const("Change Info"), id="change_meeting", state=AdminStates.meeting_change),
     Row(Button(Const("Back"), id="back_window_info", on_click=open_meetings_type_choice), BLANK_BUTTON),
@@ -70,7 +70,7 @@ admin_meeting_change_ww = Window(
     Format("{title}"),
     Format("Date: {date}"),
     Format("Duration: {duration}"),
-    Format("Tutor: {tutor_username}"),
+    Format("Tutor: @{tutor_username}"),
     Format("{description}", when="description"),
     Column(
         Button(Const("Set Title"), id="change_title", on_click=open_set_title),

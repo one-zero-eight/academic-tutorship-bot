@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from .models import Tutor
+from .models import Meeting, MeetingStatus, Tutor
 
 
 class TutorsRepository(ABC):
@@ -42,6 +42,30 @@ class TutorsRepository(ABC):
         username: str | None = None,
         tutor: Tutor | None = None,
     ) -> Tutor: ...
+
+    @abstractmethod
+    async def dispose(self): ...
+
+
+class MeetingsRepository(ABC):
+    @abstractmethod
+    async def create(self, *, title: str) -> Meeting: ...
+
+    @abstractmethod
+    async def save(self, meeting: Meeting): ...
+
+    @abstractmethod
+    async def get(self, *, id: int) -> Meeting: ...
+
+    @abstractmethod
+    async def list(
+        self,
+        *,
+        tutor_id: int | None = None,
+        status: MeetingStatus | None = None,
+        offset: int = 0,
+        limit: int | None = None,
+    ) -> list[Meeting]: ...
 
     @abstractmethod
     async def dispose(self): ...

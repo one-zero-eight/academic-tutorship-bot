@@ -11,7 +11,7 @@ from src.bot.routers.admin import AdminStates
 from src.bot.routers.authentication import AuthStates
 from src.bot.routers.student import StudentStates
 from src.config import settings
-from src.domain.enums import UserStatus as US
+from src.domain.models import UserStatus as US
 
 router = Router(name="commands")
 

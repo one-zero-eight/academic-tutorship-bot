@@ -43,22 +43,21 @@ async def open_meeting_info(query: CallbackQuery, button: Button, dialog_manager
     await clear_messages(query.bot, dialog_manager)
     if button.widget_id.startswith("a_meeting"):
         meeting_id = int(button.widget_id.replace("a_meeting_", ""))  # type: ignore
-        dialog_manager.dialog_data.update({"meeting": [x for x in TEST_MEETINGS if x.id == meeting_id][0]})
+        meeting = await meetings_repo.get(id=meeting_id)
+        dialog_manager.dialog_data.update({"meeting": meeting})
     await dialog_manager.switch_to(AdminStates.meeting_info)
 
 
 async def get_new_title(message: Message, _: MessageInput, dialog_manager: DialogManager):
     if not message.text:
         return
-    TEST_MEETINGS.append(Meeting(id=len(TEST_MEETINGS) + 1, title=message.text))
-    dialog_manager.dialog_data.update({"meeting": TEST_MEETINGS[-1]})
+    new_meeting = await meetings_repo.create(title=message.text)
+    dialog_manager.dialog_data.update({"meeting": new_meeting})
     await dialog_manager.switch_to(AdminStates.meeting_info)
 
 
 async def on_meeting_selected(query: CallbackQuery, widget: Any, dialog_manager: DialogManager, item_id: str):
-    # TODO : add database fetch data here
-    meeting = TEST_MEETINGS[int(item_id)]
-
+    meeting = await meetings_repo.get(id=int(item_id))
     dialog_manager.dialog_data.update({"meeting": meeting})
     await dialog_manager.switch_to(AdminStates.meeting_info)
 
@@ -92,18 +91,19 @@ async def get_assigned_tutor(message: Message, _: MessageInput, dialog_manager: 
         return
     await clear_messages(message.bot, dialog_manager)
 
-    tutor = message.users_shared.users[0]
+    shared_user = message.users_shared.users[0]
     meeting: Meeting | None = dialog_manager.dialog_data.get("meeting")
 
-    dialog_manager.dialog_data.update({"tutor": tutor})
+    dialog_manager.dialog_data.update({"tutor": shared_user})
 
     if not isinstance(meeting, Meeting):
         raise Exception("No meeting in get_assigned_tutor wtf?")
-    if not isinstance(tutor, SharedUser):
-        raise Exception("No tutor in get_assigned_tutor wtf?")
-    # TODO : changes to database
-    meeting.tutor_id = tutor.user_id
-    meeting.tutor_username = tutor.username
+    if not isinstance(shared_user, SharedUser):
+        raise Exception("No shared_user in get_assigned_tutor wtf?")
+
+    tutor = await tutors_repo.get(tg_id=shared_user.user_id)
+    meeting.assign_tutor(tutor)
+    await meetings_repo.save(meeting)
 
     await dialog_manager.switch_to(AdminStates.meeting_change, show_mode=ShowMode.DELETE_AND_SEND)
 
@@ -114,6 +114,7 @@ async def get_meeting_title(message: Message, _: MessageInput, dialog_manager: D
     if not meeting or not message.text:
         return
     meeting.title = message.text
+    await meetings_repo.save(meeting)
     await message.delete()
     await dialog_manager.switch_to(AdminStates.meeting_change, show_mode=ShowMode.DELETE_AND_SEND)
 
@@ -124,6 +125,7 @@ async def get_meeting_description(message: Message, _: MessageInput, dialog_mana
     if not meeting or not message.text:
         return
     meeting.description = message.text
+    await meetings_repo.save(meeting)
     await message.delete()
     await dialog_manager.switch_to(AdminStates.meeting_change, show_mode=ShowMode.DELETE_AND_SEND)
 
@@ -137,6 +139,7 @@ async def get_meeting_date(message: Message, _: MessageInput, dialog_manager: Di
         meeting.date = int(datetime.strptime(message.text, "%d.%m.%Y").timestamp())
     except Exception:
         return
+    await meetings_repo.save(meeting)
     await message.delete()
     await dialog_manager.switch_to(AdminStates.meeting_change, show_mode=ShowMode.DELETE_AND_SEND)
 
@@ -151,6 +154,7 @@ async def get_meeting_duration(message: Message, _: MessageInput, dialog_manager
         meeting.duration = (minutes * 60 + seconds) * 60
     except Exception:
         return
+    await meetings_repo.save(meeting)
     await message.delete()
     await dialog_manager.switch_to(AdminStates.meeting_change, show_mode=ShowMode.DELETE_AND_SEND)
 

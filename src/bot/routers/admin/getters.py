@@ -3,51 +3,28 @@ from datetime import datetime
 from aiogram_dialog import DialogManager
 
 from src.bot.filters import *
-from src.db.repositories import tutors_repo
+from src.db.repositories import meetings_repo, tutors_repo
 from src.domain.models import *
-
-TEST_MEETINGS = [
-    Meeting(status=CREATED, id=1, title="Prob&Stat Recap 3", date=1762983763, duration=3600),
-    Meeting(
-        status=CREATED,
-        id=2,
-        title="MathAn Recap 1",
-        date=1762997763,
-    ),
-    Meeting(
-        status=CREATED,
-        id=3,
-        title="Individual Maxim Pavlov",
-        date=1762947763,
-    ),
-    Meeting(
-        status=CREATED,
-        id=4,
-        title="OS PreFinal Preparation",
-        date=1762947763,
-    ),
-    Meeting(
-        status=CREATED,
-        id=5,
-        title="Optimization Last Recap",
-    ),
-]
 
 
 async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
     meetings_type = dialog_manager.dialog_data["meetings_type"]
     if meetings_type == "created":
-        allowed_statuses = {0}
+        allowed_statuses = {MeetingStatus.CREATED}
     elif meetings_type == "announced":
-        allowed_statuses = {1, 2, 3}
+        allowed_statuses = {MeetingStatus.ANNOUNCED, MeetingStatus.CONDUCTING, MeetingStatus.FINISHED}
     elif meetings_type == "closed":
-        allowed_statuses = {4}
+        allowed_statuses = {MeetingStatus.CLOSED}
     else:
         allowed_statuses = set()
 
+    meetings = []
+    for status in allowed_statuses:
+        meetings.extend(await meetings_repo.list(status=status))
+
     return {
         "meetings_type": meetings_type.capitalize(),
-        "meetings": list(filter(lambda m: m.status in allowed_statuses, TEST_MEETINGS)),
+        "meetings": meetings,
     }
 
 
@@ -61,8 +38,7 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
         "description": meeting.description,
         "date": date_to_str(meeting.date) if meeting.date else "--.--.----",
         "duration": duration_to_str(meeting.duration) if meeting.duration else "--:--",
-        "tutor": tutor.username if (tutor := data.get("tutor")) else None,
-        "tutor_username": "@" + str(meeting.tutor_username) if meeting.tutor_username else "Not Assigned",
+        "tutor_username": meeting.tutor.username if meeting.tutor else None,
     }
 
 
@@ -76,4 +52,9 @@ async def tutors_list_getter(dialog_manager: DialogManager, **kwargs):
 async def tutor_info_getter(dialog_manager: DialogManager, **kwargs):
     data = dialog_manager.dialog_data
     tutor: Tutor = data["tutor"]
-    return tutor.model_dump()
+    return {
+        "id": tutor.id,
+        "tg_id": tutor.tg_id,
+        "username": tutor.username,
+        "full_name": tutor.full_name,
+    }

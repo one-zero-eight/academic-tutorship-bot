@@ -16,7 +16,7 @@ MEETINGS_SCROLLING_GROUP = ScrollingGroup(
     Select(
         Format("[{item.date_human}] {item.title}"),
         id="select_meetings",
-        item_id_getter=(lambda x: TEST_MEETINGS.index(x)),
+        item_id_getter=(lambda x: x.id),
         items="meetings",
         on_click=on_meeting_selected,
     ),

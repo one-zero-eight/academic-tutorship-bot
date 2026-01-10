@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import TelegramObject, User
 
 from src.config import settings
-from src.domain.enums import UserStatus
+from src.domain.models import UserStatus
 
 
 class UserAuthenticatedFilter(Filter):
