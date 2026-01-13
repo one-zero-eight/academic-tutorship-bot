@@ -52,10 +52,12 @@ from src.bot.routers.admin import router as admin_router  # noqa: E402
 from src.bot.routers.authentication import router as authentication_router  # noqa: E402
 from src.bot.routers.commands import router as commands_router  # noqa: E402
 from src.bot.routers.student import router as student_router  # noqa: E402
+from src.bot.routers.tutor import router as tutor_router  # noqa: E402
 
 dp.include_router(commands_router)  # start, help, menu commands
 dp.include_router(authentication_router)
 dp.include_router(student_router)
+dp.include_router(tutor_router)
 dp.include_router(admin_router)  # admin mode
 
 setup_dialogs(dp)

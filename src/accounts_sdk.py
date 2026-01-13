@@ -78,10 +78,12 @@ class InNoHassleAccounts:
     api_jwt_token: str
     PUBLIC_KID = "public"
     key_set: KeySet
+    verify: bool = True
 
-    def __init__(self, api_url: str, api_jwt_token: str):
+    def __init__(self, api_url: str, api_jwt_token: str, *, verify: bool = True):
         self.api_url = api_url
         self.api_jwt_token = api_jwt_token
+        self.verify = verify
 
     async def update_key_set(self):
         self.key_set = await self.get_key_set()
@@ -92,7 +94,7 @@ class InNoHassleAccounts:
         return self.key_set.find_by_kid(self.PUBLIC_KID)
 
     async def get_key_set(self) -> KeySet:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(verify=self.verify) as client:
             response = await client.get(f"{self.api_url}/.well-known/jwks.json")
             response.raise_for_status()
             jwks_json = response.json()
@@ -121,6 +123,7 @@ class InNoHassleAccounts:
         return httpx.AsyncClient(
             headers={"Authorization": f"Bearer {self.api_jwt_token}"},
             base_url=self.api_url,
+            verify=self.verify,
         )
 
     def _get_jwt_claims(self, token: str) -> JWTClaims:
@@ -165,6 +168,7 @@ if settings.accounts:
     inh_accounts: InNoHassleAccounts = InNoHassleAccounts(
         api_url=settings.accounts.api_url,
         api_jwt_token=settings.accounts.api_jwt_token.get_secret_value(),
+        verify=False,
     )
 else:
     raise ImportError("InNoHassle Accounts is not configured in ./settings.yaml")

@@ -10,6 +10,7 @@ from src.bot.filters import StatusFilter
 from src.bot.routers.admin import AdminStates
 from src.bot.routers.authentication import AuthStates
 from src.bot.routers.student import StudentStates
+from src.bot.routers.tutor import TutorStates
 from src.config import settings
 from src.domain.models import UserStatus as US
 
@@ -18,7 +19,7 @@ router = Router(name="commands")
 
 MATCHING_START_STATE = {
     US.student: StudentStates.start,
-    # US.tutor: TutorStates.start,
+    US.tutor: TutorStates.start,
     US.admin: AdminStates.start,
 }
 
@@ -28,10 +29,10 @@ MATCHING_START_STATE = {
 async def on_start(
     message: types.Message, state: FSMContext, dialog_manager: DialogManager, authenticated: bool, status: US
 ):
-    if not authenticated:
-        return await dialog_manager.start(AuthStates.bind_tg_inh)
-    else:
+    if authenticated:
         return await dialog_manager.start(MATCHING_START_STATE[status])
+    else:
+        return await dialog_manager.start(AuthStates.bind_tg_inh)
 
 
 @router.message(Command("admin"), StatusFilter(US.admin))

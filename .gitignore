@@ -10,3 +10,5 @@ __pycache__
 settings.yaml
 .python-version
 *.sqlite
+
+.DS_Store
