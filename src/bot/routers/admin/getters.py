@@ -42,6 +42,22 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
     }
 
 
+async def meeting_info_with_tutors_getter(dialog_manager: DialogManager, **kwargs):
+    data = dialog_manager.dialog_data
+    meeting: Meeting = data["meeting"]
+    date_to_str = lambda x: datetime.fromtimestamp(x).strftime("%d.%m.%Y")  # noqa E731
+    duration_to_str = lambda x: f"{x // 3600:02d}:{(x % 3600) // 60:02d}"  # noqa E731
+    tutors = await tutors_repo.list()
+    return {
+        "title": meeting.title,
+        "description": meeting.description,
+        "date": date_to_str(meeting.date) if meeting.date else "--.--.----",
+        "duration": duration_to_str(meeting.duration) if meeting.duration else "--:--",
+        "tutor_username": meeting.tutor.username if meeting.tutor else None,
+        "tutors": list(enumerate(tutors)),
+    }
+
+
 async def tutors_list_getter(dialog_manager: DialogManager, **kwargs):
     tutors = await tutors_repo.list()
     return {

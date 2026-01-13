@@ -37,3 +37,17 @@ TUTORS_SCROLLING_GROUP = ScrollingGroup(
     width=1,
     height=6,
 )
+
+TUTORS_BLANK_SCROLLING_GROUP = ScrollingGroup(
+    Select(
+        Format("@{item[1].username} {item[1].full_name}"),
+        id="select_tutors",
+        item_id_getter=(lambda item: item[1].id),
+        items="tutors",
+        on_click=on_tutor_blank,
+    ),
+    id="scroll_tutors",
+    width=1,
+    height=6,
+)
+"Unclickable, just to see the tutors"

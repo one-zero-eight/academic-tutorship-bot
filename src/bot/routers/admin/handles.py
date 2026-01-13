@@ -1,3 +1,4 @@
+from datetime import date, datetime
 from typing import Literal
 
 from aiogram.types import CallbackQuery, Message, SharedUser
@@ -130,18 +131,17 @@ async def get_meeting_description(message: Message, _: MessageInput, dialog_mana
     await dialog_manager.switch_to(AdminStates.meeting_change, show_mode=ShowMode.DELETE_AND_SEND)
 
 
-async def get_meeting_date(message: Message, _: MessageInput, dialog_manager: DialogManager):
-    # TODO : proper error handeling
+async def on_admin_date_selected(query: CallbackQuery, widget, dialog_manager: DialogManager, selected_date: date):
     meeting: Meeting | None = dialog_manager.dialog_data.get("meeting")
-    if not meeting or not message.text:
+    if not meeting:
         return
-    try:
-        meeting.date = int(datetime.strptime(message.text, "%d.%m.%Y").timestamp())
-    except Exception:
+    datetime_obj = datetime.combine(selected_date, datetime.min.time())
+    if datetime_obj.date() < datetime.now().date():
+        await query.answer("Date cannot be in the past!", show_alert=True)
         return
+    meeting.date = int(datetime_obj.timestamp())
     await meetings_repo.save(meeting)
-    await message.delete()
-    await dialog_manager.switch_to(AdminStates.meeting_change, show_mode=ShowMode.DELETE_AND_SEND)
+    await dialog_manager.switch_to(AdminStates.meeting_change)
 
 
 async def get_meeting_duration(message: Message, _: MessageInput, dialog_manager: DialogManager):
@@ -163,6 +163,10 @@ async def on_tutor_selected(query: CallbackQuery, widget: Any, dialog_manager: D
     tutor = await tutors_repo.get(id=int(item_id))
     dialog_manager.dialog_data.update({"tutor": tutor})
     await dialog_manager.switch_to(AdminStates.tutor_info)
+
+
+async def on_tutor_blank(query: CallbackQuery, widget: Any, dialog_manager: DialogManager, item_id: str):
+    await query.answer("Just for reference")
 
 
 async def on_remove_tutor(query: CallbackQuery, button: Button, dialog_manager: DialogManager):

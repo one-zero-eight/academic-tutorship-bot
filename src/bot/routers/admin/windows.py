@@ -1,6 +1,6 @@
 from aiogram_dialog import Window
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Back, Button, Column, Row, SwitchTo
+from aiogram_dialog.widgets.kbd import Back, Button, Calendar, Column, Row, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
 from src.bot.filters import *
@@ -86,11 +86,13 @@ admin_meeting_change_ww = Window(
 
 
 admin_assign_tutor_ww = Window(
-    Format('Assign Tutor to "{title}"'),
+    Format('Assign Tutor to "{title}"\n'),
+    Const("Here's the list of all tutors for reference"),
+    TUTORS_BLANK_SCROLLING_GROUP,
     Row(Button(Const("Back"), id="back_assign_tutor", on_click=open_meeting_info), BLANK_BUTTON),
     MessageInput(get_assigned_tutor),
     state=AdminStates.assign_tutor,
-    getter=meeting_info_getter,
+    getter=meeting_info_with_tutors_getter,
 )
 
 
@@ -114,9 +116,8 @@ admin_set_description_ww = Window(
 
 admin_set_date_ww = Window(
     Format('Enter new Date for "{title}"'),
-    Const('In format "DD.MM.YYYY"'),
+    Calendar(id="set_date_calendar", on_click=on_admin_date_selected),  # type: ignore
     Row(SwitchTo(Const("Back"), id="st1", state=AdminStates.meeting_change), BLANK_BUTTON),
-    MessageInput(get_meeting_date),
     state=AdminStates.set_date,
     getter=meeting_info_getter,
 )
