@@ -1,15 +1,15 @@
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
+from enum import IntEnum, StrEnum
 
 
-class UserStatus(Enum):
+class UserStatus(StrEnum):
     student = "student"
     tutor = "tutor"
     admin = "admin"
 
 
-class MeetingStatus(Enum):
+class MeetingStatus(IntEnum):
     CREATED = 0
     ANNOUNCED = 1
     CONDUCTING = 2

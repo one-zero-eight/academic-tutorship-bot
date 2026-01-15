@@ -2,9 +2,9 @@ from datetime import datetime
 
 from aiogram_dialog import DialogManager
 
+from src.bot.dto import *
 from src.bot.filters import *
 from src.db.repositories import meetings_repo, tutors_repo
-from src.domain.models import *
 
 
 async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
@@ -30,7 +30,9 @@ async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
 
 async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
     data = dialog_manager.dialog_data
-    meeting: Meeting = data["meeting"]
+    meeting: Meeting | None = dto_to_meeting(data.get("meeting"))
+    if not meeting:
+        raise ValueError("No Meeting in meeting_info_getter")
     date_to_str = lambda x: datetime.fromtimestamp(x).strftime("%d.%m.%Y")  # noqa E731
     duration_to_str = lambda x: f"{x // 3600:02d}:{(x % 3600) // 60:02d}"  # noqa E731
     return {
@@ -44,7 +46,9 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
 
 async def meeting_info_with_tutors_getter(dialog_manager: DialogManager, **kwargs):
     data = dialog_manager.dialog_data
-    meeting: Meeting = data["meeting"]
+    meeting: Meeting | None = dto_to_meeting(data.get("meeting"))
+    if not meeting:
+        raise ValueError("No Meeting in meeting_info_getter")
     date_to_str = lambda x: datetime.fromtimestamp(x).strftime("%d.%m.%Y")  # noqa E731
     duration_to_str = lambda x: f"{x // 3600:02d}:{(x % 3600) // 60:02d}"  # noqa E731
     tutors = await tutors_repo.list()
@@ -67,7 +71,9 @@ async def tutors_list_getter(dialog_manager: DialogManager, **kwargs):
 
 async def tutor_info_getter(dialog_manager: DialogManager, **kwargs):
     data = dialog_manager.dialog_data
-    tutor: Tutor = data["tutor"]
+    tutor: Tutor | None = dto_to_tutor(data.get("tutor"))
+    if not tutor:
+        raise ValueError("No Tutor in tutor_info_getter")
     return {
         "id": tutor.id,
         "tg_id": tutor.tg_id,

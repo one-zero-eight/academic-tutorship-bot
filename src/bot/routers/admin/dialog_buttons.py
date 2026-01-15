@@ -2,7 +2,6 @@ from aiogram_dialog.widgets.kbd import Back, Button, Row, ScrollingGroup, Select
 from aiogram_dialog.widgets.text import Const, Format
 
 from src.bot.filters import *
-from src.domain.models import *
 
 from .handles import *
 

@@ -5,8 +5,7 @@ from aiogram_dialog.widgets.kbd import Button
 from src.bot.filters import UserStatus
 from src.bot.routers.admin import AdminStates
 from src.bot.routers.student import StudentStates
-
-# from src.bot.routers.tutor import TutorStates
+from src.bot.routers.tutor import TutorStates
 
 
 async def check_connected(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
@@ -15,16 +14,15 @@ async def check_connected(query: CallbackQuery, button: Button, dialog_manager: 
     status = dialog_manager.middleware_data["status"]
 
     if not authenticated:
-        await query.answer("You are not authenticated yet, try again")
-        return
+        return await query.answer("You are not authenticated yet, try again")
 
     match status:
         case UserStatus.admin:
-            target_state = AdminStates.start
+            target_state = AdminStates.start  # noqa E701
+        case UserStatus.tutor:
+            target_state = TutorStates.start  # noqa E701
         case UserStatus.student:
-            target_state = StudentStates.start
-        # case UserStatus.tutor:
-        #     target_state = TutorStates.start
+            target_state = StudentStates.start  # noqa E701
 
     await query.answer("Authentication Success ✅")
     await dialog_manager.start(state=target_state, mode=StartMode.RESET_STACK)
