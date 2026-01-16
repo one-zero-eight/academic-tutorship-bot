@@ -12,11 +12,6 @@ from .getters import *
 from .keyboards import *
 from .states import *
 
-# region Utils
-
-
-# endregion
-
 
 async def get_new_title(message: Message, _: MessageInput, dialog_manager: DialogManager):
     state = get_state(dialog_manager)
@@ -63,6 +58,7 @@ async def get_assigned_tutor(message: Message, _: MessageInput, dialog_manager: 
             text=f"The user [{shared_user.user_id}] @{shared_user.username} is not a Tutor", reply_markup=CHOOSE_USER_KB
         )
         await track_message(to_delete, dialog_manager)
+        return await dialog_manager.switch_to(ChangeStates.tutor, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def get_meeting_title(message: Message, _: MessageInput, dialog_manager: DialogManager):

@@ -50,6 +50,7 @@ async def on_unknown_state(event: ErrorEvent, state: FSMContext, dialog_manager:
 
 from src.bot.dialogs.change_meeting import dialog as change_meeting_dialog  # noqa: E402
 from src.bot.dialogs.meetings import dialog as meetings_dialog  # noqa: E402
+from src.bot.dialogs.tutors import dialog as tutors_dialog  # noqa: E402
 from src.bot.routers.admin import router as admin_router  # noqa: E402
 from src.bot.routers.authentication import router as authentication_router  # noqa: E402
 from src.bot.routers.commands import router as commands_router  # noqa: E402
@@ -65,6 +66,7 @@ dp.include_router(admin_router)  # admin mode
 # separate functional dialogs
 dp.include_router(meetings_dialog)
 dp.include_router(change_meeting_dialog)
+dp.include_router(tutors_dialog)
 
 setup_dialogs(dp)
 
