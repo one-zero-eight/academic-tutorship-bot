@@ -16,6 +16,8 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button
 from pydantic import TypeAdapter
 
+from src.domain.models import UserStatus
+
 commands_type_adapter = TypeAdapter(list[BotCommand])
 
 
@@ -82,3 +84,13 @@ CHOOSE_USER_KB = ReplyKeyboardMarkup(
 )
 
 del request_users
+
+
+async def user_status_getter(dialog_manager: DialogManager, **kwargs):
+    state = get_state(dialog_manager)
+    status: UserStatus | None = await state.get_value("status")
+    return {
+        "is_admin": (status == UserStatus.admin),
+        "is_tutor": (status == UserStatus.tutor),
+        "is_student": (status == UserStatus.student),
+    }

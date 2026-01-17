@@ -127,15 +127,13 @@ class AutoAuthMiddleware(LogAllEventsMiddleware):
     async def _update_status(self, data: dict[str, Any]) -> UserStatus:
         state: FSMContext = data["state"]
         chat: Chat = data["event_chat"]
-        status = await state.get_value("status")
-        if status is None:
-            if chat.id in settings.admins:
-                status = UserStatus.admin
-            elif await tutors_repo.exists(tg_id=chat.id):
-                status = UserStatus.tutor
-            else:
-                status = UserStatus.student
-            await state.update_data({"status": status})
+        if chat.id in settings.admins:
+            status = UserStatus.admin
+        elif await tutors_repo.exists(tg_id=chat.id):
+            status = UserStatus.tutor
+        else:
+            status = UserStatus.student
+        await state.update_data({"status": status})
         return status
 
 

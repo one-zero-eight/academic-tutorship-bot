@@ -16,11 +16,16 @@ omlot = open_meetings_list_of_type
 
 type_ww: Window = Window(
     Const("Meetings"),
-    Row(Cancel(), Button(Const("Create New"), id="a_create_meeting", on_click=open_meeting_create)),
+    Row(
+        Cancel(Const("Back")),
+        Button(Const("Create New"), id="create_meeting", on_click=open_meeting_create, when="is_admin"),
+        Button(Const(" "), id="blank", on_click=None, when="is_tutor"),
+    ),
     Button(Const("See Created"), id="a_meetings_created", on_click=omlot("created")),
     Button(Const("See Announced"), id="a_meetings_announced", on_click=omlot("announced")),
     Button(Const("See Closed"), id="a_meetings_closed", on_click=omlot("closed")),
     state=MeetingStates.type,
+    getter=user_status_getter,
 )
 
 del omlot
