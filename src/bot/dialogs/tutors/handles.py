@@ -4,7 +4,7 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 
 from src.bot.utils import *
-from src.db.repositories import tutors_repo
+from src.db.repositories import meetings_repo, tutors_repo
 
 from .getters import *
 from .states import *
@@ -23,8 +23,28 @@ async def on_remove_tutor(query: CallbackQuery, button: Button, dialog_manager: 
     if not tutor:
         raise ValueError("No tutor")
 
+    meetings = []
+    meetings.extend(await meetings_repo.list(status=MeetingStatus.CREATED, tutor_id=tutor.id))
+    meetings.extend(await meetings_repo.list(status=MeetingStatus.ANNOUNCED, tutor_id=tutor.id))
+    meetings.extend(await meetings_repo.list(status=MeetingStatus.CONDUCTING, tutor_id=tutor.id))
+    if len(meetings) > 0:
+        return await query.answer(
+            (
+                "This tutor is assigned to some meetings in states: CREATED or ANNOUNCED."
+                "Assign another tutor to them first"
+            ),
+            show_alert=True,
+        )
+
     await tutors_repo.remove(tutor=tutor)
     await state.update_data({"tutor": None})
+
+    try:
+        await query.message.bot.send_message(  # type: ignore
+            text=("You've been dismissed from being a tutor ⛄️\n"), chat_id=tutor.tg_id
+        )
+    except Exception as e:
+        print(f"Could not send message to [{tutor.tg_id}] @{tutor.username}, {e}")
 
     await query.answer(f"@{tutor.username} is no longer a Tutor", show_alert=True)
     await dialog_manager.switch_to(TutorsStates.list)
@@ -64,6 +84,14 @@ async def get_added_tutor(message: Message, _: MessageInput, dialog_manager: Dia
         first_name=shared_user.first_name,
         last_name=shared_user.last_name,
     )
+
+    try:
+        await message.bot.send_message(
+            text=("You've been chosen to be a tutor! 👨‍🏫\nUse /start to open the tutor menu"), chat_id=tutor.tg_id
+        )
+    except Exception as e:
+        print(f"Could not send message to [{tutor.tg_id}] @{tutor.username}, {e}")
+
     await get_state(dialog_manager).update_data({"tutor": tutor_to_dto(tutor)})
 
     await dialog_manager.switch_to(TutorsStates.info, show_mode=ShowMode.DELETE_AND_SEND)

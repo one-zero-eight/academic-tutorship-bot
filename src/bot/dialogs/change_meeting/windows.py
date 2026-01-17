@@ -13,11 +13,12 @@ from .states import *
 
 info_change_ww = Window(
     Const("Meeting Info"),
-    Format("{title}"),
+    Format("Title: {title}"),
+    Format("Status: {status.name}\n"),
     Format("Date: {date}"),
     Format("Duration: {duration}"),
     Format("Tutor: @{tutor_username}"),
-    Format("{description}", when="description"),
+    Format("Description: {description}", when="description"),
     Column(
         SwitchTo(Const("Set Title"), id="change_title", state=ChangeStates.title),
         SwitchTo(Const("Set Description"), id="set_description", state=ChangeStates.description),
@@ -31,7 +32,7 @@ info_change_ww = Window(
             when="is_admin",
         ),
     ),
-    Row(Cancel(), BTN_BLANK),
+    Row(Cancel(Const("Back")), BTN_BLANK),
     state=ChangeStates.init,
     getter=meeting_info_getter,
 )

@@ -1,11 +1,13 @@
 from typing import Literal
 
+from aiogram import Bot
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.kbd import Button
 
 from src.bot.dto import *
 from src.bot.utils import get_state
+from src.config import settings
 from src.db.repositories import meetings_repo
 
 from .states import *
@@ -39,3 +41,62 @@ async def get_new_title(message: Message, message_input, dialog_manager: DialogM
     await get_state(dialog_manager).update_data({"meeting": meeting_to_dto(new_meeting)})
     await dialog_manager.switch_to(MeetingStates.info, show_mode=ShowMode.DELETE_AND_SEND)
     await message.delete()
+
+
+async def open_announce_confirm(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    state = get_state(dialog_manager)
+    meeting = dto_to_meeting(await state.get_value("meeting"))
+    if not meeting:
+        raise ValueError("No meeting")
+
+    try:
+        meeting._check_for_announce()
+    except Exception as e:
+        return await query.answer(f"{e}", show_alert=True)
+
+    await dialog_manager.switch_to(state=MeetingStates.announce_confirm)
+
+
+async def on_announce_confirmed(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    state = get_state(dialog_manager)
+    bot: Bot = dialog_manager.middleware_data["bot"]
+    await query.answer("Okay, announced", show_alert=True)
+
+    meeting = dto_to_meeting(await state.get_value("meeting"))
+    if not meeting:
+        raise ValueError("No meeting")
+
+    try:
+        meeting.announce()
+    except Exception as e:
+        return await query.answer(f"{e}", show_alert=True)
+
+    await meetings_repo.save(meeting)
+    await state.update_data({"meeting": meeting_to_dto(meeting)})
+
+    # TODO: meeting announced notification
+    #       - for all the admins
+    #       - for the tutor assigned
+
+    tutor = meeting.tutor
+    if not tutor:
+        raise ValueError("No tutor")
+
+    for chat_id in list(set(settings.admins + [tutor.tg_id])):
+        try:
+            await bot.send_message(
+                text=(
+                    "A meeting was announced 📣\n"
+                    f'Title: "{meeting.title}"\n'
+                    f"Date: {meeting.date_human}\n"
+                    f"Tutor: @{tutor.username}"
+                ),
+                chat_id=chat_id,
+            )
+        except Exception as e:
+            print(f"Error sending notification to [{chat_id}], {e}")
+
+    # TODO LATER:
+    #       - for the students who want notifications
+
+    await dialog_manager.switch_to(state=MeetingStates.info)

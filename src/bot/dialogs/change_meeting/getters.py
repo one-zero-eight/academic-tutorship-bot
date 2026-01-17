@@ -40,13 +40,16 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
     duration_to_str = lambda x: f"{x // 3600:02d}:{(x % 3600) // 60:02d}"  # noqa E731
 
     data = await user_status_getter(dialog_manager, **kwargs)
+    is_admin: bool = data["is_admin"]
     data.update(
         {
             "title": meeting.title,
             "description": meeting.description,
+            "status": meeting.status,
             "date": date_to_str(meeting.date) if meeting.date else "--.--.----",
             "duration": duration_to_str(meeting.duration) if meeting.duration else "--:--",
             "tutor_username": meeting.tutor.username if meeting.tutor else None,
-        }
-    )  # type: ignore
+            "can_be_announced": is_admin and meeting.status == MeetingStatus.CREATED,
+        }  # type: ignore
+    )
     return data

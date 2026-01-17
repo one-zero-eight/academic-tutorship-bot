@@ -1,5 +1,6 @@
 from datetime import date, datetime
 
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
@@ -46,9 +47,36 @@ async def get_assigned_tutor(message: Message, _: MessageInput, dialog_manager: 
     if not meeting:
         raise ValueError("No meeting")
 
+    tutor = meeting.tutor
+
+    if tutor:
+        try:
+            await message.bot.send_message(
+                text=(
+                    "You are not longer a tutor for Meeting 🕊️\n"
+                    f"Title: {meeting.title}\n"
+                    f"Date: {meeting.date_human}\n"
+                    "\n"
+                    "The meeting is no longer accessible from your meetings list"
+                ),
+                chat_id=tutor.tg_id,
+            )
+        except Exception as e:
+            print(f"Could not send notification to [{tutor.tg_id}] @{tutor.username}, {e}")
+
     try:
         tutor = await tutors_repo.get(tg_id=shared_user.user_id)
         meeting.assign_tutor(tutor)
+        await message.bot.send_message(
+            text=(
+                "You are assigned to a Meeting 👨‍🏫\n"
+                f"Title: {meeting.title}\n"
+                f"Date: {meeting.date_human}\n"
+                "\n"
+                "You can now see the Meeting in your meetings list"
+            ),
+            chat_id=tutor.tg_id,
+        )
         await meetings_repo.save(meeting)
         await state.update_data({"meeting": meeting_to_dto(meeting)})
         await dialog_manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
@@ -57,6 +85,19 @@ async def get_assigned_tutor(message: Message, _: MessageInput, dialog_manager: 
         to_delete = await message.answer(
             text=f"The user [{shared_user.user_id}] @{shared_user.username} is not a Tutor", reply_markup=CHOOSE_USER_KB
         )
+        await track_message(to_delete, dialog_manager)
+        return await dialog_manager.switch_to(ChangeStates.tutor, show_mode=ShowMode.DELETE_AND_SEND)
+
+    except TelegramBadRequest:
+        to_delete = await message.answer(
+            text=f"The user [{shared_user.user_id}] @{shared_user.username} may have blocked the bot",
+            reply_markup=CHOOSE_USER_KB,
+        )
+        await track_message(to_delete, dialog_manager)
+        return await dialog_manager.switch_to(ChangeStates.tutor, show_mode=ShowMode.DELETE_AND_SEND)
+
+    except Exception as e:
+        to_delete = await message.answer(text=f"Unknown Error: {e}", reply_markup=CHOOSE_USER_KB)
         await track_message(to_delete, dialog_manager)
         return await dialog_manager.switch_to(ChangeStates.tutor, show_mode=ShowMode.DELETE_AND_SEND)
 

@@ -1,6 +1,6 @@
 from aiogram_dialog import Window
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Button, Cancel, Row, SwitchTo
+from aiogram_dialog.widgets.kbd import Button, Cancel, Row, Start, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
 from src.bot.dialogs.change_meeting import ChangeStates
@@ -51,13 +51,26 @@ create_ww = Window(
 
 info_ww = Window(
     Const("Meeting Info"),
-    Format("{title}"),
+    Format("Title: {title}"),
+    Format("Status: {status.name}\n"),
     Format("Date: {date}"),
     Format("Duration: {duration}"),
     Format("Tutor: @{tutor_username}"),
-    Format("{description}", when="description"),
-    StartWithData(text=Const("Change Info"), id="change_init", state=ChangeStates.init, show_mode=ShowMode.EDIT),
+    Format("Description: {description}", when="description"),
+    Start(text=Const("Change Info"), id="change_init", state=ChangeStates.init, show_mode=ShowMode.EDIT),
+    Button(Const("Announce"), id="announce_start", on_click=open_announce_confirm, when="can_be_announced"),
     Row(SwitchTo(Const("Back"), "to_list", MeetingStates.list), BLANK_BUTTON),
     state=MeetingStates.info,
+    getter=meeting_info_getter,
+)
+
+
+announce_confirm_ww = Window(
+    Format('Are you surely ready to announce "{title}"?'),
+    Row(
+        Button(Const("Announce 📣"), id="announce", when="can_be_announced", on_click=on_announce_confirmed),
+        SwitchTo(Const("Cancel"), id="cancel_announce", state=MeetingStates.info),
+    ),
+    state=MeetingStates.announce_confirm,
     getter=meeting_info_getter,
 )
