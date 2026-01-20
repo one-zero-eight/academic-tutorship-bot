@@ -7,3 +7,4 @@ class MeetingStates(StatesGroup):
     info = State()
     create = State()
     announce_confirm = State()
+    delete_confirm = State()

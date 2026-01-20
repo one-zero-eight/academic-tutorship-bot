@@ -59,6 +59,7 @@ info_ww = Window(
     Format("Description: {description}", when="description"),
     Start(text=Const("Change Info"), id="change_init", state=ChangeStates.init, show_mode=ShowMode.EDIT),
     Button(Const("Announce"), id="announce_start", on_click=open_announce_confirm, when="can_be_announced"),
+    Button(Const("Delete"), id="delete_start", on_click=open_delete_confirm, when="can_be_deleted"),
     Row(SwitchTo(Const("Back"), "to_list", MeetingStates.list), BLANK_BUTTON),
     state=MeetingStates.info,
     getter=meeting_info_getter,
@@ -72,5 +73,16 @@ announce_confirm_ww = Window(
         SwitchTo(Const("Cancel"), id="cancel_announce", state=MeetingStates.info),
     ),
     state=MeetingStates.announce_confirm,
+    getter=meeting_info_getter,
+)
+
+
+delete_confirm_ww = Window(
+    Format('Do you really want to delete "{title}"?'),
+    Row(
+        Button(Const("Delete 🗑️"), id="delete", when="can_be_deleted", on_click=on_delete_confirmed),
+        SwitchTo(Const("Cancel"), id="cancel_delete", state=MeetingStates.info),
+    ),
+    state=MeetingStates.delete_confirm,
     getter=meeting_info_getter,
 )

@@ -264,8 +264,27 @@ class SQLMeetingsRepository(MeetingsRepository):
             result = await conn.execute(stmt)
             return [self._row_to_meeting(row) for row in result.fetchall()]
 
+    async def remove(self, *, id: int | None = None, meeting: Meeting | None = None):
+        where = self._where_clause(id, meeting)
+        stmt = delete(meetings).where(where)
+        async with self._db.engine.begin() as conn:
+            result = await conn.execute(stmt)
+            if result.rowcount < 1:
+                raise LookupError("Meeting not found")
+
     async def dispose(self):
         await self._db.dispose()
+
+    def _where_clause(
+        self,
+        id: int | None,
+        meeting: Meeting | None,
+    ):
+        if id is not None:
+            return meetings.c.id == id
+        if meeting is not None:
+            return meetings.c.id == meeting.id
+        raise ValueError("Either id or meeting must be provided")
 
     def _row_to_meeting(self, row: Row) -> Meeting:
         meeting = Meeting(id=row.meetings_id, title=row.meetings_title)

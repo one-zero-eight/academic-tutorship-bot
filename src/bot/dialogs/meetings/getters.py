@@ -72,6 +72,7 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
             "duration": duration_to_str(meeting.duration) if meeting.duration else "--:--",
             "tutor_username": meeting.tutor.username if meeting.tutor else None,
             "can_be_announced": is_admin and meeting.status == MeetingStatus.CREATED,
+            "can_be_deleted": is_admin,
         }  # type: ignore
     )
     return data

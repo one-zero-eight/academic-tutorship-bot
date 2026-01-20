@@ -60,7 +60,6 @@ async def open_announce_confirm(query: CallbackQuery, button: Button, dialog_man
 async def on_announce_confirmed(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
     state = get_state(dialog_manager)
     bot: Bot = dialog_manager.middleware_data["bot"]
-    await query.answer("Okay, announced", show_alert=True)
 
     meeting = dto_to_meeting(await state.get_value("meeting"))
     if not meeting:
@@ -73,10 +72,6 @@ async def on_announce_confirmed(query: CallbackQuery, button: Button, dialog_man
 
     await meetings_repo.save(meeting)
     await state.update_data({"meeting": meeting_to_dto(meeting)})
-
-    # TODO: meeting announced notification
-    #       - for all the admins
-    #       - for the tutor assigned
 
     tutor = meeting.tutor
     if not tutor:
@@ -96,7 +91,54 @@ async def on_announce_confirmed(query: CallbackQuery, button: Button, dialog_man
         except Exception as e:
             print(f"Error sending notification to [{chat_id}], {e}")
 
+    await query.answer("Okay, announced", show_alert=True)
+
     # TODO LATER:
     #       - for the students who want notifications
 
-    await dialog_manager.switch_to(state=MeetingStates.info)
+    await dialog_manager.switch_to(state=MeetingStates.info, show_mode=ShowMode.DELETE_AND_SEND)
+
+
+async def open_delete_confirm(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    state = get_state(dialog_manager)
+    meeting = dto_to_meeting(await state.get_value("meeting"))
+    if not meeting:
+        raise ValueError("No meeting")
+
+    await dialog_manager.switch_to(state=MeetingStates.delete_confirm)
+
+
+async def on_delete_confirmed(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    state = get_state(dialog_manager)
+    bot: Bot = dialog_manager.middleware_data["bot"]
+
+    meeting = dto_to_meeting(await state.get_value("meeting"))
+    if not meeting:
+        raise ValueError("No meeting")
+
+    try:
+        await meetings_repo.remove(meeting=meeting)
+    except Exception as e:
+        return await query.answer(f"{e}", show_alert=True)
+
+    await state.update_data({"meeting": None})
+
+    listeners = settings.admins.copy()
+    if tutor := meeting.tutor:
+        listeners = list(set(listeners + [tutor.tg_id]))
+
+    for chat_id in listeners:
+        try:
+            await bot.send_message(
+                text=("A meeting was deleted 🗑️\n" f'Title: "{meeting.title}"\n' f"Date: {meeting.date_human}\n"),
+                chat_id=chat_id,
+            )
+        except Exception as e:
+            print(f"Error sending notification to [{chat_id}], {e}")
+
+    await query.answer("Meeting deleted", show_alert=True)
+
+    # TODO LATER:
+    #       - for the students who want notifications
+
+    await dialog_manager.switch_to(state=MeetingStates.list, show_mode=ShowMode.DELETE_AND_SEND)
