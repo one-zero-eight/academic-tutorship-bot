@@ -15,7 +15,7 @@ async def meeting_info_with_tutors_getter(dialog_manager: DialogManager, **kwarg
     if not meeting:
         raise ValueError("No Meeting in meeting_info_getter")
 
-    date_to_str = lambda x: datetime.fromtimestamp(x).strftime("%d.%m.%Y")  # noqa E731
+    date_to_str = lambda x: datetime.fromtimestamp(x).strftime("%d.%m.%Y %H:%M")  # noqa E731
     duration_to_str = lambda x: f"{x // 3600:02d}:{(x % 3600) // 60:02d}"  # noqa E731
     tutors = await tutors_repo.list()
 
@@ -36,7 +36,7 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
     if not meeting:
         raise ValueError("No Meeting in meeting_info_getter")
 
-    date_to_str = lambda x: datetime.fromtimestamp(x).strftime("%d.%m.%Y")  # noqa E731
+    date_to_str = lambda x: datetime.fromtimestamp(x).strftime("%d.%m.%Y %H:%M")  # noqa E731
     duration_to_str = lambda x: f"{x // 3600:02d}:{(x % 3600) // 60:02d}"  # noqa E731
 
     data = await user_status_getter(dialog_manager, **kwargs)

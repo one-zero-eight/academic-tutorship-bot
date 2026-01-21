@@ -1,4 +1,5 @@
 import re
+from datetime import time
 from types import ModuleType
 
 from aiogram import Bot
@@ -94,3 +95,19 @@ async def user_status_getter(dialog_manager: DialogManager, **kwargs):
         "is_tutor": (status == UserStatus.tutor),
         "is_student": (status == UserStatus.student),
     }
+
+
+_time_pattern = re.compile(r"[0-2][0-9][:. ][0-5][0-9]")
+
+
+def parse_time(text: str) -> time:
+    text = text.strip()
+    if not re.fullmatch(_time_pattern, text):
+        raise ValueError("Invalid time format")
+    hour = int(text[:2])
+    minute = int(text[3:])
+    if not (0 <= hour <= 23):
+        raise ValueError("Hours not in range [0, 23]")
+    if not (0 <= minute <= 59):
+        raise ValueError("Minutes not in range [0, 59]")
+    return time(hour, minute)

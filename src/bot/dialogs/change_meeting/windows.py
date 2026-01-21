@@ -58,9 +58,22 @@ set_description_ww = Window(
 
 set_date_ww = Window(
     Format('Enter new Date for "{title}"'),
-    Calendar(id="set_date_calendar", on_click=on_admin_date_selected),  # type: ignore
+    Calendar(id="set_date_calendar", on_click=on_date_selected),  # type: ignore
     Row(BTN_INIT, BTN_BLANK),
     state=ChangeStates.date,
+    getter=meeting_info_getter,
+)
+
+
+set_time_ww = Window(
+    Format('Enter new Time for "{title}"'),
+    Const("Adhere to format 00:00, e.g. 20:32"),
+    MessageInput(get_meeting_time),
+    Row(
+        SwitchTo(text=Const("Back"), id="to_date", state=ChangeStates.date, on_click=on_switch_clear_messages),
+        BTN_BLANK,
+    ),
+    state=ChangeStates.time,
     getter=meeting_info_getter,
 )
 

@@ -106,9 +106,9 @@ class Meeting:
     @property
     def date_human(self) -> str:
         if self.date:
-            return datetime.fromtimestamp(self.date).strftime("%d.%m.%y")
+            return datetime.fromtimestamp(self.date).strftime("%d.%m.%y %H:%M")
         else:
-            return "-.-.-"
+            return "-.-.- -:-"
 
     def _check_for_announce(self):
         if self.status is not MeetingStatus.CREATED:

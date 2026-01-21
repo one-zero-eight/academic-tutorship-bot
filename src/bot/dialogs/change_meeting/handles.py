@@ -14,6 +14,10 @@ from .keyboards import *
 from .states import *
 
 
+async def on_switch_clear_messages(query: CallbackQuery, button: Button, dialog_manager: DialogManager):
+    await clear_messages(dialog_manager)
+
+
 async def get_new_title(message: Message, _: MessageInput, dialog_manager: DialogManager):
     state = get_state(dialog_manager)
     if not message.text:
@@ -137,15 +141,45 @@ async def get_meeting_description(message: Message, _: MessageInput, dialog_mana
     await dialog_manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
 
 
-async def on_admin_date_selected(query: CallbackQuery, widget, dialog_manager: DialogManager, selected_date: date):
+async def on_date_selected(query: CallbackQuery, widget, dialog_manager: DialogManager, selected_date: date):
     state = get_state(dialog_manager)
-    meeting = dto_to_meeting(await state.get_value("meeting"))
-    if not meeting:
-        raise ValueError("meeting is None")
 
-    datetime_obj = datetime.combine(selected_date, datetime.min.time())
-    if datetime_obj.date() < datetime.now().date():
+    if selected_date < datetime.now().date():
         return await query.answer("Date cannot be in the past!", show_alert=True)
+
+    await state.update_data({"selected_date": selected_date.isoformat()})
+    await dialog_manager.switch_to(state=ChangeStates.time)
+
+
+async def get_meeting_time(message: Message, _: MessageInput, dialog_manager: DialogManager):
+    state = get_state(dialog_manager)
+    await clear_messages(dialog_manager)
+    await message.delete()
+
+    if not message.text:
+        raise ValueError("No message.text")
+
+    try:
+        selected_time = parse_time(message.text)
+    except ValueError:
+        to_delete = await message.answer("Incorrect format, try like that 00:00")
+        await track_message(to_delete, dialog_manager)
+        return await dialog_manager.switch_to(ChangeStates.time, show_mode=ShowMode.DELETE_AND_SEND)
+
+    selected_date_str: str | None = await state.get_value("selected_date")
+    if not selected_date_str:
+        raise ValueError("No date")
+    selected_date = date.fromisoformat(selected_date_str)
+
+    datetime_obj = datetime.combine(selected_date, selected_time)
+    if datetime_obj < datetime.now():
+        to_delete = await message.answer("Date cannot be in the past!")
+        await track_message(to_delete, dialog_manager)
+        return await dialog_manager.switch_to(ChangeStates.time, show_mode=ShowMode.DELETE_AND_SEND)
+
+    meeting: Meeting | None = dto_to_meeting(await state.get_value("meeting"))
+    if not meeting:
+        raise ValueError("No meeting")
 
     meeting.date = int(datetime_obj.timestamp())
     await meetings_repo.save(meeting)
@@ -156,22 +190,26 @@ async def on_admin_date_selected(query: CallbackQuery, widget, dialog_manager: D
 
 async def get_meeting_duration(message: Message, _: MessageInput, dialog_manager: DialogManager):
     state = get_state(dialog_manager)
+    await message.delete()
 
     if not message.text:
         raise ValueError("message.text is None")
+
+    try:
+        selected_time = parse_time(message.text)
+    except ValueError:
+        to_delete = await message.answer("Incorrect format, try like that 00:00")
+        await track_message(to_delete, dialog_manager)
+        return await dialog_manager.switch_to(ChangeStates.duration, show_mode=ShowMode.DELETE_AND_SEND)
 
     meeting = dto_to_meeting(await state.get_value("meeting"))
     if not meeting:
         raise ValueError("meeting is None")
 
-    # TODO: error handle this
-    minutes, seconds = map(int, message.text.split(":"))
-    meeting.duration = (minutes * 60 + seconds) * 60
-    # till this
-
+    meeting.duration = selected_time.hour * 3600 + selected_time.minute * 60
     await meetings_repo.save(meeting)
+
     await state.update_data({"meeting": meeting_to_dto(meeting)})
-    await message.delete()
     await dialog_manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
 
 

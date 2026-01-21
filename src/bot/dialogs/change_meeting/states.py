@@ -6,5 +6,6 @@ class ChangeStates(StatesGroup):
     title = State()
     description = State()
     date = State()
+    time = State()
     duration = State()
     tutor = State()
