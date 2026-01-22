@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from aiogram_dialog import DialogManager
 
 from src.bot.dto import *
@@ -58,9 +56,6 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
     if not meeting:
         raise ValueError("No Meeting in meeting_info_getter")
 
-    date_to_str = lambda x: datetime.fromtimestamp(x).strftime("%d.%m.%Y %H:%M")  # noqa E731
-    duration_to_str = lambda x: f"{x // 3600:02d}:{(x % 3600) // 60:02d}"  # noqa E731
-
     data = await user_status_getter(dialog_manager, **kwargs)
     is_admin: bool = data["is_admin"]
     data.update(
@@ -68,8 +63,8 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
             "title": meeting.title,
             "description": meeting.description,
             "status": meeting.status,
-            "date": date_to_str(meeting.date) if meeting.date else "--.--.----",
-            "duration": duration_to_str(meeting.duration) if meeting.duration else "--:--",
+            "date": meeting.date_human,
+            "duration": meeting.duration_human,
             "tutor_username": meeting.tutor.username if meeting.tutor else None,
             "can_be_announced": is_admin and meeting.status == MeetingStatus.CREATED,
             "can_be_deleted": is_admin,

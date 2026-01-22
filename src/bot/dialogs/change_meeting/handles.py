@@ -6,6 +6,7 @@ from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 
+from src.bot.scheduling import update_meeting_schedule
 from src.bot.utils import *
 from src.db.repositories import meetings_repo
 
@@ -183,6 +184,8 @@ async def get_meeting_time(message: Message, _: MessageInput, dialog_manager: Di
 
     meeting.date = int(datetime_obj.timestamp())
     await meetings_repo.save(meeting)
+    if meeting.status > MeetingStatus.CREATED:
+        await update_meeting_schedule(meeting)
 
     await state.update_data({"meeting": meeting_to_dto(meeting)})
     await dialog_manager.switch_to(state=ChangeStates.init)
@@ -208,6 +211,8 @@ async def get_meeting_duration(message: Message, _: MessageInput, dialog_manager
 
     meeting.duration = selected_time.hour * 3600 + selected_time.minute * 60
     await meetings_repo.save(meeting)
+    if meeting.status > MeetingStatus.CREATED:
+        await update_meeting_schedule(meeting)
 
     await state.update_data({"meeting": meeting_to_dto(meeting)})
     await dialog_manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)

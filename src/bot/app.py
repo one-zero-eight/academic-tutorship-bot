@@ -10,16 +10,20 @@ from aiogram.types import ErrorEvent
 from aiogram_dialog import DialogManager, setup_dialogs
 from aiogram_dialog.api.exceptions import UnknownIntent, UnknownState
 
+from src.bot import bot_container
 from src.bot.dispatcher import CustomDispatcher
 from src.bot.logging_ import logger
 from src.bot.middlewares import AutoAuthMiddleware
 from src.bot.utils import check_commands_equality
 from src.config import settings
 from src.db.repositories import tutors_repo
+from src.scheduler import scheduler
 
 _time1 = perf_counter()
 
 bot = Bot(token=settings.bot_token.get_secret_value())
+bot_container.set_bot(bot)  # NOTE: needed to use bot in lower layers
+
 if settings.redis_url:
     storage = RedisStorage.from_url(
         settings.redis_url.get_secret_value(), key_builder=DefaultKeyBuilder(with_destiny=True)
@@ -98,12 +102,17 @@ async def on_startup():
         logger.info(f"Bot commands updated. Success: {_}.")
     logger.info(f"Bot started https://t.me/{existing_bot['username']} in {perf_counter() - _time1:.2f} sec.")
 
+    # Starting APScheduler
+    scheduler.start()
+
 
 @dp.shutdown()
 async def on_shutdown():
     logger.info("Bot shutting down...")
     logger.info("Disposing Tutors Repository...")
     await tutors_repo.dispose()
+    logger.info("Shutting Down Scheduler...")
+    scheduler.shutdown()
 
 
 async def main():

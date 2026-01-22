@@ -6,6 +6,7 @@ from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.kbd import Button
 
 from src.bot.dto import *
+from src.bot.scheduling import update_meeting_schedule, wipe_meeting_schedule
 from src.bot.utils import get_state
 from src.config import settings
 from src.db.repositories import meetings_repo
@@ -67,6 +68,8 @@ async def on_announce_confirmed(query: CallbackQuery, button: Button, dialog_man
 
     try:
         meeting.announce()
+        await update_meeting_schedule(meeting)
+
     except Exception as e:
         return await query.answer(f"{e}", show_alert=True)
 
@@ -118,6 +121,7 @@ async def on_delete_confirmed(query: CallbackQuery, button: Button, dialog_manag
 
     try:
         await meetings_repo.remove(meeting=meeting)
+        await wipe_meeting_schedule(meeting)
     except Exception as e:
         return await query.answer(f"{e}", show_alert=True)
 

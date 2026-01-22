@@ -8,6 +8,8 @@ from aiogram.types import (
     BotCommand,
     CallbackQuery,
     Chat,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
     KeyboardButton,
     KeyboardButtonRequestUsers,
     Message,
@@ -17,7 +19,9 @@ from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button
 from pydantic import TypeAdapter
 
-from src.domain.models import UserStatus
+from src.bot import bot_container
+from src.config import settings
+from src.domain.models import Meeting, UserStatus
 
 commands_type_adapter = TypeAdapter(list[BotCommand])
 
@@ -111,3 +115,48 @@ def parse_time(text: str) -> time:
     if not (0 <= minute <= 59):
         raise ValueError("Minutes not in range [0, 59]")
     return time(hour, minute)
+
+
+async def send_to_admins(meeting: Meeting, text: str, **kwargs):
+    bot = bot_container.get_bot()
+    whom_to_send = settings.admins
+    whom_to_send = list(set(whom_to_send))  # remove duplicates
+
+    for tg_id in whom_to_send:
+        try:
+            await bot.send_message(chat_id=tg_id, text=text, **kwargs)
+        except Exception as e:
+            print(f"Could not send message to [{tg_id}], {e}")
+
+
+async def send_to_tutor(meeting: Meeting, text: str, **kwargs):
+    bot = bot_container.get_bot()
+    if not meeting.tutor:
+        raise ValueError("No meeting.tutor")
+    tg_id = meeting.tutor.tg_id
+    try:
+        await bot.send_message(chat_id=tg_id, text=text, **kwargs)
+    except Exception as e:
+        print(f"Could not send message to [{tg_id}], {e}")
+
+
+async def send_to_admins_and_tutor(meeting: Meeting, text: str, **kwargs):
+    bot = bot_container.get_bot()
+    whom_to_send = settings.admins
+    if meeting.tutor:
+        whom_to_send.append(meeting.tutor.tg_id)
+    whom_to_send = list(set(whom_to_send))  # remove duplicates
+
+    for tg_id in whom_to_send:
+        try:
+            await bot.send_message(chat_id=tg_id, text=text, **kwargs)
+        except Exception as e:
+            print(f"Could not send message to [{tg_id}], {e}")
+
+
+def create_attendance_sending_kb(meeting: Meeting) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Send Attendance File", callback_data=f"open-send-attendance_{meeting.id}")]
+        ]
+    )

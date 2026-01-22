@@ -67,17 +67,17 @@ class Meeting:
         self._status = MeetingStatus.ANNOUNCED
 
     def conduct(self):
-        if self.status is not MeetingStatus.ANNOUNCED:
+        if self.status != MeetingStatus.ANNOUNCED:
             raise ValueError("Cannot Conduct Meeting: it is not in ANNOUNCED status")
         self._status = MeetingStatus.CONDUCTING
 
     def finish(self):
-        if self.status is not MeetingStatus.CONDUCTING:
+        if self.status != MeetingStatus.CONDUCTING:
             raise ValueError("Cannot Finish Meeting: it is not in CONDUCTING status")
         self._status = MeetingStatus.FINISHED
 
     def close(self, attendance: list[InnoEmail]):
-        if self.status is not MeetingStatus.FINISHED:
+        if self.status != MeetingStatus.FINISHED:
             raise ValueError("Cannot Close Meeting: it is not in FINISHED status")
         self._attendance = attendance
         self._status = MeetingStatus.CLOSED
@@ -108,10 +108,18 @@ class Meeting:
         if self.date:
             return datetime.fromtimestamp(self.date).strftime("%d.%m.%y %H:%M")
         else:
-            return "-.-.- -:-"
+            return "--.--.---- --:--"
+
+    @property
+    def duration_human(self) -> str:
+        if self.duration:
+            d = self.duration
+            return f"{d // 3600:02d}:{(d % 3600) // 60:02d}"
+        else:
+            return "--:--"
 
     def _check_for_announce(self):
-        if self.status is not MeetingStatus.CREATED:
+        if self.status != MeetingStatus.CREATED:
             raise ValueError("Cannot Announce Meeting: it is not in CREATED status")
         if self.date is None:
             raise ValueError("Cannot Announce Meeting: date is not set")
