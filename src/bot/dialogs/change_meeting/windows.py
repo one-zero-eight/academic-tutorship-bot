@@ -18,10 +18,12 @@ info_change_ww = Window(
     Format("Date: {date}"),
     Format("Duration: {duration}"),
     Format("Tutor: @{tutor_username}"),
+    Format("Room: {room}"),
     Format("Description: {description}", when="description"),
     Column(
         SwitchTo(Const("Set Title"), id="change_title", state=ChangeStates.title),
         SwitchTo(Const("Set Description"), id="set_description", state=ChangeStates.description),
+        SwitchTo(Const("Set Room"), id="set_room", state=ChangeStates.room),
         SwitchTo(Const("Set Date"), id="choose_date", state=ChangeStates.date),
         SwitchTo(Const("Set Duration"), id="choose_duration", state=ChangeStates.duration),
         SwitchTo(
@@ -52,6 +54,15 @@ set_description_ww = Window(
     Row(BTN_INIT, BTN_BLANK),
     MessageInput(get_meeting_description),
     state=ChangeStates.description,
+    getter=meeting_info_getter,
+)
+
+
+set_room_ww = Window(
+    Format('Enter new Room for "{title}"'),
+    Row(BTN_INIT, BTN_BLANK),
+    MessageInput(get_meeting_room),
+    state=ChangeStates.room,
     getter=meeting_info_getter,
 )
 

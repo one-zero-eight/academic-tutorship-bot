@@ -69,6 +69,7 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
             "status": meeting.status,
             "date": meeting.date_human,
             "duration": meeting.duration_human,
+            "room": meeting.room if meeting.room else "---",
             "attendance_count": len(meeting.attendance) if meeting.attendance else None,
             "tutor_username": meeting.tutor.username if meeting.tutor else None,
             "can_be_changed": is_authorized and meeting.status < MeetingStatus.CLOSED,

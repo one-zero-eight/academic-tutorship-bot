@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Any
 
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message
@@ -6,9 +7,10 @@ from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 
+from src.bot.dto import *
 from src.bot.scheduling import update_meeting_schedule
 from src.bot.utils import *
-from src.db.repositories import meetings_repo
+from src.db.repositories import meetings_repo, tutors_repo
 
 from .getters import *
 from .keyboards import *
@@ -108,9 +110,14 @@ async def get_assigned_tutor(message: Message, _: MessageInput, dialog_manager: 
 
 
 async def get_meeting_title(message: Message, _: MessageInput, dialog_manager: DialogManager):
+    await clear_messages(dialog_manager)
+    await message.delete()
     state = get_state(dialog_manager)
+
     if not message.text:
-        raise ValueError("No message.text")
+        to_delete = await message.answer("There is no text in your message")
+        await track_message(to_delete, dialog_manager)
+        return await dialog_manager.switch_to(ChangeStates.title, show_mode=ShowMode.DELETE_AND_SEND)
 
     meeting = dto_to_meeting(await state.get_value("meeting"))
     if not meeting:
@@ -120,15 +127,19 @@ async def get_meeting_title(message: Message, _: MessageInput, dialog_manager: D
     await meetings_repo.save(meeting)
 
     await state.update_data({"meeting": meeting_to_dto(meeting)})
-    await message.delete()
     await dialog_manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def get_meeting_description(message: Message, _: MessageInput, dialog_manager: DialogManager):
+    await clear_messages(dialog_manager)
+    await message.delete()
+
     state = get_state(dialog_manager)
 
     if not message.text:
-        raise ValueError("message.text is None")
+        to_delete = await message.answer("There is no text in your message")
+        await track_message(to_delete, dialog_manager)
+        return await dialog_manager.switch_to(ChangeStates.description, show_mode=ShowMode.DELETE_AND_SEND)
 
     meeting = dto_to_meeting(await state.get_value("meeting"))
     if not meeting:
@@ -138,7 +149,6 @@ async def get_meeting_description(message: Message, _: MessageInput, dialog_mana
     await meetings_repo.save(meeting)
 
     await state.update_data({"meeting": meeting_to_dto(meeting)})
-    await message.delete()
     await dialog_manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
 
 
@@ -158,7 +168,9 @@ async def get_meeting_time(message: Message, _: MessageInput, dialog_manager: Di
     await message.delete()
 
     if not message.text:
-        raise ValueError("No message.text")
+        to_delete = await message.answer("There is no text in your message")
+        await track_message(to_delete, dialog_manager)
+        return await dialog_manager.switch_to(ChangeStates.time, show_mode=ShowMode.DELETE_AND_SEND)
 
     try:
         selected_time = parse_time(message.text)
@@ -190,7 +202,7 @@ async def get_meeting_time(message: Message, _: MessageInput, dialog_manager: Di
 
     if (datetime_obj - datetime.now()).days < 1:
         await message.answer(
-            text=("Warning ⚠️\n" "The meeting would be conducted in less than 24H\n"), reply_markup=DELETE_WARNING_KB
+            text=("Warning ⚠️\nThe meeting would be conducted in less than 24H\n"), reply_markup=DELETE_WARNING_KB
         )
 
     await dialog_manager.switch_to(state=ChangeStates.init)
@@ -201,7 +213,9 @@ async def get_meeting_duration(message: Message, _: MessageInput, dialog_manager
     await message.delete()
 
     if not message.text:
-        raise ValueError("message.text is None")
+        to_delete = await message.answer("There is no text in your message")
+        await track_message(to_delete, dialog_manager)
+        return await dialog_manager.switch_to(ChangeStates.duration, show_mode=ShowMode.DELETE_AND_SEND)
 
     try:
         selected_time = parse_time(message.text)
@@ -292,3 +306,29 @@ async def on_tutor_assign(query: CallbackQuery, widget: Any, dialog_manager: Dia
 
     except Exception as e:
         return await query.answer(f"Unknown Error: {e}", show_alert=True)
+
+
+async def get_meeting_room(message: Message, _: MessageInput, dialog_manager: DialogManager):
+    state = get_state(dialog_manager)
+    await clear_messages(dialog_manager)
+    await message.delete()
+
+    if not message.text:
+        to_delete = await message.answer("There is no text in your message")
+        await track_message(to_delete, dialog_manager)
+        return await dialog_manager.switch_to(ChangeStates.room, show_mode=ShowMode.DELETE_AND_SEND)
+
+    if len(message.text) > 64:
+        to_delete = await message.answer("Length must not be more than 64 simbols")
+        await track_message(to_delete, dialog_manager)
+        return await dialog_manager.switch_to(ChangeStates.room, show_mode=ShowMode.DELETE_AND_SEND)
+
+    meeting = dto_to_meeting(await state.get_value("meeting"))
+    if not meeting:
+        raise ValueError("No meeting")
+
+    meeting.room = message.text
+    await meetings_repo.save(meeting)
+
+    await state.update_data({"meeting": meeting_to_dto(meeting)})
+    await dialog_manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)

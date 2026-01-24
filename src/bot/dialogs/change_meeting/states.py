@@ -5,6 +5,7 @@ class ChangeStates(StatesGroup):
     init = State()
     title = State()
     description = State()
+    room = State()
     date = State()
     time = State()
     duration = State()

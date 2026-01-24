@@ -1,5 +1,6 @@
 from aiogram_dialog import DialogManager
 
+from src.bot.dialogs.meetings.getters import meeting_info_getter
 from src.bot.dto import *
 from src.bot.filters import *
 from src.bot.utils import *
@@ -23,3 +24,6 @@ async def meeting_info_with_tutors_getter(dialog_manager: DialogManager, **kwarg
         "tutor_username": meeting.tutor.username if meeting.tutor else None,
         "tutors": list(enumerate(tutors)),
     }
+
+
+__all__ = ["meeting_info_getter", "meeting_info_with_tutors_getter"]
