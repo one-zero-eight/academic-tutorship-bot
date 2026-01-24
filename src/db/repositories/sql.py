@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from src.db.schema import meetings, tutors
-from src.domain.models import Meeting, MeetingStatus, Tutor
+from src.domain.models import Email, Meeting, MeetingStatus, Tutor
 from src.domain.repositories import MeetingsRepository, TutorsRepository
 
 
@@ -190,7 +190,11 @@ class SQLMeetingsRepository(MeetingsRepository):
         self._db = db
 
     async def create(self, *, title: str) -> Meeting:
-        stmt = insert(meetings).values(title=title, status=MeetingStatus.CREATED.value)
+        # NOTE: creating tmp_meeting here to ensure default values from model definition
+        tmp_meeting = Meeting(id=0, title=title)
+        stmt = insert(meetings).values(
+            title=tmp_meeting.title, duration=tmp_meeting.duration, status=tmp_meeting.status.value
+        )
 
         async with self._db.engine.begin() as conn:
             try:
@@ -303,5 +307,5 @@ class SQLMeetingsRepository(MeetingsRepository):
             )
             meeting.assign_tutor(tutor)
         if row.meetings_attendance:
-            meeting._attendance = row.meetings_attendance.split(";")
+            meeting._attendance = [Email(e) for e in row.meetings_attendance.split(";")]
         return meeting

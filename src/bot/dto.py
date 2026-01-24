@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from src.domain.models import InnoEmail, Meeting, MeetingStatus, Tutor
+from src.domain.models import Email, Meeting, MeetingStatus, Tutor
 
 
 class TutorDTO(TypedDict):
@@ -21,7 +21,7 @@ class MeetingDTO(TypedDict):
     description: str | None
     room: str | None
     date: int | None
-    duration: int | None
+    duration: int
     attendance: list[str] | None
 
 
@@ -71,7 +71,7 @@ def dto_to_meeting(dto: MeetingDTO | None) -> Meeting | None:
         )
         meeting._status = MeetingStatus(dto["status"])
         if dto["attendance"]:
-            meeting._attendance = [InnoEmail(e) for e in dto["attendance"]]
+            meeting._attendance = [Email(e) for e in dto["attendance"]]
         meeting.description = dto["description"]
         meeting.room = dto["room"]
         meeting.date = dto["date"]

@@ -52,16 +52,19 @@ async def on_unknown_state(event: ErrorEvent, state: FSMContext, dialog_manager:
     raise SkipHandler()
 
 
+from src.bot.dialogs.attendance import dialog as attendance_dialog  # noqa: E402
 from src.bot.dialogs.change_meeting import dialog as change_meeting_dialog  # noqa: E402
 from src.bot.dialogs.meetings import dialog as meetings_dialog  # noqa: E402
 from src.bot.dialogs.tutors import dialog as tutors_dialog  # noqa: E402
 from src.bot.routers.admin import router as admin_router  # noqa: E402
 from src.bot.routers.authentication import router as authentication_router  # noqa: E402
 from src.bot.routers.commands import router as commands_router  # noqa: E402
+from src.bot.routers.queries import router as queries_router  # noqa: E402
 from src.bot.routers.student import router as student_router  # noqa: E402
 from src.bot.routers.tutor import router as tutor_router  # noqa: E402
 
 dp.include_router(commands_router)  # start, help, menu commands
+dp.include_router(queries_router)  # callback handles for notification messages
 dp.include_router(authentication_router)
 dp.include_router(student_router)
 dp.include_router(tutor_router)
@@ -71,6 +74,7 @@ dp.include_router(admin_router)  # admin mode
 dp.include_router(meetings_dialog)
 dp.include_router(change_meeting_dialog)
 dp.include_router(tutors_dialog)
+dp.include_router(attendance_dialog)
 
 setup_dialogs(dp)
 

@@ -30,9 +30,9 @@ async def on_start(
     message: types.Message, state: FSMContext, dialog_manager: DialogManager, authenticated: bool, status: US
 ):
     if authenticated:
-        return await dialog_manager.start(MATCHING_START_STATE[status])
+        return await dialog_manager.start(MATCHING_START_STATE[status], mode=StartMode.RESET_STACK)
     else:
-        return await dialog_manager.start(AuthStates.bind_tg_inh)
+        return await dialog_manager.start(AuthStates.bind_tg_inh, mode=StartMode.RESET_STACK)
 
 
 @router.message(Command("admin"), StatusFilter(US.admin))

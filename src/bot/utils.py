@@ -1,6 +1,9 @@
+import csv
+import io
 import re
 from datetime import time
 from types import ModuleType
+from typing import Literal
 
 from aiogram import Bot
 from aiogram.fsm.context import FSMContext
@@ -17,11 +20,12 @@ from aiogram.types import (
 )
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button
+from email_validator import EmailNotValidError, validate_email
 from pydantic import TypeAdapter
 
 from src.bot import bot_container
 from src.config import settings
-from src.domain.models import Meeting, UserStatus
+from src.domain.models import Email, Meeting, UserStatus
 
 commands_type_adapter = TypeAdapter(list[BotCommand])
 
@@ -160,3 +164,58 @@ def create_attendance_sending_kb(meeting: Meeting) -> InlineKeyboardMarkup:
             [InlineKeyboardButton(text="Send Attendance File", callback_data=f"open-send-attendance_{meeting.id}")]
         ]
     )
+
+
+DELETE_WARNING_KB = InlineKeyboardMarkup(
+    inline_keyboard=[[InlineKeyboardButton(text="Delete Warning", callback_data="delete_warning")]]
+)
+
+
+def parse_attendance(content: str) -> list[Email]:
+    match _determine_attendance_type(content):
+        case "moodle":
+            return _parse_attendance_csv(content)
+        case "raw":
+            return _parse_attendance_csv(content)
+        case "txt":
+            return _parse_attendance_txt(content)
+        case _:
+            raise ValueError("Unknown attendance file type")
+
+
+def _determine_attendance_type(content: str) -> Literal["moodle", "raw", "txt"]:
+    lines = content.split("\n")
+    if lines[0] == "External user field,status":
+        return "moodle"
+    elif lines[0] == "email,stage,time,manual":
+        return "raw"
+    elif _is_email(lines[0]):
+        return "txt"
+    else:
+        raise ValueError("Unknown attendance file type")
+
+
+def _is_email(text: str) -> bool:
+    try:
+        validate_email(text)
+        return True
+    except EmailNotValidError:
+        return False
+
+
+def _parse_attendance_csv(content: str) -> list[Email]:
+    attendance = []
+    content_io = io.StringIO(content)
+    reader = csv.reader(content_io)
+    for row in reader:
+        if _is_email(row[0]):
+            attendance.append(Email(row[0]))
+    return attendance
+
+
+def _parse_attendance_txt(content: str) -> list[Email]:
+    attendance = []
+    for line in content.split("\n"):
+        if _is_email(line):
+            attendance.append(Email(line))
+    return attendance

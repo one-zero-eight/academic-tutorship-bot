@@ -12,13 +12,13 @@ BTN_ROW_BACK = Row(Back(), BTN_BLANK)
 BTN_INIT = SwitchTo(Const("Back"), id="to_init", state=ChangeStates.init)
 
 
-TUTORS_BLANK_SCROLLING_GROUP = ScrollingGroup(
+TUTORS_ASSIGN_SCROLLING_GROUP = ScrollingGroup(
     Select(
         Format("@{item[1].username} {item[1].full_name}"),
         id="select_tutors",
         item_id_getter=(lambda item: item[1].id),
         items="tutors",
-        on_click=on_tutor_blank,
+        on_click=on_tutor_assign,
     ),
     id="scroll_tutors",
     width=1,

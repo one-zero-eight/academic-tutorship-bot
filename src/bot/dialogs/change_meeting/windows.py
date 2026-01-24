@@ -91,7 +91,7 @@ set_duration_ww = Window(
 assign_tutor_ww = Window(
     Format('Assign Tutor to "{title}"\n'),
     Const("Here's the list of all tutors for reference"),
-    TUTORS_BLANK_SCROLLING_GROUP,
+    TUTORS_ASSIGN_SCROLLING_GROUP,
     Row(SwitchTo(Const("Back"), id="to_init", state=ChangeStates.init, on_click=on_cancel_assign_tutor), BTN_BLANK),
     MessageInput(get_assigned_tutor),
     state=ChangeStates.tutor,

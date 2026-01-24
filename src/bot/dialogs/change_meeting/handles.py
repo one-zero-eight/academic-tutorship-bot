@@ -33,7 +33,7 @@ async def open_assign_tutor(query: CallbackQuery, button: Button, dialog_manager
     if not query.message:
         raise ValueError("No query.message")
 
-    to_delete = await query.message.answer(text="Click the button to choose a User 👇", reply_markup=CHOOSE_USER_KB)
+    to_delete = await query.message.answer(text="Or click the button to choose a User 👇", reply_markup=CHOOSE_USER_KB)
     await track_message(to_delete, dialog_manager)
 
 
@@ -186,8 +186,13 @@ async def get_meeting_time(message: Message, _: MessageInput, dialog_manager: Di
     await meetings_repo.save(meeting)
     if meeting.status > MeetingStatus.CREATED:
         await update_meeting_schedule(meeting)
-
     await state.update_data({"meeting": meeting_to_dto(meeting)})
+
+    if (datetime_obj - datetime.now()).days < 1:
+        await message.answer(
+            text=("Warning ⚠️\n" "The meeting would be conducted in less than 24H\n"), reply_markup=DELETE_WARNING_KB
+        )
+
     await dialog_manager.switch_to(state=ChangeStates.init)
 
 
@@ -228,3 +233,62 @@ async def on_cancel_assign_tutor(query: CallbackQuery, button: Button, dialog_ma
     if not query.message:
         raise ValueError("No query.message")
     await clear_messages(dialog_manager)
+
+
+async def on_tutor_assign(query: CallbackQuery, widget: Any, dialog_manager: DialogManager, item_id: str):
+    state = get_state(dialog_manager)
+
+    if not query.message:
+        raise ValueError("No query.message.bot")
+    message = query.message
+
+    if not message.bot:
+        raise ValueError("No message.bot")
+    await clear_messages(dialog_manager)
+
+    meeting = dto_to_meeting(await state.get_value("meeting"))
+    if not meeting:
+        raise ValueError("No meeting")
+
+    tutor = meeting.tutor
+
+    if tutor:
+        try:
+            await message.bot.send_message(
+                text=(
+                    "You are not longer a tutor for Meeting 🕊️\n"
+                    f"Title: {meeting.title}\n"
+                    f"Date: {meeting.date_human}\n"
+                    "\n"
+                    "The meeting is no longer accessible from your meetings list"
+                ),
+                chat_id=tutor.tg_id,
+            )
+        except Exception as e:
+            print(f"Could not send notification to [{tutor.tg_id}] @{tutor.username}, {e}")
+
+    try:
+        tutor = await tutors_repo.get(id=int(item_id))
+        meeting.assign_tutor(tutor)
+        await message.bot.send_message(
+            text=(
+                "You are assigned to a Meeting 👨‍🏫\n"
+                f"Title: {meeting.title}\n"
+                f"Date: {meeting.date_human}\n"
+                "\n"
+                "You can now see the Meeting in your meetings list"
+            ),
+            chat_id=tutor.tg_id,
+        )
+        await meetings_repo.save(meeting)
+        await state.update_data({"meeting": meeting_to_dto(meeting)})
+        await dialog_manager.switch_to(state=ChangeStates.init)
+
+    except LookupError:
+        return (await query.answer("The tutor is not found (somehow)", show_alert=True),)
+
+    except TelegramBadRequest:
+        return await query.answer("The tutor may have blocked the bot.", show_alert=True)
+
+    except Exception as e:
+        return await query.answer(f"Unknown Error: {e}", show_alert=True)

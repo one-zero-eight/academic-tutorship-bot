@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum
 
+from email_validator import validate_email
+
 
 class UserStatus(StrEnum):
     student = "student"
@@ -18,12 +20,18 @@ class MeetingStatus(IntEnum):
 
 
 @dataclass(frozen=True)
-class InnoEmail(str):
+class Email(str):
+    ALLOWED_DOMAINS = [
+        "innopolis.university",
+        "innopolis.ru",
+    ]
+
     value: str
 
     def __post_init__(self):
-        if not self.value.endswith("@innopolis.university"):
-            raise ValueError(f"Invalid email: {self.value}")
+        email_info = validate_email(self.value)
+        if email_info.domain not in self.ALLOWED_DOMAINS:
+            raise ValueError(f'"{self.value}" is not in innopolis domain')
 
 
 class Meeting:
@@ -45,13 +53,13 @@ class Meeting:
     # Optional for announcement
     description: str | None = None
     "Description of the Meeting"
-    _duration: int | None = None
+    _duration: int = 5400  # 01:30
     "Duration of the Meeting (seconds)"
     room: str | None = None
     "Room for the Meeting (any string)"
 
     # Essential for closing
-    _attendance: list[InnoEmail] | None = None
+    _attendance: list[Email] | None = None
     "List of emails of attendees"
 
     def __init__(self, id: int, title: str):
@@ -76,7 +84,7 @@ class Meeting:
             raise ValueError("Cannot Finish Meeting: it is not in CONDUCTING status")
         self._status = MeetingStatus.FINISHED
 
-    def close(self, attendance: list[InnoEmail]):
+    def close(self, attendance: list[Email]):
         if self.status != MeetingStatus.FINISHED:
             raise ValueError("Cannot Close Meeting: it is not in FINISHED status")
         self._attendance = attendance
@@ -88,18 +96,18 @@ class Meeting:
         return self._status
 
     @property
-    def duration(self) -> int | None:
+    def duration(self) -> int:
         "Duration of the Meeting (seconds)"
         return self._duration
 
     @duration.setter
-    def duration(self, value: int | None):
+    def duration(self, value: int):
         if value is not None and value <= 0:
             raise ValueError("Duration must be positive")
         self._duration = value
 
     @property
-    def attendance(self) -> list[InnoEmail] | None:
+    def attendance(self) -> list[Email] | None:
         "List of emails of attendees"
         return self._attendance
 

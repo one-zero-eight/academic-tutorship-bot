@@ -67,7 +67,7 @@ async def _job_meeting_finish(meeting_id: int):
 
 
 async def update_meeting_schedule(meeting: Meeting):
-    if meeting.date:
+    if meeting.date and meeting.status < MeetingStatus.CONDUCTING:
         conduct_date = datetime.fromtimestamp(meeting.date)
         scheduler.add_job(
             trigger=DateTrigger(conduct_date),
@@ -79,7 +79,7 @@ async def update_meeting_schedule(meeting: Meeting):
         )
         print(f"Scheduled Conducting of Meeting [{meeting.id}] at {conduct_date}")
 
-    if meeting.date and meeting.duration:
+    if meeting.date and meeting.duration and meeting.status < MeetingStatus.FINISHED:
         conduct_date = datetime.fromtimestamp(meeting.date)
         finish_date = conduct_date + timedelta(seconds=meeting.duration)
         scheduler.add_job(
