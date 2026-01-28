@@ -1,5 +1,6 @@
 from aiogram_dialog import DialogManager
 
+from src.bot.dialog_extension import extend_dialog
 from src.bot.dto import *
 from src.bot.filters import *
 from src.bot.utils import *
@@ -14,10 +15,8 @@ async def tutors_list_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def tutor_info_getter(dialog_manager: DialogManager, **kwargs):
-    state = get_state(dialog_manager)
-    tutor = dto_to_tutor(await state.get_value("tutor"))
-    if not tutor:
-        raise ValueError("No Tutor in tutor_info_getter")
+    manager = extend_dialog(dialog_manager)
+    tutor = await manager.state.get_tutor()
     return {
         "id": tutor.id,
         "tg_id": tutor.tg_id,

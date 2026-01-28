@@ -4,8 +4,8 @@ from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.kbd import Button
 
+from src.bot.dialog_extension import extend_dialog
 from src.bot.dto import *
-from src.bot.extended_dialog_manager import extend
 from src.bot.user_errors import *
 from src.bot.utils import *
 from src.db.repositories import meetings_repo
@@ -15,7 +15,7 @@ from .states import *
 
 
 async def on_meeting_selected(query: CallbackQuery, meeting, manager: DialogManager, item_id: str):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     meeting = await meetings_repo.get(id=int(item_id))
     await manager.state.set_meeting(meeting)
     await manager.switch_to(MeetingStates.info)
@@ -25,7 +25,7 @@ def open_meetings_list_of_type(type: Literal["created", "announced", "closed"]):
     """Higher order function, returns Awaitable that opens specified meetings list"""
 
     async def open_meetings_list(query: CallbackQuery, button: Button, manager: DialogManager):
-        manager = extend(manager)
+        manager = extend_dialog(manager)
         await manager.state.update_data({"meetings_type": type})
         await manager.switch_to(MeetingStates.list)
 
@@ -33,7 +33,7 @@ def open_meetings_list_of_type(type: Literal["created", "announced", "closed"]):
 
 
 async def get_new_title(message: Message, _, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     await manager.clear_messages()
     await message.delete()
     try:
@@ -44,7 +44,7 @@ async def get_new_title(message: Message, _, manager: DialogManager):
 
 
 async def open_announce_confirm(query: CallbackQuery, button: Button, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     meeting = await manager.state.get_meeting()
     try:
         meeting._check_for_announce()
@@ -72,7 +72,7 @@ async def on_delete_confirmed(query: CallbackQuery, button: Button, manager: Dia
 
 
 async def open_finish_confirm(query: CallbackQuery, button: Button, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     meeting = await manager.state.get_meeting()
     if meeting.status != MeetingStatus.CONDUCTING:
         return await query.answer("Meeting must be CONDUCTING to become FINISHED", show_alert=True)

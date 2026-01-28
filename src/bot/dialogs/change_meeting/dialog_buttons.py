@@ -9,7 +9,7 @@ from .handles import *
 BTN_BLANK = Button(Const(" "), id="blank")
 BTN_ROW_BACK = Row(Back(), BTN_BLANK)
 
-BTN_INIT = SwitchTo(Const("Back"), id="to_init", state=ChangeStates.init)
+BTN_INIT = SwitchTo(Const("Back"), id="to_init", state=ChangeStates.init, on_click=handle_clear)
 
 
 TUTORS_ASSIGN_SCROLLING_GROUP = ScrollingGroup(

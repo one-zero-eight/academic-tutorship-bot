@@ -1,7 +1,7 @@
-from aiogram.types import BufferedInputFile, InputFile
+from aiogram.types import BufferedInputFile, InputFile, Message
 from aiogram_dialog import DialogManager
 
-from src.bot.extended_dialog_manager import extend
+from src.bot.dialog_extension import extend_dialog
 from src.bot.scheduling import *
 from src.bot.user_errors import *
 from src.bot.utils import *
@@ -11,7 +11,7 @@ MAX_ATTENDANCE_FILE_SIZE = 5_242_880  # 5 MiB
 
 
 async def get_document_contents(message: Message, manager: DialogManager) -> str:
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     if not message.document:
         raise NoDocumentError()
     file = await manager.bot.get_file(message.document.file_id)
@@ -28,7 +28,7 @@ async def get_document_contents(message: Message, manager: DialogManager) -> str
 
 
 async def get_attendance_file_to_download(manager: DialogManager) -> InputFile:
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     meeting = await manager.state.get_meeting()
     if not meeting.attendance:
         raise NoMeetingAttendance()
@@ -47,7 +47,7 @@ async def extract_email(message: Message) -> Email:
 
 
 async def add_email_to_attendance(email: Email, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     async with manager.state.sync_meeting() as meeting:
         if not meeting.attendance:
             raise NoMeetingAttendance()

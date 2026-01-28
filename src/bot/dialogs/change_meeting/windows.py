@@ -81,7 +81,7 @@ set_time_ww = Window(
     Const("Adhere to format 00:00, e.g. 20:32"),
     MessageInput(get_meeting_time),
     Row(
-        SwitchTo(text=Const("Back"), id="to_date", state=ChangeStates.date, on_click=on_switch_clear_messages),
+        SwitchTo(text=Const("Back"), id="to_date", state=ChangeStates.date, on_click=handle_clear),
         BTN_BLANK,
     ),
     state=ChangeStates.time,
@@ -103,7 +103,7 @@ assign_tutor_ww = Window(
     Format('Assign Tutor to "{title}"\n'),
     Const("Here's the list of all tutors for reference"),
     TUTORS_ASSIGN_SCROLLING_GROUP,
-    Row(SwitchTo(Const("Back"), id="to_init", state=ChangeStates.init, on_click=on_switch_clear_messages), BTN_BLANK),
+    Row(BTN_INIT, BTN_BLANK),
     MessageInput(get_assigned_tutor),
     state=ChangeStates.tutor,
     getter=meeting_info_with_tutors_getter,

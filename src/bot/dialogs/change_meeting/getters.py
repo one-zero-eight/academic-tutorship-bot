@@ -1,5 +1,6 @@
 from aiogram_dialog import DialogManager
 
+from src.bot.dialog_extension import extend_dialog
 from src.bot.dialogs.meetings.getters import meeting_info_getter
 from src.bot.dto import *
 from src.bot.filters import *
@@ -8,14 +9,9 @@ from src.db.repositories import tutors_repo
 
 
 async def meeting_info_with_tutors_getter(dialog_manager: DialogManager, **kwargs):
-    state = get_state(dialog_manager)
-    meeting = dto_to_meeting(await state.get_value("meeting"))
-
-    if not meeting:
-        raise ValueError("No Meeting in meeting_info_getter")
-
+    manager = extend_dialog(dialog_manager)
+    meeting = await manager.state.get_meeting()
     tutors = await tutors_repo.list()
-
     return {
         "title": meeting.title,
         "description": meeting.description,

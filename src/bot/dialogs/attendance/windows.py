@@ -32,7 +32,7 @@ init_ww = Window(
 resend_ww = Window(
     Format('Resend attendance file for "{title}"'),
     Row(
-        SwitchTo(Const("Back"), state=AttendanceStates.init, id="to_attendance_init"),
+        SwitchTo(Const("Back"), state=AttendanceStates.init, id="to_attendance_init", on_click=handle_clear),
         Button(Const(" "), id="blank", on_click=None),
     ),
     MessageInput(get_attendance_file_resend),
@@ -42,7 +42,7 @@ resend_ww = Window(
 
 close_ww = Window(
     Format('Send attendance file to close "{title}"'),
-    Row(Cancel(Const("Back")), Button(Const(" "), id="blank", on_click=None)),
+    Row(Cancel(Const("Back"), on_click=handle_clear), Button(Const(" "), id="blank", on_click=None)),
     MessageInput(get_attendance_file_close),
     getter=meeting_info_getter,
     state=AttendanceStates.close,
@@ -51,7 +51,7 @@ close_ww = Window(
 add_email_ww = Window(
     Format("Enter email of a person to add 👤"),
     Row(
-        SwitchTo(Const("Back"), state=AttendanceStates.init, id="to_attendance_init"),
+        SwitchTo(Const("Back"), state=AttendanceStates.init, id="to_attendance_init", on_click=handle_clear),
         Button(Const(" "), id="blank", on_click=None),
     ),
     MessageInput(get_email_to_add),

@@ -6,8 +6,8 @@ from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 
+from src.bot.dialog_extension import extend_dialog
 from src.bot.dto import *
-from src.bot.extended_dialog_manager import extend
 from src.bot.user_errors import *
 from src.bot.utils import *
 
@@ -17,12 +17,8 @@ from .logic import *
 from .states import *
 
 
-async def on_switch_clear_messages(query: CallbackQuery, button: Button, manager: DialogManager):
-    await clear_messages(manager)
-
-
 async def open_assign_tutor(query: CallbackQuery, button: Button, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     await manager.clear_messages()
     if not query.message:
         raise ValueError("No query.message")
@@ -30,7 +26,7 @@ async def open_assign_tutor(query: CallbackQuery, button: Button, manager: Dialo
 
 
 async def get_assigned_tutor(message: Message, _: MessageInput, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     await manager.clear_messages()
     await message.delete()
     try:
@@ -48,8 +44,8 @@ async def get_assigned_tutor(message: Message, _: MessageInput, manager: DialogM
 
 
 async def get_meeting_title(message: Message, _: MessageInput, manager: DialogManager):
-    manager = extend(manager)
-    await clear_messages(manager)
+    manager = extend_dialog(manager)
+    await manager.clear_messages()
     await message.delete()
     try:
         await update_meeting_title(message, manager)
@@ -59,8 +55,8 @@ async def get_meeting_title(message: Message, _: MessageInput, manager: DialogMa
 
 
 async def get_meeting_description(message: Message, _: MessageInput, manager: DialogManager):
-    manager = extend(manager)
-    await clear_messages(manager)
+    manager = extend_dialog(manager)
+    await manager.clear_messages()
     await message.delete()
     try:
         await update_meeting_description(message, manager)
@@ -70,7 +66,7 @@ async def get_meeting_description(message: Message, _: MessageInput, manager: Di
 
 
 async def on_date_selected(query: CallbackQuery, widget, manager: DialogManager, selected_date: date):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     if selected_date < datetime.now().date():
         return await query.answer("Date cannot be in the past!", show_alert=True)
     await manager.state.update_data({"selected_date": selected_date.isoformat()})
@@ -78,7 +74,7 @@ async def on_date_selected(query: CallbackQuery, widget, manager: DialogManager,
 
 
 async def get_meeting_time(message: Message, _: MessageInput, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     await manager.clear_messages()
     await message.delete()
     try:
@@ -96,7 +92,7 @@ async def get_meeting_time(message: Message, _: MessageInput, manager: DialogMan
 
 
 async def get_meeting_duration(message: Message, _: MessageInput, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     await manager.clear_messages()
     await message.delete()
     try:
@@ -110,20 +106,20 @@ async def get_meeting_duration(message: Message, _: MessageInput, manager: Dialo
 
 
 async def on_tutor_assign(query: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
-    manager = extend(manager)
-    await clear_messages(manager)
+    manager = extend_dialog(manager)
+    await manager.clear_messages()
     try:
         await update_meeting_tutor_item_id(item_id, manager)
     except LookupError:
         return await query.answer("The tutor is not found (somehow)", show_alert=True)
     except Exception as e:
         return await query.answer(f"Unknown Error: {e}", show_alert=True)
-    await manager.switch_to(state=ChangeStates.init)
+    await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def get_meeting_room(message: Message, _: MessageInput, manager: DialogManager):
-    manager = extend(manager)
-    await clear_messages(manager)
+    manager = extend_dialog(manager)
+    await manager.clear_messages()
     await message.delete()
     try:
         await update_meeting_room(message, manager)

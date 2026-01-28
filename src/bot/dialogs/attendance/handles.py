@@ -2,8 +2,8 @@ from aiogram.types import Message
 from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
 
+from src.bot.dialog_extension import extend_dialog
 from src.bot.dto import *
-from src.bot.extended_dialog_manager import extend
 from src.bot.user_errors import *
 from src.bot.utils import *
 from src.db.repositories import meetings_repo
@@ -14,8 +14,8 @@ from .states import *
 
 
 async def get_attendance_file_close(message: Message, _: MessageInput, manager: DialogManager):
-    manager = extend(manager)
-    await clear_messages(manager)
+    manager = extend_dialog(manager)
+    await manager.clear_messages()
     await message.delete()
     try:
         contents = await get_document_contents(message, manager)
@@ -33,8 +33,8 @@ async def get_attendance_file_close(message: Message, _: MessageInput, manager: 
 
 
 async def get_attendance_file_resend(message: Message, _: MessageInput, manager: DialogManager):
-    manager = extend(manager)
-    await clear_messages(manager)
+    manager = extend_dialog(manager)
+    await manager.clear_messages()
     await message.delete()
     try:
         contents = await get_document_contents(message, manager)
@@ -52,7 +52,7 @@ async def get_attendance_file_resend(message: Message, _: MessageInput, manager:
 
 
 async def on_download_attendance(query: CallbackQuery, button: Button, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     try:
         input_file = await get_attendance_file_to_download(manager)
         await query.answer("Sending attendance file...")
@@ -65,15 +65,14 @@ async def on_download_attendance(query: CallbackQuery, button: Button, manager: 
 
 
 async def get_email_to_add(message: Message, _: MessageInput, manager: DialogManager):
-    manager = extend(manager)
-    await clear_messages(manager)
+    manager = extend_dialog(manager)
+    await manager.clear_messages()
     await message.delete()
     try:
         email = await extract_email(message)
+        await add_email_to_attendance(email, manager)
     except NoMessageText:
         return await manager.answer_and_retry("There's no text in your message, enter email of a person to add")
-    try:
-        await add_email_to_attendance(email, manager)
     except NoMeetingAttendance:
         return await manager.answer_and_retry("Somehow there is no attendance for this meeting, resend the file maybe")
     except EmailAlreadyPresent:

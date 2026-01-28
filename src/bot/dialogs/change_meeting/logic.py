@@ -1,9 +1,9 @@
 from datetime import date, datetime, time
 
-from aiogram.types import InaccessibleMessage, SharedUser
+from aiogram.types import InaccessibleMessage, Message, SharedUser
 from aiogram_dialog import DialogManager
 
-from src.bot.extended_dialog_manager import extend
+from src.bot.dialog_extension import extend_dialog
 from src.bot.scheduling import *
 from src.bot.user_errors import *
 from src.bot.utils import *
@@ -24,7 +24,7 @@ def extract_shared_user(message: Message | InaccessibleMessage | None) -> Shared
 
 
 async def notify_tutor_assigned(tutor: Tutor, meeting: Meeting, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     try:
         await manager.bot.send_message(
             text=(
@@ -41,7 +41,7 @@ async def notify_tutor_assigned(tutor: Tutor, meeting: Meeting, manager: DialogM
 
 
 async def notify_tutor_unassigned(tutor: Tutor, meeting: Meeting, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     try:
         await manager.bot.send_message(
             text=(
@@ -58,7 +58,7 @@ async def notify_tutor_unassigned(tutor: Tutor, meeting: Meeting, manager: Dialo
 
 
 async def update_meeting_title(message: Message, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     if not message.text:
         raise NoMessageText()
     async with manager.state.sync_meeting() as meeting:
@@ -67,7 +67,7 @@ async def update_meeting_title(message: Message, manager: DialogManager):
 
 
 async def update_meeting_description(message: Message, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     if not message.text:
         raise NoMessageText()
     async with manager.state.sync_meeting() as meeting:
@@ -76,7 +76,7 @@ async def update_meeting_description(message: Message, manager: DialogManager):
 
 
 async def update_meeting_tutor_shared_user(shared_user: SharedUser, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     async with manager.state.sync_meeting() as meeting:
         if old_tutor := meeting.tutor:
             await notify_tutor_unassigned(old_tutor, meeting, manager)
@@ -87,7 +87,7 @@ async def update_meeting_tutor_shared_user(shared_user: SharedUser, manager: Dia
 
 
 async def update_meeting_tutor_item_id(item_id: str, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     async with manager.state.sync_meeting() as meeting:
         if old_tutor := meeting.tutor:
             await notify_tutor_unassigned(old_tutor, meeting, manager)
@@ -104,7 +104,7 @@ def extract_time(message: Message) -> time:
 
 
 async def combine_meeting_date_time(selected_time: time, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     selected_date_str = await manager.state.get_value("selected_date")
     if not selected_date_str:
         raise ValueError("No date")
@@ -116,7 +116,7 @@ async def combine_meeting_date_time(selected_time: time, manager: DialogManager)
 
 
 async def update_meeting_date(meeting_date: datetime, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     async with manager.state.sync_meeting() as meeting:
         meeting.date = int(meeting_date.timestamp())
     await meetings_repo.save(meeting)
@@ -132,7 +132,7 @@ async def warn_if_date_is_too_soon(meeting_date: datetime, message: Message):
 
 
 async def update_meeting_duration(selected_time: time, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     async with manager.state.sync_meeting() as meeting:
         meeting.duration = selected_time.hour * 3600 + selected_time.minute * 60
     await meetings_repo.save(meeting)
@@ -141,7 +141,7 @@ async def update_meeting_duration(selected_time: time, manager: DialogManager):
 
 
 async def update_meeting_room(message: Message, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     if not message.text:
         raise NoMessageText()
     if len(message.text) > MAX_ROOM_LEN:

@@ -3,7 +3,7 @@ from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 
-from src.bot.extended_dialog_manager import extend
+from src.bot.dialog_extension import extend_dialog
 from src.bot.user_errors import *
 from src.bot.utils import *
 from src.db.repositories import tutors_repo
@@ -14,14 +14,14 @@ from .states import *
 
 
 async def on_tutor_selected(query: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     tutor = await tutors_repo.get(id=int(item_id))
     await manager.state.set_tutor(tutor)
     await manager.switch_to(TutorsStates.info)
 
 
 async def on_remove_tutor(query: CallbackQuery, button: Button, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     try:
         tutor = await manager.state.get_tutor()
         await remove_tutor(tutor, manager)
@@ -40,12 +40,12 @@ async def on_remove_tutor(query: CallbackQuery, button: Button, manager: DialogM
 
 
 async def open_add_tutor(query: CallbackQuery, button: Button, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     await manager.answer_and_track(text="Click the button to choose a user 👇", reply_markup=CHOOSE_USER_KB)
 
 
 async def get_added_tutor(message: Message, _: MessageInput, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     await manager.clear_messages()
     try:
         await add_tutor_from_shared_user(message, manager)

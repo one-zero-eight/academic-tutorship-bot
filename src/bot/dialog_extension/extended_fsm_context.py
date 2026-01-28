@@ -56,7 +56,7 @@ class ExtendedFSMContext(FSMContext):
         await self.set_to_delete_list(to_delete_list)
 
 
-def extend(fsm_context: FSMContext) -> ExtendedFSMContext:
+def extend_fsm_context(fsm_context: FSMContext) -> ExtendedFSMContext:
     if not isinstance(fsm_context, ExtendedFSMContext):
         fsm_context = ExtendedFSMContext.wrap(fsm_context)
     return fsm_context

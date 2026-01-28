@@ -1,8 +1,9 @@
 from datetime import datetime
 
+from aiogram.types import Message
 from aiogram_dialog import DialogManager
 
-from src.bot.extended_dialog_manager import extend
+from src.bot.dialog_extension import extend_dialog
 from src.bot.scheduling import *
 from src.bot.user_errors import *
 from src.bot.utils import *
@@ -11,7 +12,7 @@ from src.domain.models import Meeting
 
 
 async def announce_meeting(query: CallbackQuery, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     async with manager.state.sync_meeting() as meeting:
         tutor = meeting.tutor
         if not tutor:
@@ -28,7 +29,7 @@ async def announce_meeting(query: CallbackQuery, manager: DialogManager):
 
 
 async def create_meeting_with_title(message: Message, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     if not message.text:
         raise NoMessageText()
     new_meeting = await meetings_repo.create(title=message.text)
@@ -36,7 +37,7 @@ async def create_meeting_with_title(message: Message, manager: DialogManager):
 
 
 async def delete_meeting(query: CallbackQuery, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     meeting = await manager.state.get_meeting()
     await meetings_repo.remove(meeting=meeting)
     await wipe_meeting_schedule(meeting)
@@ -47,7 +48,7 @@ async def delete_meeting(query: CallbackQuery, manager: DialogManager):
 
 
 async def finish_meeting(manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     async with manager.state.sync_meeting() as meeting:
         meeting.finish()
         _adjust_duration(meeting)

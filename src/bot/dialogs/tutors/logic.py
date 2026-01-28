@@ -1,6 +1,7 @@
+from aiogram.types import Message
 from aiogram_dialog import DialogManager
 
-from src.bot.extended_dialog_manager import extend
+from src.bot.dialog_extension import extend_dialog
 from src.bot.user_errors import *
 from src.bot.utils import *
 from src.db.repositories import meetings_repo, tutors_repo
@@ -8,7 +9,7 @@ from src.domain.models import MeetingStatus, Tutor
 
 
 async def remove_tutor(tutor: Tutor, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
 
     meetings = []
     meetings.extend(await meetings_repo.list(status=MeetingStatus.CREATED, tutor_id=tutor.id))
@@ -23,7 +24,7 @@ async def remove_tutor(tutor: Tutor, manager: DialogManager):
 
 
 async def add_tutor_from_shared_user(message: Message, manager: DialogManager):
-    manager = extend(manager)
+    manager = extend_dialog(manager)
     if not message.users_shared:
         raise NoMessageUsersShared()
     shared_user = message.users_shared.users[0]

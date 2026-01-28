@@ -1,5 +1,6 @@
 from aiogram_dialog import DialogManager
 
+from src.bot.dialog_extension import extend_dialog
 from src.bot.dto import *
 from src.bot.exceptions import AuthorityException
 from src.bot.filters import *
@@ -8,14 +9,14 @@ from src.db.repositories import meetings_repo, tutors_repo
 
 
 async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
-    state = get_state(dialog_manager)
-    meetings_type: str = await state.get_value("meetings_type", "")
+    manager = extend_dialog(dialog_manager)
+    meetings_type: str = await manager.state.get_value("meetings_type", "")
 
     # NOTE: the meetings list is dependent on user status
     #       as the meetings are used by admins and tutors
     #       tutors can only see and work on meetings that
     #       are assigned to them
-    user_status: UserStatus | None = await state.get_value("status")
+    user_status: UserStatus | None = await manager.state.get_value("status")
     if not user_status:
         raise ValueError("No status")
 
@@ -33,13 +34,10 @@ async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
         case UserStatus.admin:
             for status in meeting_statuses:
                 meetings.extend(await meetings_repo.list(status=status))
-
         case UserStatus.tutor:
-            chat: Chat = dialog_manager.middleware_data["event_chat"]
-            tutor = await tutors_repo.get(tg_id=chat.id)
+            tutor = await tutors_repo.get(tg_id=manager.chat.id)
             for status in meeting_statuses:
                 meetings.extend(await meetings_repo.list(status=status, tutor_id=tutor.id))
-
         case _:
             raise AuthorityException(f"Meetings list is inaccessible for {user_status}")
 
@@ -50,17 +48,12 @@ async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
-    state = get_state(dialog_manager)
-    meeting = dto_to_meeting(await state.get_value("meeting"))
+    manager = extend_dialog(dialog_manager)
+    meeting = await manager.state.get_meeting()
 
-    chat: Chat = dialog_manager.middleware_data["event_chat"]
-
-    if not meeting:
-        raise ValueError("No Meeting in meeting_info_getter")
-
-    data = await user_status_getter(dialog_manager, **kwargs)
+    data = await user_status_getter(manager, **kwargs)
     is_admin: bool = data["is_admin"]
-    is_assigned_tutor = bool(data["is_tutor"] and meeting.tutor and chat.id == meeting.tutor.tg_id)
+    is_assigned_tutor = bool(data["is_tutor"] and meeting.tutor and manager.chat.id == meeting.tutor.tg_id)
     is_authorized = is_admin or is_assigned_tutor
     data.update(
         {
