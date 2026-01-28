@@ -103,7 +103,7 @@ assign_tutor_ww = Window(
     Format('Assign Tutor to "{title}"\n'),
     Const("Here's the list of all tutors for reference"),
     TUTORS_ASSIGN_SCROLLING_GROUP,
-    Row(SwitchTo(Const("Back"), id="to_init", state=ChangeStates.init, on_click=on_cancel_assign_tutor), BTN_BLANK),
+    Row(SwitchTo(Const("Back"), id="to_init", state=ChangeStates.init, on_click=on_switch_clear_messages), BTN_BLANK),
     MessageInput(get_assigned_tutor),
     state=ChangeStates.tutor,
     getter=meeting_info_with_tutors_getter,

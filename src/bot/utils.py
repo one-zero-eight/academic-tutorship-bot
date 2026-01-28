@@ -18,7 +18,7 @@ from aiogram.types import (
     Message,
     ReplyKeyboardMarkup,
 )
-from aiogram_dialog import DialogManager
+from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.kbd import Button
 from email_validator import EmailNotValidError, validate_email
 from pydantic import TypeAdapter
@@ -121,41 +121,40 @@ def parse_time(text: str) -> time:
     return time(hour, minute)
 
 
-async def send_to_admins(meeting: Meeting, text: str, **kwargs):
+async def send_to(chat_id: int, text: str, **kwargs):
     bot = bot_container.get_bot()
+    try:
+        await bot.send_message(chat_id=chat_id, text=text, **kwargs)
+    except Exception as e:
+        print(f"Could not send message to [{chat_id}], {e}")
+
+
+async def send_to_admins(meeting: Meeting, text: str, *, skip_tutor: bool = False, **kwargs):
     whom_to_send = settings.admins
     whom_to_send = list(set(whom_to_send))  # remove duplicates
 
+    if skip_tutor and meeting.tutor:
+        whom_to_send.remove(meeting.tutor.tg_id)
+
     for tg_id in whom_to_send:
-        try:
-            await bot.send_message(chat_id=tg_id, text=text, **kwargs)
-        except Exception as e:
-            print(f"Could not send message to [{tg_id}], {e}")
+        await send_to(tg_id, text, **kwargs)
 
 
 async def send_to_tutor(meeting: Meeting, text: str, **kwargs):
-    bot = bot_container.get_bot()
     if not meeting.tutor:
         raise ValueError("No meeting.tutor")
     tg_id = meeting.tutor.tg_id
-    try:
-        await bot.send_message(chat_id=tg_id, text=text, **kwargs)
-    except Exception as e:
-        print(f"Could not send message to [{tg_id}], {e}")
+    await send_to(tg_id, text, **kwargs)
 
 
 async def send_to_admins_and_tutor(meeting: Meeting, text: str, **kwargs):
-    bot = bot_container.get_bot()
     whom_to_send = settings.admins
     if meeting.tutor:
         whom_to_send.append(meeting.tutor.tg_id)
     whom_to_send = list(set(whom_to_send))  # remove duplicates
 
     for tg_id in whom_to_send:
-        try:
-            await bot.send_message(chat_id=tg_id, text=text, **kwargs)
-        except Exception as e:
-            print(f"Could not send message to [{tg_id}], {e}")
+        await send_to(tg_id, text, **kwargs)
 
 
 def create_attendance_sending_kb(meeting: Meeting) -> InlineKeyboardMarkup:
@@ -219,3 +218,12 @@ def _parse_attendance_txt(content: str) -> list[Email]:
         if _is_email(line):
             attendance.append(Email(line))
     return attendance
+
+
+async def answer_and_retry(text: str, dialog_manager: DialogManager):
+    bot: Bot = dialog_manager.middleware_data["bot"]
+    chat: Chat = dialog_manager.middleware_data["event_chat"]
+    current_state = dialog_manager.current_context().state
+    to_delete = await bot.send_message(chat_id=chat.id, text=text)
+    await track_message(to_delete, dialog_manager)
+    return await dialog_manager.switch_to(current_state, show_mode=ShowMode.DELETE_AND_SEND)

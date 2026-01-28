@@ -5,7 +5,7 @@ from aiogram.dispatcher.event.bases import SkipHandler
 from aiogram.filters import ExceptionTypeFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
+from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage  # type: ignore
 from aiogram.types import ErrorEvent
 from aiogram_dialog import DialogManager, setup_dialogs
 from aiogram_dialog.api.exceptions import UnknownIntent, UnknownState

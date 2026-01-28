@@ -19,7 +19,7 @@ type_ww: Window = Window(
     Const("Meetings"),
     Row(
         Cancel(Const("Back")),
-        Button(Const("Create New"), id="create_meeting", on_click=open_meeting_create, when="is_admin"),
+        SwitchTo(Const("Create New"), id="create_meeting", state=MeetingStates.create, when="is_admin"),
         Button(Const(" "), id="blank", on_click=None, when="is_tutor"),
     ),
     Button(Const("See Created"), id="a_meetings_created", on_click=omlot("created")),
@@ -71,7 +71,7 @@ info_ww = Window(
     Button(Const("Finish"), id="finish_start", on_click=open_finish_confirm, when="can_be_finished"),
     Start(Const("Close"), id="start_close", state=AttendanceStates.close, when="can_be_closed"),
     Start(Const("Attendance"), id="start_attendance", state=AttendanceStates.init, when="can_see_attendance"),
-    Button(Const("Delete"), id="delete_start", on_click=open_delete_confirm, when="can_be_deleted"),
+    SwitchTo(Const("Delete"), id="delete_start", state=MeetingStates.delete_confirm, when="can_be_deleted"),
     Row(SwitchTo(Const("Back"), "to_list", MeetingStates.list), BLANK_BUTTON),
     state=MeetingStates.info,
     getter=meeting_info_getter,
