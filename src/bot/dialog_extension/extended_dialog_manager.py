@@ -32,7 +32,7 @@ class ExtendedDialogManager(DialogManagerWrapper):
         try:
             await self.bot.delete_messages(self.chat.id, to_delete_list)
         except Exception as e:
-            return print(f"clear_messages could not delete {len(to_delete_list)} messages, {e}")
+            print(f"clear_messages could not delete {len(to_delete_list)} messages, {e}")
         await self.state.set_to_delete_list([])
 
     async def switch_to_current(self, show_mode: ShowMode):

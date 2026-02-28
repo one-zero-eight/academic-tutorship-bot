@@ -20,13 +20,13 @@ type_ww: Window = Window(
     Row(
         Cancel(Const("Back")),
         SwitchTo(Const("Create New"), id="create_meeting", state=MeetingStates.create, when="is_admin"),
-        Button(Const(" "), id="blank", on_click=None, when="is_tutor"),
+        Button(Const(" "), id="blank", on_click=None, when="is_not_admin"),
     ),
-    Button(Const("See Created"), id="a_meetings_created", on_click=omlot("created")),
-    Button(Const("See Announced"), id="a_meetings_announced", on_click=omlot("announced")),
-    Button(Const("See Closed"), id="a_meetings_closed", on_click=omlot("closed")),
+    Button(Const("See Created"), id="a_meetings_created", on_click=omlot("created"), when="can_see_created"),
+    Button(Const("See Announced"), id="a_meetings_announced", on_click=omlot("announced"), when="can_see_announced"),
+    Button(Const("See Closed"), id="a_meetings_closed", on_click=omlot("closed"), when="can_see_closed"),
     state=MeetingStates.type,
-    getter=user_status_getter,
+    getter=meetings_type_getter,
 )
 
 del omlot

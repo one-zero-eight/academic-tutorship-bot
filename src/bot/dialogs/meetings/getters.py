@@ -8,6 +8,18 @@ from src.bot.utils import *
 from src.db.repositories import meetings_repo, tutors_repo
 
 
+async def meetings_type_getter(dialog_manager: DialogManager, **kwargs):
+    data = await user_status_getter(dialog_manager, **kwargs)
+    data.update(
+        {
+            "can_see_created": data["is_tutor"] or data["is_admin"],
+            "can_see_closed": data["is_tutor"] or data["is_admin"],
+            "can_see_announced": True,  # anybody can
+        }
+    )
+    return data
+
+
 async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
     manager = extend_dialog(dialog_manager)
     meetings_type: str = await manager.state.get_value("meetings_type", "")

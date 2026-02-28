@@ -71,6 +71,7 @@ async def user_status_getter(dialog_manager: DialogManager, **kwargs):
     status: UserStatus | None = await dialog_manager.state.get_value("status")
     return {
         "is_admin": (status == UserStatus.admin),
+        "is_not_admin": (status != UserStatus.admin),
         "is_tutor": (status == UserStatus.tutor),
         "is_student": (status == UserStatus.student),
     }
