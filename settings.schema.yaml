@@ -132,6 +132,11 @@ properties:
     default: null
     description: Connection String for SQLAlchemy
     title: Db Conn String
+  run_support_daemon:
+    default: false
+    description: Whether to run the support daemon (for debugging)
+    title: Run Support Daemon
+    type: boolean
 required:
 - bot_token
 title: Settings

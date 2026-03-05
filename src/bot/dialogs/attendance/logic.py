@@ -2,10 +2,10 @@ from aiogram.types import BufferedInputFile, InputFile, Message
 from aiogram_dialog import DialogManager
 
 from src.bot.dialog_extension import extend_dialog
-from src.bot.scheduling import *
 from src.bot.user_errors import *
 from src.bot.utils import *
 from src.db.repositories import meetings_repo
+from src.scheduling.scheduling import *
 
 MAX_ATTENDANCE_FILE_SIZE = 5_242_880  # 5 MiB
 

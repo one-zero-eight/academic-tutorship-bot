@@ -52,6 +52,8 @@ class Settings(SettingBaseModel):
     "URL for binding Telegram to InNoHassle Account"
     db_conn_string: str | None = None
     "Connection String for SQLAlchemy"
+    run_support_daemon: bool = False
+    "Whether to run the support daemon (for debugging)"
 
     @classmethod
     def from_yaml(cls, path: Path) -> "Settings":

@@ -1,7 +1,9 @@
 from time import perf_counter
 
 from aiogram import Bot, F, types
+from aiogram.client.default import DefaultBotProperties
 from aiogram.dispatcher.event.bases import SkipHandler
+from aiogram.enums import ParseMode
 from aiogram.filters import ExceptionTypeFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -17,11 +19,12 @@ from src.bot.middlewares import AutoAuthMiddleware
 from src.bot.utils import check_commands_equality
 from src.config import settings
 from src.db.repositories import tutors_repo
-from src.scheduler import scheduler
+from src.scheduling.scheduler import scheduler
+from src.support_daemon.server import support_daemon
 
 _time1 = perf_counter()
 
-bot = Bot(token=settings.bot_token.get_secret_value())
+bot = Bot(token=settings.bot_token.get_secret_value(), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 bot_container.set_bot(bot)  # NOTE: needed to use bot in lower layers
 
 if settings.redis_url:
@@ -57,6 +60,7 @@ from src.bot.dialogs.change_meeting import dialog as change_meeting_dialog  # no
 from src.bot.dialogs.meetings import dialog as meetings_dialog  # noqa: E402
 from src.bot.dialogs.student_meetings import dialog as student_meetings_dialog  # noqa: E402
 from src.bot.dialogs.tutors import dialog as tutors_dialog  # noqa: E402
+from src.bot.dialogs.tutors_profile import dialog as tutors_profile_dialog  # noqa: E402
 from src.bot.routers.admin import router as admin_router  # noqa: E402
 from src.bot.routers.authentication import router as authentication_router  # noqa: E402
 from src.bot.routers.commands import router as commands_router  # noqa: E402
@@ -76,6 +80,7 @@ dp.include_router(meetings_dialog)
 dp.include_router(student_meetings_dialog)
 dp.include_router(change_meeting_dialog)
 dp.include_router(tutors_dialog)
+dp.include_router(tutors_profile_dialog)
 dp.include_router(attendance_dialog)
 
 setup_dialogs(dp)
@@ -126,7 +131,10 @@ async def main():
     await bot.delete_webhook(drop_pending_updates=True)
     # Start long-polling
     try:
+        if settings.run_support_daemon:
+            support_daemon.start()
         await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
     finally:
         await dp.storage.close()
         await bot.session.close()
+        support_daemon.stop()

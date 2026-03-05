@@ -38,3 +38,6 @@ class SupportDaemon:
                 self._process.kill()
                 self._process.join()
             self._process = None
+
+
+support_daemon = SupportDaemon()

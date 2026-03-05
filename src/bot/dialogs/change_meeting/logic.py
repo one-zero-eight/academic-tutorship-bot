@@ -4,11 +4,11 @@ from aiogram.types import InaccessibleMessage, Message, SharedUser
 from aiogram_dialog import DialogManager
 
 from src.bot.dialog_extension import extend_dialog
-from src.bot.scheduling import *
 from src.bot.user_errors import *
 from src.bot.utils import *
 from src.db.repositories import meetings_repo, tutors_repo
 from src.domain.models import Meeting, MeetingStatus, Tutor
+from src.scheduling.scheduling import *
 
 MAX_ROOM_LEN = 64
 
