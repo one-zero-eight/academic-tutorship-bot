@@ -3,6 +3,7 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Cancel, Row, Start, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
+from src.bot.custom_widgets import MeetingInfoText
 from src.bot.dialogs.attendance.states import AttendanceStates
 from src.bot.dialogs.change_meeting.states import ChangeStates
 from src.bot.dto import *
@@ -51,15 +52,7 @@ create_ww = Window(
 
 
 info_ww = Window(
-    Const("Meeting Info"),
-    Format("Title: {title}"),
-    Format("Status: {status.name}"),
-    Format("Attendance: {attendance_count}", when="attendance_count"),
-    Const(" "),
-    Format("Date: {date}"),
-    Format("Duration: {duration}"),
-    Format("Tutor: @{tutor_username}"),
-    Format("Description: {description}", when="description"),
+    MeetingInfoText(admin_info=True),
     Start(
         text=Const("Change Info"),
         id="change_init",

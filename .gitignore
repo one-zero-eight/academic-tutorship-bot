@@ -11,4 +11,6 @@ settings.yaml
 .python-version
 *.sqlite
 
+### Other ###
 .DS_Store
+try/

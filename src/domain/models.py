@@ -62,6 +62,15 @@ class Meeting:
     _attendance: list[Email] | None = None
     "List of emails of attendees"
 
+    def __repr__(self) -> str:
+        return (
+            f"Meeting(id={self.id}, status={self.status.name}, "
+            f"title={self.title}, date={self.date_human}, "
+            f"duration={self.duration}, room={self.room}, "
+            f"tutor={self.tutor}"
+            ")"
+        )
+
     def __init__(self, id: int, title: str):
         self.id = id
         self.title = title
@@ -83,6 +92,14 @@ class Meeting:
         if self.status != MeetingStatus.CONDUCTING:
             raise ValueError("Cannot Finish Meeting: it is not in CONDUCTING status")
         self._status = MeetingStatus.FINISHED
+
+    def adjust_duration_to_now(self):
+        """Sets duration to the difference between `self.date` and `datetime.now`"""
+        if not self.date:
+            raise ValueError("No meeting.date")
+        date_obj = datetime.fromtimestamp(self.date)
+        real_duration = datetime.now() - date_obj
+        self.duration = int(real_duration.total_seconds())
 
     def close(self, attendance: list[Email]):
         if self.status != MeetingStatus.FINISHED:
@@ -150,6 +167,9 @@ class Tutor:
     last_name: str | None = None
     "Telegram last name"
 
+    def __repr__(self) -> str:
+        return f"Tutor(id={self.id}, tg_id={self.tg_id}, username={self.username}, ...)"
+
     def __init__(
         self,
         id: int,
@@ -179,3 +199,42 @@ class Tutor:
     def full_name(self) -> str:
         name_parts = [self.first_name, self.last_name]
         return " ".join(part for part in name_parts if part)
+
+
+class TutorProfile:
+    id: int
+    "ID in database, same as Tutor.id"
+    full_name: str
+    "Real name"
+    _username: str | None
+    "Telegram username (without @)"
+    discipline: str
+    "Teaching discipline"
+    photo_id: str | None
+    "Telegram ID of profile photo"
+    about: str | None
+    "Description by him/herself"
+
+    def __repr__(self) -> str:
+        return f"TutorProfile(id={self.id}, full_name={self.full_name}, ...)"
+
+    def __init__(
+        self, id: int, full_name: str, username: str | None, discipline: str, photo_id: str | None, about: str | None
+    ):
+        self.id = id
+        self.full_name = full_name
+        self.username = username
+        self.discipline = discipline
+        self.photo_id = photo_id
+        self.about = about
+
+    @property
+    def username(self) -> str | None:
+        return self._username
+
+    @username.setter
+    def username(self, value: str | None):
+        if value:
+            self._username = value.lstrip("@")
+        else:
+            self._username = None

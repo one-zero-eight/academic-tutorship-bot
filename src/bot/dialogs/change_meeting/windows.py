@@ -3,6 +3,7 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Calendar, Cancel, Column, Row, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
+from src.bot.custom_widgets import MeetingInfoText
 from src.bot.dto import *
 from src.bot.filters import *
 
@@ -12,14 +13,7 @@ from .handles import *
 from .states import *
 
 info_change_ww = Window(
-    Const("Meeting Info"),
-    Format("Title: {title}"),
-    Format("Status: {status.name}\n"),
-    Format("Date: {date}"),
-    Format("Duration: {duration}"),
-    Format("Tutor: @{tutor_username}"),
-    Format("Room: {room}"),
-    Format("Description: {description}", when="description"),
+    MeetingInfoText(admin_info=True),
     Column(
         SwitchTo(Const("Set Title"), id="change_title", state=ChangeStates.title),
         SwitchTo(Const("Set Description"), id="set_description", state=ChangeStates.description),

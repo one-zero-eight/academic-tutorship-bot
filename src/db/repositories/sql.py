@@ -8,9 +8,9 @@ from sqlalchemy import (
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
-from src.db.schema import meetings, tutors
-from src.domain.models import Email, Meeting, MeetingStatus, Tutor
-from src.domain.repositories import MeetingsRepository, TutorsRepository
+from src.db.schema import meetings, tutor_profiles, tutors
+from src.domain.models import Email, Meeting, MeetingStatus, Tutor, TutorProfile
+from src.domain.repositories import MeetingsRepository, TutorProfilesRepository, TutorsRepository
 
 
 class SQLDatabase:
@@ -35,6 +35,132 @@ class SQLDatabase:
         if not self._disposed:
             self._disposed = True
             return await self._engine.dispose()
+
+
+class SQLTutorProfilesRepository(TutorProfilesRepository):
+    _db: SQLDatabase
+
+    def __init__(self, db: SQLDatabase):
+        self._db = db
+
+    async def exists(
+        self,
+        *,
+        id: int | None = None,
+        username: str | None = None,
+        tutor_profile: TutorProfile | None = None,
+        tutor: Tutor | None = None,
+    ) -> bool:
+        where = self._where_clause(id, username, tutor_profile, tutor)
+
+        stmt = select(tutor_profiles.c.id).where(where).limit(1)
+
+        async with self._db.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            return result.first() is not None
+
+    async def get(self, *, id: int | None = None, username: str | None = None) -> TutorProfile:
+        where = self._where_clause(id, username, tutor=None, tutor_profile=None)
+        stmt = select(tutor_profiles).where(where).limit(1)
+
+        async with self._db.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            row = result.first()
+            if row is None:
+                raise LookupError("TutorProfile not found")
+            return self._row_to_tutor_profile(row)
+
+    async def create(
+        self,
+        *,
+        full_name: str,
+        discipline: str,
+        username: str | None = None,
+        photo_id: str | None = None,
+        about: str | None = None,
+    ) -> TutorProfile:
+        stmt = insert(tutors).values(
+            full_name=full_name, username=username, discipline=discipline, photo_id=photo_id, about=about
+        )
+
+        async with self._db.engine.begin() as conn:
+            try:
+                result = await conn.execute(stmt)
+                if result.rowcount == 0 or result.inserted_primary_key is None:
+                    raise ValueError("Failed to insert tutor_profile")
+                db_id = result.inserted_primary_key[0]
+            except IntegrityError as e:
+                raise e
+
+        return TutorProfile(
+            id=db_id,
+            full_name=full_name,
+            username=username,
+            discipline=discipline,
+            photo_id=photo_id,
+            about=about,
+        )
+
+    async def update(self, tutor_profile: TutorProfile):
+        stmt = (
+            update(tutors)
+            .where(tutor_profiles.c.id == tutor_profile.id)
+            .values(
+                username=tutor_profile.username,
+                full_name=tutor_profile.full_name,
+                discipline=tutor_profile.discipline,
+                photo_id=tutor_profile.photo_id,
+                about=tutor_profile.about,
+            )
+        )
+
+        async with self._db.engine.begin() as conn:
+            result = await conn.execute(stmt)
+            if result.rowcount == 0:
+                raise LookupError("Tutor not found for update")
+
+    async def remove(
+        self, *, id: int | None = None, username: str | None = None, tutor_profile: TutorProfile | None = None
+    ) -> TutorProfile:
+        where = self._where_clause(id, username, tutor=None, tutor_profile=None)
+        stmt = delete(tutor_profiles).where(where).returning(tutor_profiles)
+
+        async with self._db.engine.begin() as conn:
+            result = await conn.execute(stmt)
+            row = result.fetchone()
+            if row is None:
+                raise LookupError("TutorProfile not found")
+            return self._row_to_tutor_profile(row)
+
+    async def dispose(self):
+        await self._db.dispose()
+
+    def _where_clause(
+        self,
+        id: int | None,
+        username: str | None,
+        tutor_profile: TutorProfile | None,
+        tutor: Tutor | None,
+    ):
+        if id is not None:
+            return tutor_profiles.c.id == id
+        if username is not None:
+            return tutor_profiles.c.username == username
+        if tutor_profile is not None:
+            return tutor_profiles.c.id == tutor_profile.id
+        if tutor is not None:
+            return tutor_profiles.c.id == tutor.id
+        raise ValueError("At least one of id / username / tutor_profile / tutor must be provided")
+
+    def _row_to_tutor_profile(self, row: Row) -> TutorProfile:
+        return TutorProfile(
+            id=row.id,
+            full_name=row.full_name,
+            username=row.username,
+            discipline=row.discipline,
+            photo_id=row.photo_id,
+            about=row.about,
+        )
 
 
 class SQLTutorsRepository(TutorsRepository):
@@ -81,8 +207,12 @@ class SQLTutorsRepository(TutorsRepository):
         *,
         offset: int = 0,
         limit: int | None = None,
+        only_with_profiles: bool = False,
     ) -> list[Tutor]:
-        stmt = select(tutors).order_by(tutors.c.id).offset(offset)
+        stmt = select(tutors)
+        if only_with_profiles:
+            stmt = stmt.join(tutor_profiles, tutors.c.id == tutor_profiles.c.id)
+        stmt = stmt.order_by(tutors.c.id).offset(offset)
         if limit:
             stmt = stmt.limit(limit)
 
@@ -203,7 +333,7 @@ class SQLMeetingsRepository(MeetingsRepository):
                     raise ValueError("Failed to insert meeting")
                 db_id = result.inserted_primary_key[0]
             except IntegrityError as e:
-                print(e)
+                raise e
 
         return Meeting(id=db_id, title=title)
 

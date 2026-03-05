@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from src.domain.models import Email, Meeting, MeetingStatus, Tutor
+from src.domain.models import Email, Meeting, MeetingStatus, Tutor, TutorProfile
 
 
 class TutorDTO(TypedDict):
@@ -23,6 +23,40 @@ class MeetingDTO(TypedDict):
     date: int | None
     duration: int
     attendance: list[str] | None
+
+
+class TutorProfileDTO(TypedDict):
+    id: int
+    full_name: str
+    username: str | None
+    discipline: str
+    photo_id: str | None
+    about: str | None
+
+
+def tutor_profile_to_dto(tutor_profile: TutorProfile | None) -> TutorProfileDTO | None:
+    if tutor_profile is not None:
+        t = tutor_profile
+        return TutorProfileDTO(
+            id=t.id,
+            full_name=t.full_name,
+            username=t.username,
+            discipline=t.discipline,
+            photo_id=t.photo_id,
+            about=t.about,
+        )
+
+
+def dto_to_tutor_profile(dto: TutorProfileDTO | None) -> TutorProfile | None:
+    if dto is not None:
+        return TutorProfile(
+            id=dto["id"],
+            full_name=dto["full_name"],
+            username=dto["username"],
+            discipline=dto["discipline"],
+            photo_id=dto["photo_id"],
+            about=dto["about"],
+        )
 
 
 def tutor_to_dto(tutor: Tutor | None) -> TutorDTO | None:

@@ -3,6 +3,7 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Cancel, Row, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
+from src.bot.custom_widgets import MeetingInfoText
 from src.bot.dialogs.meetings.getters import meeting_info_getter
 from src.bot.dto import *
 from src.bot.filters import *
@@ -12,15 +13,7 @@ from .handles import *
 from .states import *
 
 init_ww = Window(
-    Const("Meeting Info"),
-    Format("Title: {title}"),
-    Format("Status: {status.name}"),
-    Format("Attendance: {attendance_count}", when="attendance_count"),
-    Const(" "),
-    Format("Date: {date}"),
-    Format("Duration: {duration}"),
-    Format("Tutor: @{tutor_username}"),
-    Format("Description: {description}", when="description"),
+    MeetingInfoText(admin_info=True),
     SwitchTo(text=Const("Resend File"), state=AttendanceStates.resend, id="to_update"),
     SwitchTo(text=Const("Add email"), state=AttendanceStates.add_email, id="to_add_email"),
     Button(text=Const("Download File"), id="download_attendance", on_click=on_download_attendance),

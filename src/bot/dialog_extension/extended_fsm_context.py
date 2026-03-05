@@ -11,6 +11,8 @@ class ExtendedFSMContext(FSMContext):
     def wrap(fsm_context: FSMContext) -> "ExtendedFSMContext":
         return ExtendedFSMContext(storage=fsm_context.storage, key=fsm_context.key)
 
+    # -- Meeting --
+
     async def get_meeting(self) -> Meeting:
         if not (meeting := dto_to_meeting(await self.get_value("meeting"))):
             raise ValueError("No meeting in state storage")
@@ -27,6 +29,8 @@ class ExtendedFSMContext(FSMContext):
         finally:
             await self.set_meeting(meeting)
 
+    # -- Tutor --
+
     async def get_tutor(self) -> Tutor:
         if not (tutor := dto_to_tutor(await self.get_value("tutor"))):
             raise ValueError("No tutor in state storage")
@@ -42,6 +46,26 @@ class ExtendedFSMContext(FSMContext):
             yield tutor
         finally:
             await self.set_tutor(tutor)
+
+    # -- TutorProfile --
+
+    async def get_tutor_profile(self) -> TutorProfile:
+        if not (tutor_profile := dto_to_tutor_profile(await self.get_value("tutor_profile"))):
+            raise ValueError("No tutor_profile in state storage")
+        return tutor_profile
+
+    async def set_tutor_profile(self, tutor_profile: TutorProfile):
+        await self.update_data({"tutor_profile": tutor_profile_to_dto(tutor_profile)})
+
+    @asynccontextmanager
+    async def sync_tutor_profile(self):
+        try:
+            tutor_profile = await self.get_tutor_profile()
+            yield tutor_profile
+        finally:
+            await self.set_tutor_profile(tutor_profile)
+
+    # -- Misc --
 
     async def get_to_delete_list(self) -> list[int]:
         return await self.get_value("to_delete_list", [])
