@@ -22,7 +22,7 @@ from pydantic import TypeAdapter
 from src.bot import bot_container
 from src.bot.dialog_extension import extend_dialog
 from src.config import settings
-from src.domain.models import Email, Meeting, UserStatus
+from src.domain.models import Meeting, UserStatus
 
 commands_type_adapter = TypeAdapter(list[BotCommand])
 
@@ -69,10 +69,11 @@ del request_users
 async def user_status_getter(dialog_manager: DialogManager, **kwargs):
     dialog_manager = extend_dialog(dialog_manager)
     status: UserStatus | None = await dialog_manager.state.get_value("status")
+    self_tutor = await dialog_manager.state.get_value("self_tutor", None)
     return {
         "is_admin": (status == UserStatus.admin),
         "is_not_admin": (status != UserStatus.admin),
-        "is_tutor": (status == UserStatus.tutor),
+        "is_tutor": (self_tutor is not None),
         "is_student": (status == UserStatus.student),
     }
 
@@ -105,24 +106,24 @@ async def send_to_admins(meeting: Meeting, text: str, *, skip_tutor: bool = Fals
     whom_to_send = settings.admins
     whom_to_send = list(set(whom_to_send))  # remove duplicates
 
-    if skip_tutor and meeting.tutor:
-        whom_to_send.remove(meeting.tutor.tg_id)
+    if skip_tutor and meeting.tutor_id:
+        whom_to_send.remove(meeting.tutor_id)
 
     for tg_id in whom_to_send:
         await send_to(tg_id, text, **kwargs)
 
 
 async def send_to_tutor(meeting: Meeting, text: str, **kwargs):
-    if not meeting.tutor:
-        raise ValueError("No meeting.tutor")
-    tg_id = meeting.tutor.tg_id
+    if not meeting.tutor_id:
+        raise ValueError("No meeting.tutor_id")
+    tg_id = meeting.tutor_id
     await send_to(tg_id, text, **kwargs)
 
 
 async def send_to_admins_and_tutor(meeting: Meeting, text: str, **kwargs):
     whom_to_send = settings.admins
-    if meeting.tutor:
-        whom_to_send.append(meeting.tutor.tg_id)
+    if meeting.tutor_id:
+        whom_to_send.append(meeting.tutor_id)
     whom_to_send = list(set(whom_to_send))  # remove duplicates
 
     for tg_id in whom_to_send:
@@ -142,7 +143,7 @@ DELETE_WARNING_KB = InlineKeyboardMarkup(
 )
 
 
-def parse_attendance(content: str) -> list[Email]:
+def parse_attendance(content: str) -> list[str]:
     match _determine_attendance_type(content):
         case "moodle":
             return _parse_attendance_csv(content)
@@ -174,19 +175,19 @@ def _is_email(text: str) -> bool:
         return False
 
 
-def _parse_attendance_csv(content: str) -> list[Email]:
+def _parse_attendance_csv(content: str) -> list[str]:
     attendance = []
     content_io = io.StringIO(content)
     reader = csv.reader(content_io)
     for row in reader:
         if _is_email(row[0]):
-            attendance.append(Email(row[0]))
+            attendance.append(str(row[0]))
     return attendance
 
 
-def _parse_attendance_txt(content: str) -> list[Email]:
+def _parse_attendance_txt(content: str) -> list[str]:
     attendance = []
     for line in content.split("\n"):
         if _is_email(line):
-            attendance.append(Email(line))
+            attendance.append(str(line))
     return attendance

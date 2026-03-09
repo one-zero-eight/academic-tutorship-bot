@@ -6,7 +6,7 @@ from aiogram_dialog import DialogManager
 from src.bot.dialog_extension import extend_dialog
 from src.bot.user_errors import *
 from src.bot.utils import *
-from src.db.repositories import meetings_repo, tutors_repo
+from src.db.repositories import meeting_repo, tutor_repo
 from src.domain.models import Meeting, MeetingStatus, Tutor
 from src.scheduling.scheduling import *
 
@@ -30,14 +30,14 @@ async def notify_tutor_assigned(tutor: Tutor, meeting: Meeting, manager: DialogM
             text=(
                 "You are assigned to a Meeting 👨‍🏫\n"
                 f"Title: {meeting.title}\n"
-                f"Date: {meeting.date_human}\n"
+                f"Date: {meeting.datetime_}\n"
                 "\n"
                 "You can now see the Meeting in your meetings list"
             ),
-            chat_id=tutor.tg_id,
+            chat_id=tutor.telegram_id,
         )
     except Exception as e:
-        print(f"Could not send notification to [{tutor.tg_id}] @{tutor.username}, {e}")
+        print(f"Could not send notification to [{tutor.telegram_id}] @{tutor.username}, {e}")
 
 
 async def notify_tutor_unassigned(tutor: Tutor, meeting: Meeting, manager: DialogManager):
@@ -47,14 +47,14 @@ async def notify_tutor_unassigned(tutor: Tutor, meeting: Meeting, manager: Dialo
             text=(
                 "You are not longer a tutor for Meeting 🕊️\n"
                 f"Title: {meeting.title}\n"
-                f"Date: {meeting.date_human}\n"
+                f"Date: {meeting.datetime_}\n"
                 "\n"
                 "The meeting is no longer accessible from your meetings list"
             ),
-            chat_id=tutor.tg_id,
+            chat_id=tutor.telegram_id,
         )
     except Exception as e:
-        print(f"Could not send notification to [{tutor.tg_id}] @{tutor.username}, {e}")
+        print(f"Could not send notification to [{tutor.telegram_id}] @{tutor.username}, {e}")
 
 
 async def update_meeting_title(message: Message, manager: DialogManager):
@@ -63,7 +63,7 @@ async def update_meeting_title(message: Message, manager: DialogManager):
         raise NoMessageText()
     async with manager.state.sync_meeting() as meeting:
         meeting.title = message.text
-    await meetings_repo.save(meeting)
+        await meeting_repo.update(meeting, ["title"])
 
 
 async def update_meeting_description(message: Message, manager: DialogManager):
@@ -72,28 +72,30 @@ async def update_meeting_description(message: Message, manager: DialogManager):
         raise NoMessageText()
     async with manager.state.sync_meeting() as meeting:
         meeting.description = message.text
-    await meetings_repo.save(meeting)
+        await meeting_repo.update(meeting, ["description"])
 
 
 async def update_meeting_tutor_shared_user(shared_user: SharedUser, manager: DialogManager):
     manager = extend_dialog(manager)
     async with manager.state.sync_meeting() as meeting:
-        if old_tutor := meeting.tutor:
+        if meeting.tutor_id:
+            old_tutor = await tutor_repo.get(id=meeting.tutor_id)
             await notify_tutor_unassigned(old_tutor, meeting, manager)
-        new_tutor = await tutors_repo.get(tg_id=shared_user.user_id)
+        new_tutor = await tutor_repo.get(telegram_id=shared_user.user_id)
         meeting.assign_tutor(new_tutor)
-        await meetings_repo.save(meeting)
+        await meeting_repo.update(meeting, ["tutor_id"])
         await notify_tutor_assigned(new_tutor, meeting, manager)
 
 
 async def update_meeting_tutor_item_id(item_id: str, manager: DialogManager):
     manager = extend_dialog(manager)
     async with manager.state.sync_meeting() as meeting:
-        if old_tutor := meeting.tutor:
+        if meeting.tutor_id:
+            old_tutor = await tutor_repo.get(id=meeting.tutor_id)
             await notify_tutor_unassigned(old_tutor, meeting, manager)
-        new_tutor = await tutors_repo.get(id=int(item_id))
+        new_tutor = await tutor_repo.get(id=int(item_id))
         meeting.assign_tutor(new_tutor)
-        await meetings_repo.save(meeting)
+        await meeting_repo.update(meeting, ["tutor_id"])
         await notify_tutor_assigned(new_tutor, meeting, manager)
 
 
@@ -118,10 +120,9 @@ async def combine_meeting_date_time(selected_time: time, manager: DialogManager)
 async def update_meeting_date(meeting_date: datetime, manager: DialogManager):
     manager = extend_dialog(manager)
     async with manager.state.sync_meeting() as meeting:
-        meeting.date = int(meeting_date.timestamp())
-    await meetings_repo.save(meeting)
-    if meeting.status > MeetingStatus.CREATED:
+        meeting.datetime_ = meeting_date
         await update_meeting_schedule(meeting)
+        await meeting_repo.update(meeting, ["datetime"])
 
 
 async def warn_if_date_is_too_soon(meeting_date: datetime, message: Message):
@@ -135,7 +136,7 @@ async def update_meeting_duration(selected_time: time, manager: DialogManager):
     manager = extend_dialog(manager)
     async with manager.state.sync_meeting() as meeting:
         meeting.duration = selected_time.hour * 3600 + selected_time.minute * 60
-    await meetings_repo.save(meeting)
+    await meeting_repo.update(meeting, ["duration"])
     if meeting.status > MeetingStatus.CREATED:
         await update_meeting_schedule(meeting)
 
@@ -148,4 +149,4 @@ async def update_meeting_room(message: Message, manager: DialogManager):
         raise RoomTooLong()
     async with manager.state.sync_meeting() as meeting:
         meeting.room = message.text
-    await meetings_repo.save(meeting)
+    await meeting_repo.update(meeting, ["room"])

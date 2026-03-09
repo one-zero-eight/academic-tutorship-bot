@@ -5,10 +5,10 @@ from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.kbd import Button
 
 from src.bot.dialog_extension import extend_dialog
-from src.bot.dto import *
 from src.bot.user_errors import *
 from src.bot.utils import *
-from src.db.repositories import meetings_repo
+from src.db.repositories import meeting_repo
+from src.domain.models import MeetingStatus
 
 from .logic import *
 from .states import *
@@ -16,7 +16,7 @@ from .states import *
 
 async def on_meeting_selected(query: CallbackQuery, meeting, manager: DialogManager, item_id: str):
     manager = extend_dialog(manager)
-    meeting = await meetings_repo.get(id=int(item_id))
+    meeting = await meeting_repo.get(int(item_id))
     await manager.state.set_meeting(meeting)
     await manager.switch_to(MeetingStates.info)
 
@@ -37,10 +37,12 @@ async def get_new_title(message: Message, _, manager: DialogManager):
     await manager.clear_messages()
     await message.delete()
     try:
-        await create_meeting_with_title(message, manager)
+        if not message.text:
+            raise NoMessageText()
+        await manager.state.update_data({"title": message.text})
     except NoMessageText:
         return await manager.answer_and_retry("There is no text in your message")
-    await manager.switch_to(MeetingStates.info, show_mode=ShowMode.DELETE_AND_SEND)
+    await manager.switch_to(MeetingStates.create, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def open_announce_confirm(query: CallbackQuery, button: Button, manager: DialogManager):
@@ -85,3 +87,15 @@ async def on_finish_confirmed(query: CallbackQuery, button: Button, manager: Dia
     except Exception as e:
         return await query.answer(f"Error: {e}", show_alert=True)
     await manager.switch_to(state=MeetingStates.info, show_mode=ShowMode.DELETE_AND_SEND)
+
+
+async def on_create_submit(query: CallbackQuery, button: Button, manager: DialogManager):
+    manager = extend_dialog(manager)
+    assert (discipline_dict := await manager.state.get_value("discipline"))
+    assert (title := await manager.state.get_value("title"))
+    meeting = await meeting_repo.create(
+        title=title, discipline_id=discipline_dict["id"], creator_telegram_id=manager.chat.id
+    )
+    await manager.state.set_meeting(meeting)
+    await manager.state.update_data({"discipline": None, "title": None})
+    await manager.switch_to(state=MeetingStates.info)

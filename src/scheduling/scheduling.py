@@ -1,17 +1,19 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from apscheduler.triggers.date import DateTrigger
 
-from src.bot.dto import *
 from src.bot.utils import *
-from src.db.repositories import meetings_repo
+from src.db.repositories import meeting_repo, tutor_repo
+from src.domain.models import MeetingStatus
 
 from .scheduler import scheduler
 
 
 async def update_meeting_schedule(meeting: Meeting):
-    if meeting.date and meeting.status < MeetingStatus.CONDUCTING:
-        conduct_date = datetime.fromtimestamp(meeting.date)
+    if meeting.status < MeetingStatus.ANNOUNCED:
+        return  # schedule only when announced
+    if meeting.datetime_ and meeting.status < MeetingStatus.CONDUCTING:
+        conduct_date = meeting.datetime_
         scheduler.add_job(
             trigger=DateTrigger(conduct_date),
             func=_job_meeting_conduct,
@@ -22,8 +24,8 @@ async def update_meeting_schedule(meeting: Meeting):
         )
         print(f"Scheduled Conducting of Meeting [{meeting.id}] at {conduct_date}")
 
-    if meeting.date and meeting.duration and meeting.status < MeetingStatus.FINISHED:
-        conduct_date = datetime.fromtimestamp(meeting.date)
+    if meeting.datetime_ and meeting.duration and meeting.status < MeetingStatus.FINISHED:
+        conduct_date = meeting.datetime_
         finish_date = conduct_date + timedelta(seconds=meeting.duration)
         scheduler.add_job(
             trigger=DateTrigger(finish_date),
@@ -50,21 +52,22 @@ async def wipe_meeting_schedule(meeting: Meeting):
 
 
 async def _job_meeting_conduct(meeting_id: int):
-    meeting = await meetings_repo.get(id=meeting_id)
+    meeting = await meeting_repo.get(meeting_id)
     if not meeting:
         print("error in _job_meeting_conduct: no meeting")
         return  # TODO: proper error handeling
+    tutor = await tutor_repo.get(id=meeting.tutor_id) if meeting.tutor_id else None
     try:
         meeting.conduct()
-        await meetings_repo.save(meeting)
+        await meeting_repo.update(meeting, ["status"])
         print(f"Meeting [{meeting.id}] started conducting")
         await send_to_admins_and_tutor(
             meeting,
             text=(
                 f'It is time to conduct "{meeting.title}" ⚡️\n'
-                f'Date: {meeting.date_human}\n'
+                f'Date: {meeting.datetime_}\n'
                 f'Duration: {meeting.duration_human}\n'
-                f'Tutor: @{meeting.tutor.username if meeting.tutor else "---"}\n'
+                f'Tutor: @{tutor.username if tutor else "---"}\n'
             ),
         )
 
@@ -74,30 +77,31 @@ async def _job_meeting_conduct(meeting_id: int):
 
 
 async def _job_meeting_finish(meeting_id: int):
-    meeting = await meetings_repo.get(id=meeting_id)
+    meeting = await meeting_repo.get(id=meeting_id)
     if not meeting:
         print("error in _job_meeting_finish: no meeting")
         return  # TODO: proper error handeling
+    tutor = await tutor_repo.get(id=meeting.tutor_id) if meeting.tutor_id else None
     try:
         meeting.finish()
-        await meetings_repo.save(meeting)
+        await meeting_repo.update(meeting, ["status"])
         print(f"Meeting [{meeting.id}] finished")
         await send_to_admins(
             meeting,
             text=(
                 f'Meeting "{meeting.title}" finished ☑️ \n'
-                f'Date: {meeting.date_human}\n'
+                f'Date: {meeting.datetime_}\n'
                 f'Duration: {meeting.duration_human}\n'
-                f'Tutor: @{meeting.tutor.username if meeting.tutor else "---"}\n'
+                f'Tutor: @{tutor.username if tutor else "---"}\n'
             ),
         )
         await send_to_tutor(
             meeting,
             text=(
                 f'Meeting "{meeting.title}" finished ☑️ \n'
-                f'Date: {meeting.date_human}\n'
+                f'Date: {meeting.datetime_}\n'
                 f'Duration: {meeting.duration_human}\n'
-                f'Tutor: @{meeting.tutor.username if meeting.tutor else "---"}\n'
+                f'Tutor: @{tutor.username if tutor else "---"}\n'
                 '\nSend an Attendance File to close the Meeting!'
             ),
             reply_markup=create_attendance_sending_kb(meeting),

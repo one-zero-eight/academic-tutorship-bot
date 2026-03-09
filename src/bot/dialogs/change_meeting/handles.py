@@ -7,7 +7,6 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button
 
 from src.bot.dialog_extension import extend_dialog
-from src.bot.dto import *
 from src.bot.user_errors import *
 from src.bot.utils import *
 

@@ -14,8 +14,7 @@ from src.accounts_sdk import inh_accounts
 from src.bot.exceptions import UnauthenticatedException
 from src.bot.filters import UserStatus
 from src.bot.logging_ import logger
-from src.config import settings
-from src.db.repositories import tutors_repo
+from src.db.repositories import student_repo, tutor_repo
 
 
 # noinspection PyMethodMayBeStatic
@@ -107,11 +106,22 @@ class AutoAuthMiddleware(LogAllEventsMiddleware):
         (was_auth, become_auth) = (False, False)  # for _log_authenticated()
         state: FSMContext = data["state"]
         chat: Chat = data["event_chat"]
-        authenticated = was_auth = await state.get_value("authenticated", False)
+        # authenticated = was_auth = await state.get_value("authenticated", False)
+        authenticated = False
         if not authenticated:
             user = await inh_accounts.get_user(telegram_id=chat.id)
             if user is not None:
                 authenticated = become_auth = True
+                assert (tg := user.telegram_info)
+                assert (inno := user.innopolis_info)
+                if not await student_repo.exists(tg.id):
+                    await student_repo.create(
+                        telegram_id=tg.id,
+                        first_name=tg.first_name,
+                        last_name=tg.last_name,
+                        username=tg.username,
+                        email_=inno.email,
+                    )
             await state.update_data({"authenticated": authenticated})
         self._log_authenticated(chat, was_auth, become_auth)
         return authenticated
@@ -127,12 +137,16 @@ class AutoAuthMiddleware(LogAllEventsMiddleware):
     async def _update_status(self, data: dict[str, Any]) -> UserStatus:
         state: FSMContext = data["state"]
         chat: Chat = data["event_chat"]
-        if chat.id in settings.admins:
-            status = UserStatus.admin
-        elif await tutors_repo.exists(tg_id=chat.id):
+
+        student = await student_repo.get(chat.id)
+        if await tutor_repo.exists(chat.id):
             status = UserStatus.tutor
+            self_tutor = await tutor_repo.get(telegram_id=chat.id)
+            await state.update_data({"self_tutor": self_tutor.model_dump()})
         else:
             status = UserStatus.student
+        if student.is_admin:
+            status = UserStatus.admin
         await state.update_data({"status": status})
         return status
 

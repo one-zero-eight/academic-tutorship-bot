@@ -4,7 +4,7 @@ from aiogram_dialog import DialogManager
 from src.bot.dialog_extension import extend_dialog
 from src.bot.user_errors import *
 from src.bot.utils import *
-from src.db.repositories import meetings_repo
+from src.db.repositories import meeting_repo
 from src.scheduling.scheduling import *
 
 MAX_ATTENDANCE_FILE_SIZE = 5_242_880  # 5 MiB
@@ -30,9 +30,10 @@ async def get_document_contents(message: Message, manager: DialogManager) -> str
 async def get_attendance_file_to_download(manager: DialogManager) -> InputFile:
     manager = extend_dialog(manager)
     meeting = await manager.state.get_meeting()
-    if not meeting.attendance:
+    if not await meeting_repo.has_attendance(meeting.id):
         raise NoMeetingAttendance()
-    file_content = "\n".join([email.value for email in meeting.attendance])
+    emails = await meeting_repo.get_attendance(meeting.id)
+    file_content = "\n".join(emails)
     file_content += "\n"
     safe_title = re.sub(r"[^\w\s-]", "", meeting.title).strip().replace(" ", "_")
     filename = f"attendance_{safe_title}.txt"
@@ -40,18 +41,9 @@ async def get_attendance_file_to_download(manager: DialogManager) -> InputFile:
     return BufferedInputFile(file_bytes, filename=filename)
 
 
-async def extract_email(message: Message) -> Email:
-    if not message.text:
-        raise NoMessageText()
-    return Email(message.text)
-
-
-async def add_email_to_attendance(email: Email, manager: DialogManager):
+async def add_email_to_attendance(email: str, manager: DialogManager):
     manager = extend_dialog(manager)
     async with manager.state.sync_meeting() as meeting:
-        if not meeting.attendance:
+        if not await meeting_repo.has_attendance(meeting.id):
             raise NoMeetingAttendance()
-        if email in meeting.attendance:
-            raise EmailAlreadyPresent()
-        meeting.attendance.append(email)
-        await meetings_repo.save(meeting)
+        await meeting_repo.add_attendee(meeting.id, email)

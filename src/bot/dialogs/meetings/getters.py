@@ -1,11 +1,11 @@
 from aiogram_dialog import DialogManager
 
 from src.bot.dialog_extension import extend_dialog
-from src.bot.dto import *
 from src.bot.exceptions import AuthorityException
 from src.bot.filters import *
 from src.bot.utils import *
-from src.db.repositories import meetings_repo, tutors_repo
+from src.db.repositories import meeting_repo, tutor_repo
+from src.domain.models import MeetingStatus
 
 
 async def meetings_type_getter(dialog_manager: DialogManager, **kwargs):
@@ -32,24 +32,22 @@ async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
     if not user_status:
         raise ValueError("No status")
 
-    if meetings_type == "created":
-        meeting_statuses = {MeetingStatus.CREATED}
-    elif meetings_type == "announced":
-        meeting_statuses = {MeetingStatus.ANNOUNCED, MeetingStatus.CONDUCTING, MeetingStatus.FINISHED}
-    elif meetings_type == "closed":
-        meeting_statuses = {MeetingStatus.CLOSED}
-    else:
-        meeting_statuses = set()
+    match meetings_type:
+        case "created":
+            status_range = MeetingStatus.CREATED
+        case "announced":
+            status_range = (MeetingStatus.ANNOUNCED, MeetingStatus.FINISHED)
+        case "closed":
+            status_range = MeetingStatus.CLOSED
+        case _:
+            raise ValueError("Unknown meeting type")
 
-    meetings = []
     match user_status:
         case UserStatus.admin:
-            for status in meeting_statuses:
-                meetings.extend(await meetings_repo.list(status=status))
+            meetings = await meeting_repo.get_list(status_range)
         case UserStatus.tutor:
-            tutor = await tutors_repo.get(tg_id=manager.chat.id)
-            for status in meeting_statuses:
-                meetings.extend(await meetings_repo.list(status=status, tutor_id=tutor.id))
+            tutor = await tutor_repo.get(telegram_id=manager.chat.id)
+            meetings = await meeting_repo.get_list(status_range, tutor_id=tutor.id)
         case _:
             raise AuthorityException(f"Meetings list is inaccessible for {user_status}")
 
@@ -65,18 +63,22 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
 
     data = await user_status_getter(manager, **kwargs)
     is_admin: bool = data["is_admin"]
-    is_assigned_tutor = bool(data["is_tutor"] and meeting.tutor and manager.chat.id == meeting.tutor.tg_id)
+    tutor = await tutor_repo.get(id=meeting.tutor_id) if meeting.tutor_id else None
+    is_assigned_tutor = bool(data["is_tutor"] and tutor and tutor.telegram_id == manager.chat.id)
     is_authorized = is_admin or is_assigned_tutor
+    emails = None
+    if await meeting_repo.has_attendance(meeting.id):
+        emails = await meeting_repo.get_attendance(meeting.id)
     data.update(
         {
             "title": meeting.title,
             "description": meeting.description,
             "status": meeting.status,
-            "date": meeting.date_human,
+            "date": meeting.datetime_,
             "duration": meeting.duration_human,
             "room": meeting.room if meeting.room else "---",
-            "attendance_count": len(meeting.attendance) if meeting.attendance else None,
-            "tutor_username": meeting.tutor.username if meeting.tutor else None,
+            "attendance_count": len(emails) if emails else None,
+            "tutor_username": tutor.username if tutor else None,
             "can_be_changed": is_authorized and meeting.status < MeetingStatus.CLOSED,
             "can_be_announced": is_authorized and meeting.status == MeetingStatus.CREATED,
             "can_be_finished": is_authorized and meeting.status == MeetingStatus.CONDUCTING,
@@ -86,3 +88,15 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
         }  # type: ignore
     )
     return data
+
+
+async def meeting_create_getter(dialog_manager: DialogManager, **kwargs):
+    manager = extend_dialog(dialog_manager)
+    discipline = await manager.state.get_value("discipline", None)
+    title = await manager.state.get_value("title", None)
+    can_be_created = bool(title and discipline)
+    return {
+        "title": title if title else "Untitled",
+        "discipline_name": discipline["name"] if discipline else "Not set",
+        "can_be_created": can_be_created,
+    }

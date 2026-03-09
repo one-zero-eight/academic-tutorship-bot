@@ -3,7 +3,6 @@ from aiogram_dialog.widgets.kbd import Cancel, Row, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
 from src.bot.custom_widgets import MeetingInfoText
-from src.bot.dto import *
 from src.bot.filters import *
 
 from .dialog_buttons import *

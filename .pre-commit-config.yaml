@@ -52,6 +52,6 @@ repos:
         language: system
         entry: uv run python ./scripts/alembic_auto_migrations.py
         pass_filenames: false
-        files: storages/
+        files: src/db/
         stages:
           - commit-msg

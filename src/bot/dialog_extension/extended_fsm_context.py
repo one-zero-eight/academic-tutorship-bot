@@ -1,9 +1,10 @@
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from src.bot.dto import *
+from src.domain.models import Meeting, Tutor
 
 
 class ExtendedFSMContext(FSMContext):
@@ -14,12 +15,24 @@ class ExtendedFSMContext(FSMContext):
     # -- Meeting --
 
     async def get_meeting(self) -> Meeting:
-        if not (meeting := dto_to_meeting(await self.get_value("meeting"))):
+        if not (meeting := await self.get_value("meeting")):
             raise ValueError("No meeting in state storage")
-        return meeting
+        meeting["datetime"] = self.__deserialize_datetime(meeting["datetime"])
+        meeting["created_at"] = self.__deserialize_datetime(meeting["created_at"])
+        return Meeting(**meeting)
 
     async def set_meeting(self, meeting: Meeting):
-        await self.update_data({"meeting": meeting_to_dto(meeting)})
+        data = meeting.model_dump(by_alias=True)
+        print(data)
+        data["datetime"] = self.__serialize_datetime(data["datetime"])
+        data["created_at"] = self.__serialize_datetime(data["created_at"])
+        await self.update_data({"meeting": data})
+
+    def __serialize_datetime(self, dt: datetime | None) -> float | None:
+        return dt.timestamp() if dt else None
+
+    def __deserialize_datetime(self, dt: float | None) -> datetime | None:
+        return datetime.fromtimestamp(dt) if dt else None
 
     @asynccontextmanager
     async def sync_meeting(self):
@@ -32,12 +45,12 @@ class ExtendedFSMContext(FSMContext):
     # -- Tutor --
 
     async def get_tutor(self) -> Tutor:
-        if not (tutor := dto_to_tutor(await self.get_value("tutor"))):
+        if not (tutor := await self.get_value("tutor")):
             raise ValueError("No tutor in state storage")
-        return tutor
+        return Tutor(**tutor)
 
     async def set_tutor(self, tutor: Tutor):
-        await self.update_data({"tutor": tutor_to_dto(tutor)})
+        await self.update_data({"tutor": tutor.model_dump()})
 
     @asynccontextmanager
     async def sync_tutor(self):
@@ -47,23 +60,23 @@ class ExtendedFSMContext(FSMContext):
         finally:
             await self.set_tutor(tutor)
 
-    # -- TutorProfile --
+    # -- Self Tutor --
 
-    async def get_tutor_profile(self) -> TutorProfile:
-        if not (tutor_profile := dto_to_tutor_profile(await self.get_value("tutor_profile"))):
-            raise ValueError("No tutor_profile in state storage")
-        return tutor_profile
+    async def get_self_tutor(self) -> Tutor:
+        if not (tutor := await self.get_value("self_tutor")):
+            raise ValueError("No self_tutor in state storage")
+        return Tutor(**tutor)
 
-    async def set_tutor_profile(self, tutor_profile: TutorProfile):
-        await self.update_data({"tutor_profile": tutor_profile_to_dto(tutor_profile)})
+    async def set_self_tutor(self, tutor: Tutor):
+        await self.update_data({"self_tutor": tutor.model_dump()})
 
     @asynccontextmanager
-    async def sync_tutor_profile(self):
+    async def sync_self_tutor(self):
         try:
-            tutor_profile = await self.get_tutor_profile()
-            yield tutor_profile
+            tutor = await self.get_self_tutor()
+            yield tutor
         finally:
-            await self.set_tutor_profile(tutor_profile)
+            await self.set_self_tutor(tutor)
 
     # -- Misc --
 
@@ -76,7 +89,6 @@ class ExtendedFSMContext(FSMContext):
     async def add_to_delete(self, message: Message):
         to_delete_list = await self.get_to_delete_list()
         to_delete_list.append(message.message_id)
-        print("UPDATED TO DELETE:", to_delete_list)
         await self.set_to_delete_list(to_delete_list)
 
 

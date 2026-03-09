@@ -2,6 +2,7 @@
 $schema: "./settings.schema.yaml"
 # ---------- Application settings ----- #
 bot_token: null # Telegram bot token from @BotFather
+notification_bot_token: null # Telegram notification bot token from @BotFather
 bot_name: "My Telegram Bot"
 bot_commands:
   - command: "start"
@@ -11,3 +12,6 @@ bot_commands:
   - command: "menu"
     description: "Show the menu"
 redis_url: null # Redis URL, "redis://redis:6379/0" inside the docker network
+db_url: postgresql+asyncpg://postgres:postgres@db:5432/postgres
+
+run_support_daemon: false # support daemon for admin features

@@ -14,3 +14,4 @@ settings.yaml
 ### Other ###
 .DS_Store
 try/
+*.drawio.bkp

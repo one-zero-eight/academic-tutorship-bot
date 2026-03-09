@@ -1,7 +1,6 @@
 from aiogram_dialog.widgets.kbd import Back, Button, Row, ScrollingGroup, Select, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
-from src.bot.dto import *
 from src.bot.filters import *
 
 from .handles import *
@@ -23,5 +22,6 @@ TUTORS_ASSIGN_SCROLLING_GROUP = ScrollingGroup(
     id="scroll_tutors",
     width=1,
     height=6,
+    hide_pager=True,
 )
 "Unclickable, just to see the tutors"

@@ -5,7 +5,6 @@ from aiogram_dialog.widgets.text import Const, Format
 
 from src.bot.custom_widgets import MeetingInfoText
 from src.bot.dialogs.meetings.getters import meeting_info_getter
-from src.bot.dto import *
 from src.bot.filters import *
 
 from .getters import *

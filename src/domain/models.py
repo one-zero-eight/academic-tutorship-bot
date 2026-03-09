@@ -1,8 +1,7 @@
-from dataclasses import dataclass
 from datetime import datetime
 from enum import IntEnum, StrEnum
 
-from email_validator import validate_email
+from pydantic import BaseModel, EmailStr, Field, computed_field
 
 
 class UserStatus(StrEnum):
@@ -19,122 +18,100 @@ class MeetingStatus(IntEnum):
     CLOSED = 4
 
 
-@dataclass(frozen=True)
-class Email(str):
-    ALLOWED_DOMAINS = [
-        "innopolis.university",
-        "innopolis.ru",
-    ]
-
-    value: str
-
-    def __post_init__(self):
-        email_info = validate_email(self.value)
-        if email_info.domain not in self.ALLOWED_DOMAINS:
-            raise ValueError(f'"{self.value}" is not in innopolis domain')
+class Settings(BaseModel):
+    receive_notifications: bool = True
 
 
-class Meeting:
-    """Meeting (Recap, Individual, etc)"""
-
-    # Essential for creation
+class Student(BaseModel):
     id: int
-    "Meeting id in Database"
+    telegram_id: int
+    email: EmailStr
+    settings: Settings
+    first_name: str | None = None
+    last_name: str | None = None
+    username: str | None = None
+    "Telegram username (without @)"
+    is_admin: bool = False
+
+    @property
+    def full_name(self) -> str:
+        name_parts = [self.first_name, self.last_name]
+        return " ".join(part for part in name_parts if part)
+
+
+class Photo(BaseModel):
+    id: int
+    telegram_file_id: str
+    file_path: str
+
+
+class Discipline(BaseModel):
+    id: int
+    name: str
+    year: int
+    language: str
+
+
+class Tutor(BaseModel):
+    id: int
+    telegram_id: int
+    username: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    profile_name: str | None = None
+    about: str | None = None
+    photo: Photo | None = None
+
+    @property
+    def full_name(self) -> str:
+        name_parts = [self.first_name, self.last_name]
+        return " ".join(part for part in name_parts if part)
+
+
+class Meeting(BaseModel):
+    id: int
     title: str
-    "Meaningful Title (creation required)"
-    _status: MeetingStatus = MeetingStatus.CREATED
-
-    # Essential for announcement
-    date: int | None = None
-    "Date of the Meeting (seconds since epoch)"
-    tutor: "Tutor | None" = None
-    "Tutor conducting the Meeting"
-
-    # Optional for announcement
+    discipline: Discipline
+    creator_id: int
+    created_at: datetime = Field(default_factory=datetime.now)
+    status: MeetingStatus = MeetingStatus.CREATED
+    duration: int = 5400
     description: str | None = None
-    "Description of the Meeting"
-    _duration: int = 5400  # 01:30
-    "Duration of the Meeting (seconds)"
     room: str | None = None
-    "Room for the Meeting (any string)"
-
-    # Essential for closing
-    _attendance: list[Email] | None = None
-    "List of emails of attendees"
-
-    def __repr__(self) -> str:
-        return (
-            f"Meeting(id={self.id}, status={self.status.name}, "
-            f"title={self.title}, date={self.date_human}, "
-            f"duration={self.duration}, room={self.room}, "
-            f"tutor={self.tutor}"
-            ")"
-        )
-
-    def __init__(self, id: int, title: str):
-        self.id = id
-        self.title = title
+    datetime_: datetime | None = Field(None, alias="datetime")
+    tutor_id: int | None = None
 
     def assign_tutor(self, tutor: "Tutor"):
-        self.tutor = tutor
+        self.tutor_id = tutor.id
 
     def announce(self):
         "To announce, date and tutor must be set"
         self._check_for_announce()
-        self._status = MeetingStatus.ANNOUNCED
+        self.status = MeetingStatus.ANNOUNCED
 
     def conduct(self):
         if self.status != MeetingStatus.ANNOUNCED:
             raise ValueError("Cannot Conduct Meeting: it is not in ANNOUNCED status")
-        self._status = MeetingStatus.CONDUCTING
+        self.status = MeetingStatus.CONDUCTING
 
     def finish(self):
         if self.status != MeetingStatus.CONDUCTING:
             raise ValueError("Cannot Finish Meeting: it is not in CONDUCTING status")
-        self._status = MeetingStatus.FINISHED
+        self.status = MeetingStatus.FINISHED
 
     def adjust_duration_to_now(self):
         """Sets duration to the difference between `self.date` and `datetime.now`"""
-        if not self.date:
+        if not self.datetime_:
             raise ValueError("No meeting.date")
-        date_obj = datetime.fromtimestamp(self.date)
-        real_duration = datetime.now() - date_obj
+        real_duration = datetime.now() - self.datetime_
         self.duration = int(real_duration.total_seconds())
 
-    def close(self, attendance: list[Email]):
+    def close(self):
         if self.status != MeetingStatus.FINISHED:
             raise ValueError("Cannot Close Meeting: it is not in FINISHED status")
-        self._attendance = attendance
-        self._status = MeetingStatus.CLOSED
+        self.status = MeetingStatus.CLOSED
 
-    @property
-    def status(self) -> MeetingStatus:
-        "Status of the Meeting"
-        return self._status
-
-    @property
-    def duration(self) -> int:
-        "Duration of the Meeting (seconds)"
-        return self._duration
-
-    @duration.setter
-    def duration(self, value: int):
-        if value is not None and value <= 0:
-            raise ValueError("Duration must be positive")
-        self._duration = value
-
-    @property
-    def attendance(self) -> list[Email] | None:
-        "List of emails of attendees"
-        return self._attendance
-
-    @property
-    def date_human(self) -> str:
-        if self.date:
-            return datetime.fromtimestamp(self.date).strftime("%d.%m.%y %H:%M")
-        else:
-            return "--.--.---- --:--"
-
+    @computed_field
     @property
     def duration_human(self) -> str:
         if self.duration:
@@ -146,95 +123,14 @@ class Meeting:
     def _check_for_announce(self):
         if self.status != MeetingStatus.CREATED:
             raise ValueError("Cannot Announce Meeting: it is not in CREATED status")
-        if self.date is None:
+        if self.datetime_ is None:
             raise ValueError("Cannot Announce Meeting: date is not set")
-        if self.date < int(datetime.now().timestamp()):
+        if self.datetime_ <= datetime.now():
             raise ValueError("Cannot Announce Meeting: date is in the past")
-        if self.tutor is None:
+        if self.tutor_id is None:
             raise ValueError("Cannot Announce Meeting: tutor is not set")
 
 
-class Tutor:
-    id: int
-    "ID in Database"
-    tg_id: int
-    "Telegram ID"
-
-    _username: str | None = None
-    "Telegram username"
-    first_name: str | None = None
-    "Telegram first name"
-    last_name: str | None = None
-    "Telegram last name"
-
-    def __repr__(self) -> str:
-        return f"Tutor(id={self.id}, tg_id={self.tg_id}, username={self.username}, ...)"
-
-    def __init__(
-        self,
-        id: int,
-        tg_id: int,
-        username: str | None = None,
-        first_name: str | None = None,
-        last_name: str | None = None,
-    ):
-        self.id = id
-        self.tg_id = tg_id
-        self.username = username
-        self.first_name = first_name
-        self.last_name = last_name
-
-    @property
-    def username(self) -> str | None:
-        return self._username
-
-    @username.setter
-    def username(self, value: str | None):
-        if value:
-            self._username = value.lstrip("@")
-        else:
-            self._username = None
-
-    @property
-    def full_name(self) -> str:
-        name_parts = [self.first_name, self.last_name]
-        return " ".join(part for part in name_parts if part)
-
-
-class TutorProfile:
-    id: int
-    "ID in database, same as Tutor.id"
-    full_name: str
-    "Real name"
-    _username: str | None
-    "Telegram username (without @)"
-    discipline: str
-    "Teaching discipline"
-    photo_id: str | None
-    "Telegram ID of profile photo"
-    about: str | None
-    "Description by him/herself"
-
-    def __repr__(self) -> str:
-        return f"TutorProfile(id={self.id}, full_name={self.full_name}, ...)"
-
-    def __init__(
-        self, id: int, full_name: str, username: str | None, discipline: str, photo_id: str | None, about: str | None
-    ):
-        self.id = id
-        self.full_name = full_name
-        self.username = username
-        self.discipline = discipline
-        self.photo_id = photo_id
-        self.about = about
-
-    @property
-    def username(self) -> str | None:
-        return self._username
-
-    @username.setter
-    def username(self, value: str | None):
-        if value:
-            self._username = value.lstrip("@")
-        else:
-            self._username = None
+class Attendance(BaseModel):
+    meeting_id: int
+    emails: list[EmailStr] = []

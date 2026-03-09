@@ -1,8 +1,9 @@
 from aiogram_dialog import Window
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Button, Cancel, Row, SwitchTo
+from aiogram_dialog.widgets.kbd import Button, Cancel, Row, Start, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
+from src.bot.dialogs.tutors_profile import TutorProfileStates
 from src.bot.filters import *
 from src.domain.models import *
 
@@ -27,8 +28,9 @@ info_ww = Window(
     Format("Tutor [{id}] Info"),
     Format("{full_name}"),
     Format("@{username}"),
-    Format("telegram id: <code>{tg_id}</code>"),
+    Format("telegram id: <code>{telegram_id}</code>"),
     Button(Const("Dismiss"), id="rm_tutor", on_click=on_remove_tutor),
+    Start(Const("Profile"), id="open_profile", state=TutorProfileStates.profile, when="profile_set"),
     Row(SwitchTo(Const("Back"), id="to_list", state=TutorsStates.list), BLANK_BUTTON),
     state=TutorsStates.info,
     getter=tutor_info_getter,

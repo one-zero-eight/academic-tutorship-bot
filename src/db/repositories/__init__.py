@@ -1,12 +1,13 @@
 from src.config import settings
-from src.domain.repositories import MeetingsRepository, TutorProfilesRepository, TutorsRepository
 
-from .sql import SQLDatabase, SQLMeetingsRepository, SQLTutorProfilesRepository, SQLTutorsRepository
+from .discipline import DisciplineRepository
+from .meeting import MeetingRepository
+from .sql import SQLDatabase
+from .student import StudentRepository
+from .tutor import TutorRepository
 
-if conn_string := settings.db_conn_string:
-    db = SQLDatabase(conn_string)
-    tutor_profiles_repo: TutorProfilesRepository = SQLTutorProfilesRepository(db)
-    tutors_repo: TutorsRepository = SQLTutorsRepository(db)
-    meetings_repo: MeetingsRepository = SQLMeetingsRepository(db)
-else:
-    raise ImportError("Database Connection String (db_conn_string) is not set in ./settings.yaml")
+db = SQLDatabase(settings.db_url.get_secret_value())
+student_repo = StudentRepository(db)
+tutor_repo = TutorRepository(db)
+meeting_repo = MeetingRepository(db)
+discipline_repo = DisciplineRepository(db)

@@ -1,10 +1,9 @@
 from aiogram_dialog import DialogManager
 
 from src.bot.dialog_extension import extend_dialog
-from src.bot.dto import *
-from src.bot.filters import *
 from src.bot.utils import *
-from src.db.repositories import meetings_repo
+from src.db.repositories import meeting_repo, tutor_repo
+from src.domain.models import MeetingStatus
 
 
 async def meetings_type_getter(dialog_manager: DialogManager, **kwargs):
@@ -12,22 +11,7 @@ async def meetings_type_getter(dialog_manager: DialogManager, **kwargs):
 
 
 async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
-    manager = extend_dialog(dialog_manager)
-
-    # NOTE: the meetings list is dependent on user status
-    #       as the meetings are used by admins and tutors
-    #       tutors can only see and work on meetings that
-    #       are assigned to them
-    user_status: UserStatus | None = await manager.state.get_value("status")
-    if not user_status:
-        raise ValueError("No status")
-
-    meeting_statuses = {MeetingStatus.ANNOUNCED, MeetingStatus.CONDUCTING, MeetingStatus.FINISHED}
-
-    meetings = []
-    for status in meeting_statuses:
-        meetings.extend(await meetings_repo.list(status=status))
-
+    meetings = await meeting_repo.list_((MeetingStatus.ANNOUNCED, MeetingStatus.FINISHED))
     return {
         "meetings": meetings,
     }
@@ -36,18 +20,23 @@ async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
 async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
     manager = extend_dialog(dialog_manager)
     meeting = await manager.state.get_meeting()
-
+    attendance = None
+    if await meeting_repo.has_attendance(meeting.id):
+        attendance = await meeting_repo.get_attendance(meeting.id)
+    tutor = None
+    if meeting.tutor_id:
+        tutor = await tutor_repo.get(id=meeting.tutor_id)
     data = await user_status_getter(manager, **kwargs)
     data.update(
         {
             "title": meeting.title,
             "description": meeting.description,
             "status": meeting.status,
-            "date": meeting.date_human,
+            "date": meeting.datetime_,
             "duration": meeting.duration_human,
-            "room": meeting.room if meeting.room else "---",
-            "attendance_count": len(meeting.attendance) if meeting.attendance else None,
-            "tutor_username": meeting.tutor.username if meeting.tutor else None,
+            "room": meeting.room,
+            "attendance": attendance.emails if attendance else None,
+            "tutor": tutor,
         }  # type: ignore
     )
     return data

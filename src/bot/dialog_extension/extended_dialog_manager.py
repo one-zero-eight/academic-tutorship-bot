@@ -2,8 +2,6 @@ from aiogram import Bot
 from aiogram.types import Chat, Message
 from aiogram_dialog import DialogManager, ShowMode
 
-from src.bot.dto import *
-
 from .dialog_wrapper import DialogManagerWrapper
 from .extended_fsm_context import ExtendedFSMContext, extend_fsm_context
 

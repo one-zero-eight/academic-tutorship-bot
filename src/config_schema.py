@@ -36,6 +36,8 @@ class Settings(SettingBaseModel):
     "Redis URL"
     bot_token: SecretStr
     "Telegram bot token from @BotFather"
+    notification_bot_token: SecretStr
+    "Telegram notification bot token from @BotFather"
     bot_name: str | None = None
     "Desired bot name"
     bot_description: str | None = None
@@ -50,7 +52,12 @@ class Settings(SettingBaseModel):
     "Use production InNoHassle Accounts API for authentication in local development"
     telegram_bind_url: str | None = None
     "URL for binding Telegram to InNoHassle Account"
-    db_conn_string: str | None = None
+    db_url: SecretStr = Field(
+        examples=[
+            "postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/postgres",
+            "postgresql+asyncpg://postgres:postgres@db:5432/postgres",
+        ],
+    )
     "Connection String for SQLAlchemy"
     run_support_daemon: bool = False
     "Whether to run the support daemon (for debugging)"
