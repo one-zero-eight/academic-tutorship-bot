@@ -29,7 +29,7 @@ async def add_tutor_from_shared_user(message: Message, manager: DialogManager):
         raise NoSharedUserUsername()
     if await tutor_repo.exists(telegram_id=shared_user.user_id):
         raise UserAlreadyTutor()
-    if not (await student_repo.exists(shared_user.user_id)):
+    if not (await student_repo.exists(telegram_id=shared_user.user_id)):
         raise ValueError("User is not authorized in the bot")
     student = await student_repo.get(shared_user.user_id)
     tutor = await tutor_repo.create(student.id)

@@ -49,8 +49,10 @@ class TutorRepository(Repository):
             await conn.execute(stmt)
 
     async def exists(self, telegram_id: int) -> bool:
-        stmt = select(exists().select_from(tutor.join(student, tutor.c.id == student.c.id))).where(
-            student.c.telegram_id == telegram_id
+        stmt = select(
+            exists()
+            .select_from(tutor.join(student, tutor.c.id == student.c.id))
+            .where(student.c.telegram_id == telegram_id)
         )
         async with self._db.engine.connect() as conn:
             result = await conn.execute(stmt)

@@ -2,7 +2,9 @@ from typing import Any
 
 from aiogram.filters import Filter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import TelegramObject, User
+from aiogram.types import Message, TelegramObject, User
+from email_validator import validate_email
+from email_validator.exceptions import EmailNotValidError
 
 from src.config import settings
 from src.domain.models import UserStatus
@@ -37,4 +39,16 @@ class StatusFilter(Filter):
         return False
 
 
+class EmailEnteredFilter(Filter):
+    async def __call__(self, event: TelegramObject, event_from_user, state) -> bool | dict[str, Any]:
+        try:
+            if isinstance(event, Message) and event.text:
+                validate_email(event.text)
+                return True
+        except EmailNotValidError:
+            pass
+        return False
+
+
 USER_AUTHENTICATED_FILTER = UserAuthenticatedFilter()
+EMAIL_ENTERED_FILTER = EmailEnteredFilter()

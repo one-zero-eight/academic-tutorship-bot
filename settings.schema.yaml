@@ -145,6 +145,12 @@ properties:
     description: Whether to run the support daemon (for debugging)
     title: Run Support Daemon
     type: boolean
+  mock_auth:
+    default: false
+    description: Use MockAutoAuthMiddleware to bypass Authentication via InNoHassle
+      Accounts (for testing)
+    title: Mock Auth
+    type: boolean
 required:
 - bot_token
 - notification_bot_token

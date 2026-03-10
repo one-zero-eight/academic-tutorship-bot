@@ -6,7 +6,7 @@ from aiogram_dialog import DialogManager, StartMode
 
 from src.accounts_sdk import inh_accounts
 from src.bot.exceptions import UnauthenticatedException
-from src.bot.filters import StatusFilter
+from src.bot.filters import EMAIL_ENTERED_FILTER, USER_AUTHENTICATED_FILTER, StatusFilter
 from src.bot.routers.admin import AdminStates
 from src.bot.routers.authentication import AuthStates
 from src.bot.routers.student import StudentStates
@@ -31,8 +31,16 @@ async def on_start(
 ):
     if authenticated:
         return await dialog_manager.start(MATCHING_START_STATE[status], mode=StartMode.RESET_STACK)
-    else:
-        return await dialog_manager.start(AuthStates.bind_tg_inh, mode=StartMode.RESET_STACK)
+    if settings.mock_auth:
+        # NOTE: Do nothing if using mock_auth, MockAutoAuthMiddleware handles everything
+        return
+    return await dialog_manager.start(AuthStates.bind_tg_inh, mode=StartMode.RESET_STACK)
+
+
+@router.message(~USER_AUTHENTICATED_FILTER, EMAIL_ENTERED_FILTER)
+async def on_email(message: types.Message, state: FSMContext):
+    # NOTE: needed just for MockAutoAuthMiddleware to work
+    pass
 
 
 @router.message(Command("admin"), StatusFilter(US.admin))

@@ -20,7 +20,6 @@ from src.bot.utils import check_commands_equality
 from src.config import settings
 from src.db.repositories import db
 from src.scheduling.scheduler import scheduler
-from src.support_daemon.server import support_daemon
 
 _time1 = perf_counter()
 
@@ -35,8 +34,16 @@ if settings.redis_url:
 else:
     storage = MemoryStorage()
     logger.info("Using Memory storage")
+
 dp = CustomDispatcher(storage=storage)
+
 auto_auth_middleware = AutoAuthMiddleware()
+if settings.mock_auth:
+    # Using mock authentication to bypass InNoHassle Accounts (for testing)
+    from src.bot.middlewares import MockAutoAuthMiddleware
+
+    auto_auth_middleware = MockAutoAuthMiddleware()
+
 dp.message.middleware(auto_auth_middleware)
 dp.callback_query.middleware(auto_auth_middleware)
 dp.error.middleware(auto_auth_middleware)
@@ -119,6 +126,8 @@ async def on_startup():
     logger.info("Starting Scheduler...")
     scheduler.start()
     if settings.run_support_daemon:
+        from src.support_daemon.server import support_daemon
+
         logger.info("Starting Support Daemon...")
         support_daemon.start()
 
@@ -129,6 +138,8 @@ async def on_shutdown():
     logger.info("Shutting down Scheduler...")
     scheduler.shutdown()
     if settings.run_support_daemon:
+        from src.support_daemon.server import support_daemon
+
         logger.info("Shutting down Support Daemon...")
         support_daemon.stop()
     logger.info("Disposing Repository...")

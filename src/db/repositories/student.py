@@ -48,8 +48,17 @@ class StudentRepository(Repository):
             await conn.execute(insert_settings_stmt)
         return await self.get(telegram_id)
 
-    async def exists(self, telegram_id: int) -> bool:
-        stmt = select(exists().where(student.c.telegram_id == telegram_id))
+    async def exists(self, *, telegram_id: int | None = None, email_: str | None = None) -> bool:
+        if telegram_id:
+            stmt = select(exists().where(student.c.telegram_id == telegram_id))
+        elif email_:
+            stmt = select(
+                exists()
+                .select_from(student.join(email, email.c.id == student.c.email_id))
+                .where(email.c.value == email_)
+            )
+        else:
+            raise ValueError("Both telegram_id and email_ are None")
         async with self._db.engine.connect() as conn:
             result = await conn.execute(stmt)
             return bool(result.scalar())
@@ -77,6 +86,16 @@ class StudentRepository(Repository):
         stmt = delete(student).where(student.c.id == id)
         async with self._db.engine.begin() as conn:
             await conn.execute(stmt)
+
+    async def is_admin(self, telegram_id: int):
+        stmt = select(
+            exists()
+            .select_from(admin.join(student, admin.c.id == student.c.id))
+            .where(student.c.telegram_id == telegram_id)
+        )
+        async with self._db.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            return bool(result.scalar())
 
     def _row_to_student(self, row: Row) -> Student:
         return Student(

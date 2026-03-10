@@ -5,10 +5,12 @@ import os
 from collections.abc import Awaitable, Callable
 from typing import Any
 
-from aiogram import BaseMiddleware
+from aiogram import BaseMiddleware, Bot
 from aiogram.dispatcher.event.handler import HandlerObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Chat, Message, TelegramObject
+from email_validator import validate_email
+from email_validator.exceptions import EmailNotValidError
 
 from src.accounts_sdk import inh_accounts
 from src.bot.exceptions import UnauthenticatedException
@@ -98,11 +100,11 @@ class AutoAuthMiddleware(LogAllEventsMiddleware):
         event: TelegramObject,
         data: dict[str, Any],
     ) -> Any:
-        data["authenticated"] = await self._update_authenticated(data)
-        data["status"] = await self._update_status(data)
+        data["authenticated"] = await self._update_authenticated(event, data)
+        data["status"] = await self._update_status(event, data)
         return await super().__call__(handler, event, data)
 
-    async def _update_authenticated(self, data: dict[str, Any]) -> bool:
+    async def _update_authenticated(self, event: TelegramObject, data: dict[str, Any]) -> bool:
         (was_auth, become_auth) = (False, False)  # for _log_authenticated()
         state: FSMContext = data["state"]
         chat: Chat = data["event_chat"]
@@ -114,7 +116,7 @@ class AutoAuthMiddleware(LogAllEventsMiddleware):
                 authenticated = become_auth = True
                 assert (tg := user.telegram_info)
                 assert (inno := user.innopolis_info)
-                if not await student_repo.exists(tg.id):
+                if not await student_repo.exists(telegram_id=tg.id):
                     await student_repo.create(
                         telegram_id=tg.id,
                         first_name=tg.first_name,
@@ -134,18 +136,17 @@ class AutoAuthMiddleware(LogAllEventsMiddleware):
         else:
             return logger.info(f"[{chat.id}] failed to auto authenticate")
 
-    async def _update_status(self, data: dict[str, Any]) -> UserStatus:
+    async def _update_status(self, event: TelegramObject, data: dict[str, Any]) -> UserStatus:
         state: FSMContext = data["state"]
         chat: Chat = data["event_chat"]
 
-        student = await student_repo.get(chat.id)
         if await tutor_repo.exists(chat.id):
             status = UserStatus.tutor
             self_tutor = await tutor_repo.get(telegram_id=chat.id)
             await state.update_data({"self_tutor": self_tutor.model_dump()})
         else:
             status = UserStatus.student
-        if student.is_admin:
+        if await student_repo.is_admin(chat.id):
             status = UserStatus.admin
         await state.update_data({"status": status})
         return status
@@ -164,3 +165,48 @@ class AuthGuardMiddleware(BaseMiddleware):
             logger.info(f"[{chat.id}] un authenticated")
             raise UnauthenticatedException
         return await handler(event, data)
+
+
+class MockAutoAuthMiddleware(AutoAuthMiddleware):
+    async def _update_authenticated(self, event: TelegramObject, data: dict[str, Any]) -> bool:
+        (was_auth, become_auth) = (False, False)  # for _log_authenticated()
+        state: FSMContext = data["state"]
+        chat: Chat = data["event_chat"]
+        bot: Bot = data["bot"]
+        # authenticated = was_auth = await state.get_value("authenticated", False)
+        authenticated = False
+        if not authenticated:
+            if await student_repo.exists(telegram_id=chat.id):
+                authenticated = True
+            else:
+                if isinstance(event, Message) and self.__entered_innopolis_email(event):
+                    assert (email := event.text)
+                    if await student_repo.exists(email_=email):
+                        await bot.send_message(chat.id, "Student with this email already authenticated, enter another")
+                    else:
+                        await student_repo.create(
+                            telegram_id=chat.id,
+                            first_name=chat.first_name,
+                            last_name=chat.last_name,
+                            username=chat.username,
+                            email_=email,
+                        )
+                        authenticated = become_auth = True
+                else:
+                    await bot.send_message(chat.id, "Enter your innopolis email to authenticate")
+            await state.update_data({"authenticated": authenticated})
+        self._log_authenticated(chat, was_auth, become_auth)
+        if become_auth:
+            await bot.send_message(chat.id, "Authenticated succescfully, now use /start again")
+        return authenticated
+
+    def __entered_innopolis_email(self, event: Message) -> bool:
+        VALID_DOMAINS = ["innopolis.university", "innopolis.ru"]
+        if event.text:
+            try:
+                email = validate_email(event.text)
+                if email.domain in VALID_DOMAINS:
+                    return True
+            except EmailNotValidError:
+                return False
+        return False
