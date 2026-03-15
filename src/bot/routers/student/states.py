@@ -5,3 +5,4 @@ class StudentStates(StatesGroup):
     start = State("start")
     meetings_list = State("meetings_list")
     settings = State("settings")
+    settings_disciplines = State("settings_disciplines")

@@ -4,10 +4,11 @@ from sqlalchemy import (
     exists,
     insert,
     select,
+    update,
 )
 
-from src.db.schema import admin, email, settings, student
-from src.domain.models import Settings, Student
+from src.db.schema import admin, discipline, email, settings, student, student_discipline
+from src.domain.models import Discipline, Settings, Student
 
 from .sql import Repository
 
@@ -97,6 +98,49 @@ class StudentRepository(Repository):
             result = await conn.execute(stmt)
             return bool(result.scalar())
 
+    async def get_relevant_disciplines(self, telegram_id: int):
+        student_id = await self.get_student_id(telegram_id)
+        stmt = (
+            select(discipline)
+            .select_from(discipline.join(student_discipline, discipline.c.id == student_discipline.c.discipline_id))
+            .where(student_discipline.c.student_id == student_id)
+        )
+        async with self._db.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            return [self._row_to_discipline(row) for row in result.all()]
+
+    async def set_relevant_disciplines(self, telegram_id: int, discipline_ids: list[int]):
+        """Clears and sets new relevant disciplines"""
+        student_id = await self.get_student_id(telegram_id)
+        delete_old_stmt = delete(student_discipline).where(student_discipline.c.student_id == student_id)
+        insert_new_stmt = insert(student_discipline).values(
+            [{"student_id": student_id, "discipline_id": d_id} for d_id in discipline_ids]
+        )
+        async with self._db.engine.begin() as conn:
+            await conn.execute(delete_old_stmt)
+            await conn.execute(insert_new_stmt)
+
+    async def get_student_id(self, telegram_id: int) -> int:
+        stmt = select(student.c.id).select_from(student).where(student.c.telegram_id == telegram_id)
+        async with self._db.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            return result.scalar_one()
+
+    async def update(self, student_: Student, attrs: list[str] | None = None):
+        """Update student in database.
+
+        - Updates STUDENT and SETTINGS tables
+        - You may specify which `attrs` to update (to optimize query), otherwise updates all
+        """
+        student_changed, settings_changed = self.__get_what_changed(student_, attrs)
+        student_stmt = update(student).where(student.c.id == student_.id).values(**student_changed)
+        settings_stmt = update(settings).where(settings.c.id == student_.id).values(**settings_changed)
+        async with self._db.engine.begin() as conn:
+            if student_changed:
+                await conn.execute(student_stmt)
+            if settings_changed:
+                await conn.execute(settings_stmt)
+
     def _row_to_student(self, row: Row) -> Student:
         return Student(
             id=row.id,
@@ -108,3 +152,18 @@ class StudentRepository(Repository):
             is_admin=row.is_admin,
             settings=Settings(receive_notifications=row.receive_notifications),
         )
+
+    def _row_to_discipline(self, row: Row) -> Discipline:
+        return Discipline(id=row.id, name=row.name, year=row.year, language=row.language)
+
+    def __get_what_changed(self, student_: Student, attrs: list[str] | None = None) -> tuple[dict, dict]:
+        student_data = student_.model_dump()
+        del student_data["settings"]
+        settings_data = student_.settings.model_dump()
+        if attrs:
+            student_changed = {key: student_data[key] for key in attrs if key in student_data}
+            settings_changed = {key: settings_data[key] for key in attrs if key in settings_data}
+        else:
+            student_changed = student_data
+            settings_changed = settings_data
+        return (student_changed, settings_changed)

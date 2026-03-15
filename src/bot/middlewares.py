@@ -13,6 +13,7 @@ from email_validator import validate_email
 from email_validator.exceptions import EmailNotValidError
 
 from src.accounts_sdk import inh_accounts
+from src.bot.dialog_extension.extended_fsm_context import extend_fsm_context
 from src.bot.exceptions import UnauthenticatedException
 from src.bot.filters import UserStatus
 from src.bot.logging_ import logger
@@ -106,7 +107,7 @@ class AutoAuthMiddleware(LogAllEventsMiddleware):
 
     async def _update_authenticated(self, event: TelegramObject, data: dict[str, Any]) -> bool:
         (was_auth, become_auth) = (False, False)  # for _log_authenticated()
-        state: FSMContext = data["state"]
+        state: FSMContext = extend_fsm_context(data["state"])
         chat: Chat = data["event_chat"]
         # authenticated = was_auth = await state.get_value("authenticated", False)
         authenticated = False
@@ -117,13 +118,16 @@ class AutoAuthMiddleware(LogAllEventsMiddleware):
                 assert (tg := user.telegram_info)
                 assert (inno := user.innopolis_info)
                 if not await student_repo.exists(telegram_id=tg.id):
-                    await student_repo.create(
+                    self_student = await student_repo.create(
                         telegram_id=tg.id,
                         first_name=tg.first_name,
                         last_name=tg.last_name,
                         username=tg.username,
                         email_=inno.email,
                     )
+                else:
+                    self_student = await student_repo.get(telegram_id=tg.id)
+                await state.set_self_student(self_student)
             await state.update_data({"authenticated": authenticated})
         self._log_authenticated(chat, was_auth, become_auth)
         return authenticated
@@ -170,7 +174,7 @@ class AuthGuardMiddleware(BaseMiddleware):
 class MockAutoAuthMiddleware(AutoAuthMiddleware):
     async def _update_authenticated(self, event: TelegramObject, data: dict[str, Any]) -> bool:
         (was_auth, become_auth) = (False, False)  # for _log_authenticated()
-        state: FSMContext = data["state"]
+        state: FSMContext = extend_fsm_context(data["state"])
         chat: Chat = data["event_chat"]
         bot: Bot = data["bot"]
         # authenticated = was_auth = await state.get_value("authenticated", False)
@@ -178,13 +182,15 @@ class MockAutoAuthMiddleware(AutoAuthMiddleware):
         if not authenticated:
             if await student_repo.exists(telegram_id=chat.id):
                 authenticated = True
+                self_student = await student_repo.get(telegram_id=chat.id)
+                await state.set_self_student(self_student)
             else:
                 if isinstance(event, Message) and self.__entered_innopolis_email(event):
                     assert (email := event.text)
                     if await student_repo.exists(email_=email):
                         await bot.send_message(chat.id, "Student with this email already authenticated, enter another")
                     else:
-                        await student_repo.create(
+                        self_student = await student_repo.create(
                             telegram_id=chat.id,
                             first_name=chat.first_name,
                             last_name=chat.last_name,
@@ -192,6 +198,7 @@ class MockAutoAuthMiddleware(AutoAuthMiddleware):
                             email_=email,
                         )
                         authenticated = become_auth = True
+                        await state.set_self_student(self_student)
                 else:
                     await bot.send_message(chat.id, "Enter your innopolis email to authenticate")
             await state.update_data({"authenticated": authenticated})

@@ -72,7 +72,7 @@ set_about_text_ww = Window(
 
 select_disciplines_ww = Window(
     Const("Selected Disciplines"),
-    List(Format("({item[language]} {item[year]}y.) {item[name]}"), items="selected_disciplines"),
+    List(Format("- [{item[language]} {item[year]}y] {item[name]}"), items="selected_disciplines"),
     Start(
         Const("Choose other"),
         id="start_select_disciplines",

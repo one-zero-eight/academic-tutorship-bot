@@ -16,6 +16,7 @@ from aiogram.types import (
 )
 from aiogram_dialog import DialogManager
 from aiogram_dialog.widgets.kbd import Button
+from aiogram_dialog.widgets.text import Const
 from email_validator import EmailNotValidError, validate_email
 from pydantic import TypeAdapter
 
@@ -25,6 +26,9 @@ from src.config import settings
 from src.domain.models import Meeting, UserStatus
 
 commands_type_adapter = TypeAdapter(list[BotCommand])
+
+
+BLANK_BTN = Button(Const(" "), id="blank")
 
 
 def check_commands_equality(x: list[BotCommand], y: list[BotCommand]) -> bool:

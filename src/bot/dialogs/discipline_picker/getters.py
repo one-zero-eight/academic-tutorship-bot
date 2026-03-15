@@ -47,3 +47,9 @@ async def disciplines_multi_getter(dialog_manager: DialogManager, **kwargs):
         status = "✅" if disc.id in selected_ids else "⏺️"
         disciplines_multi.append((id, disc, status))
     return {"disciplines_multi": disciplines_multi}
+
+
+async def selected_disciplines_getter(dialog_manager: DialogManager, **kwargs):
+    manager = extend_dialog(dialog_manager)
+    selected_disciplines = await manager.state.get_value("selected_disciplines", [])
+    return {"selected_disciplines": selected_disciplines}

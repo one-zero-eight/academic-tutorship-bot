@@ -33,8 +33,8 @@ class ExtendedDialogManager(DialogManagerWrapper):
             print(f"clear_messages could not delete {len(to_delete_list)} messages, {e}")
         await self.state.set_to_delete_list([])
 
-    async def switch_to_current(self, show_mode: ShowMode):
-        return await self.switch_to(self.current_context().state, show_mode=ShowMode.DELETE_AND_SEND)
+    async def switch_to_current(self, show_mode: ShowMode = ShowMode.AUTO):
+        return await self.switch_to(self.current_context().state, show_mode=show_mode)
 
     async def answer_and_track(self, text: str, **kwargs):
         to_delete = await self.bot.send_message(chat_id=self.chat.id, text=text, **kwargs)
