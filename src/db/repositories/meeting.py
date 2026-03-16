@@ -10,7 +10,7 @@ from sqlalchemy import (
     update,
 )
 
-from src.db.schema import admin, attendance, discipline, email, meeting, student
+from src.db.schema import admin, attendance, discipline, email, meeting, student, student_discipline
 from src.domain.models import Discipline, Meeting, MeetingStatus
 
 from .sql import Repository
@@ -138,6 +138,14 @@ class MeetingRepository(Repository):
         stmt = delete(meeting).where(meeting.c.id == id)
         async with self._db.engine.begin() as conn:
             await conn.execute(stmt)
+
+    async def get_interested_student_ids(self, id: int) -> list[int]:
+        sd = student_discipline
+        discipline_id = (await self.get(id)).discipline.id
+        stmt = select(sd.c.student_id).where(sd.c.dicipline_id == discipline_id)
+        async with self._db.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            return [row.student_id for row in result.all()]
 
     def _row_to_meeting(self, row: Row) -> Meeting:
         return Meeting(

@@ -141,6 +141,12 @@ class StudentRepository(Repository):
             if settings_changed:
                 await conn.execute(settings_stmt)
 
+    async def get_telegram_ids(self, student_ids: list[int]) -> list[int]:
+        stmt = select(student.c.telegram_id).where(student.c.id.in_(student_ids))
+        async with self._db.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            return [row.telegram_id for row in result.all()]
+
     def _row_to_student(self, row: Row) -> Student:
         return Student(
             id=row.id,
