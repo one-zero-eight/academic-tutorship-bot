@@ -19,6 +19,7 @@ from src.bot.middlewares import AutoAuthMiddleware
 from src.bot.utils import check_commands_equality
 from src.config import settings
 from src.db.repositories import db
+from src.notifications import notification_manager
 from src.scheduling.scheduler import scheduler
 
 _time1 = perf_counter()
@@ -123,6 +124,9 @@ async def on_startup():
         logger.info(f"Bot commands updated. Success: {_}.")
     logger.info(f"Bot started https://t.me/{existing_bot['username']} in {perf_counter() - _time1:.2f} sec.")
 
+    # Set bot username for notifications
+    notification_manager.set_main_bot_username(existing_bot["username"])
+
     logger.info("Starting Scheduler...")
     scheduler.start()
     if settings.run_support_daemon:
@@ -131,10 +135,15 @@ async def on_startup():
         logger.info("Starting Support Daemon...")
         support_daemon.start()
 
+    logger.info("Sending startup notification...")
+    await notification_manager.send_bot_started()
+
 
 @dp.shutdown()
 async def on_shutdown():
     logger.info("Bot shutting down...")
+    logger.info("Sending shutdown notification...")
+    await notification_manager.send_bot_shutdown()
     logger.info("Shutting down Scheduler...")
     scheduler.shutdown()
     if settings.run_support_daemon:
@@ -155,3 +164,4 @@ async def main():
     finally:
         await dp.storage.close()
         await bot.session.close()
+        await notification_manager._bot.session.close()

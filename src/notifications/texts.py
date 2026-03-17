@@ -1,3 +1,11 @@
+BOT_STARTED = """
+<a href="{link}">Academic Tutorship Bot</a> has been started 🚀
+"""
+
+BOT_SHUTDOWN = """
+<a href="{link}">Academic Tutorship Bot</a> has been shut down 💤
+"""
+
 MEETING_UPDATED_ROOM = """
 Changed room for meeting {title}
 - New room: {room}
@@ -84,9 +92,44 @@ Reminder: Meeting '{title}' is upcoming!
 - Room: {room}
 """
 
-# TODO:
-# - Meeting Announced
-# - Meeting Started (for everyone)
-# - Meeting Finished (for everyone)
-#     - for tutors, reminder to send the attendance file (with link?)
-# - Meeting Closed (for admins)
+MEETING_ANNOUNCED = """
+New meeting upcoming!
+"{title}"
+- Date & time: {datetime}
+- Room: {room}
+- Tutor: @{username}
+
+🔗 <a href="{link}">Click to see the details</a>
+"""
+
+MEETING_STARTED = """
+Meeting has started!
+"{title}"
+- Room: {room}
+- Tutor: @{username}
+
+🔗 <a href="{link}">Click to see the details</a>
+"""
+
+MEETING_FINISHED = """
+Meeting has finished!
+"{title}"
+
+‼️ Remember to upload the attendance file
+
+🔗 <a href="{link}">Click to see the details</a>
+"""
+
+MEETING_CLOSED_FOR_ADMINS = """
+Meeting has been closed by the tutor.
+"{title}"
+
+👥 Attendance count: {attendance_count}
+"""
+
+MEETING_CLOSED_FOR_TUTOR = """
+Meeting has been closed by the admin.
+"{title}"
+
+👥 Attendance count: {attendance_count}
+"""
