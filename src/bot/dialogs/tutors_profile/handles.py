@@ -72,3 +72,13 @@ async def get_about_text(message: Message, _, manager: DialogManager):
 #     async with manager.state.sync_tutor() as tutor:
 #         await tutor.
 #     await manager.switch_to(state=TutorProfileStates.profile_control, show_mode=ShowMode.DELETE_AND_SEND)
+
+
+async def open_tutor_profile(query: CallbackQuery, button: Button, manager: DialogManager):
+    manager = extend_dialog(manager)
+    meeting = await manager.state.get_meeting()
+    tutor = await tutor_repo.get(id=meeting.tutor_id)
+    if tutor.profile_name is None:
+        return await query.answer("Tutor hasn't set up their profile yet", show_alert=True)
+    await manager.state.set_tutor(tutor)
+    await manager.start(state=TutorProfileStates.profile)

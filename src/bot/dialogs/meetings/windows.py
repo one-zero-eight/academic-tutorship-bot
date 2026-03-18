@@ -7,6 +7,7 @@ from src.bot.custom_widgets import MeetingInfoText
 from src.bot.dialogs.attendance.states import AttendanceStates
 from src.bot.dialogs.change_meeting.states import ChangeStates
 from src.bot.dialogs.discipline_picker.states import DisciplinePickerStates
+from src.bot.dialogs.tutors_profile.handles import open_tutor_profile
 from src.bot.dialogs.tutors_profile.states import TutorProfileStates
 from src.bot.filters import *
 
@@ -74,12 +75,11 @@ info_ww = Window(
         show_mode=ShowMode.EDIT,
         when="can_be_changed",
     ),
-    Start(
+    Button(
         Const("Tutor Profile"),
         id="to_tutor_profile",
-        state=TutorProfileStates.profile,
         when="can_see_tutor_profile",
-        on_click=load_tutor_profile,
+        on_click=open_tutor_profile,
     ),
     Start(
         Const("To Your Profile"),

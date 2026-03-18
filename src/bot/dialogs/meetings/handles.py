@@ -101,10 +101,3 @@ async def on_create_submit(query: CallbackQuery, button: Button, manager: Dialog
     await manager.state.set_meeting(meeting)
     await manager.state.update_data({"discipline": None, "title": None})
     await manager.switch_to(state=MeetingStates.info)
-
-
-async def load_tutor_profile(query: CallbackQuery, button: Button, manager: DialogManager):
-    manager = extend_dialog(manager)
-    meeting = await manager.state.get_meeting()
-    tutor = await tutor_repo.get(id=meeting.tutor_id)
-    await manager.state.set_tutor(tutor)

@@ -3,8 +3,8 @@ from aiogram_dialog.widgets.kbd import Cancel, Row, Start, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format
 
 from src.bot.custom_widgets import MeetingInfoText
-from src.bot.dialogs.meetings.handles import load_tutor_profile
 from src.bot.dialogs.tutors_profile import TutorProfileStates
+from src.bot.dialogs.tutors_profile.handles import open_tutor_profile
 from src.bot.filters import *
 
 from .dialog_buttons import *
@@ -22,12 +22,11 @@ list_ww: Window = Window(
 
 info_ww = Window(
     MeetingInfoText(),
-    Start(
+    Button(
         Const("Tutor Profile"),
         id="to_tutor_profile",
-        state=TutorProfileStates.profile,
         when="can_see_tutor_profile",
-        on_click=load_tutor_profile,
+        on_click=open_tutor_profile,
     ),
     Start(
         Const("To Your Profile"),
