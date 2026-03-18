@@ -45,13 +45,17 @@ class MeetingRepository(Repository):
 
     async def get(self, id: int) -> Meeting:
         disc = discipline
-        stmt = select(
-            meeting,
-            disc.c.id.label("d_id"),
-            disc.c.name.label("d_name"),
-            disc.c.year.label("d_year"),
-            disc.c.language.label("d_language"),
-        ).where(meeting.c.id == id)
+        stmt = (
+            select(
+                meeting,
+                disc.c.id.label("d_id"),
+                disc.c.name.label("d_name"),
+                disc.c.year.label("d_year"),
+                disc.c.language.label("d_language"),
+            )
+            .select_from(meeting.join(discipline, meeting.c.discipline_id == discipline.c.id))
+            .where(meeting.c.id == id)
+        )
         async with self._db.engine.connect() as conn:
             result = await conn.execute(stmt)
             if not (row := result.first()):
@@ -68,7 +72,7 @@ class MeetingRepository(Repository):
             disc.c.name.label("d_name"),
             disc.c.year.label("d_year"),
             disc.c.language.label("d_language"),
-        ).join(discipline)
+        ).select_from(meeting.join(discipline, meeting.c.discipline_id == discipline.c.id))
         if isinstance(status_range, MeetingStatus):
             status = status_range
             stmt = stmt.where(meeting.c.status == status.value)
