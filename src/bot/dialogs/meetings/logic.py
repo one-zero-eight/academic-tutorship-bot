@@ -1,33 +1,36 @@
-from aiogram.types import CallbackQuery, Message
-from aiogram_dialog import DialogManager
-
-from src.bot.dialog_extension import extend_dialog
-from src.bot.user_errors import NoMessageText
-from src.use_cases import meeting as meeting_use_case
+from src.db.repositories import meeting_repo, tutor_repo
+from src.domain.models import Meeting, MeetingStatus
+from src.notifications import notification_manager
+from src.scheduling.scheduling import update_meeting_schedule, wipe_meeting_schedule
 
 
-async def announce_meeting(query: CallbackQuery, manager: DialogManager):
-    manager = extend_dialog(manager)
-    async with manager.state.sync_meeting() as meeting:
-        await meeting_use_case.announce(meeting)
+async def create_meeting(title: str, discipline_id: int, creator_telegram_id: int):
+    meeting = await meeting_repo.create(
+        title=title, discipline_id=discipline_id, creator_telegram_id=creator_telegram_id
+    )
+    return meeting
 
 
-async def create_meeting_with_title(message: Message, manager: DialogManager):
-    manager = extend_dialog(manager)
-    if not message.text:
-        raise NoMessageText()
-    new_meeting = await meeting_use_case.create(message.text)
-    await manager.state.set_meeting(new_meeting)
+async def announce_meeting(meeting: Meeting):
+    if not meeting.tutor_id:
+        raise ValueError("No tutor")
+    meeting.announce()
+    await update_meeting_schedule(meeting)
+    await meeting_repo.update(meeting, ["status"])
+    tutor = await tutor_repo.get(id=meeting.tutor_id)
+    await notification_manager.send_meeting_announced(meeting, tutor)
 
 
-async def delete_meeting(query: CallbackQuery, manager: DialogManager):
-    manager = extend_dialog(manager)
-    meeting = await manager.state.get_meeting()
-    await meeting_use_case.delete(meeting)
-    await manager.state.update_data({"meeting": None})
+async def delete_meeting(meeting: Meeting):
+    await meeting_repo.remove(meeting.id)
+    await wipe_meeting_schedule(meeting)
+    if meeting.status == MeetingStatus.ANNOUNCED:
+        await notification_manager.send_meeting_cancelled(meeting)
 
 
-async def finish_meeting(manager: DialogManager):
-    manager = extend_dialog(manager)
-    async with manager.state.sync_meeting() as meeting:
-        await meeting_use_case.finish(meeting)
+async def finish_meeting(meeting: Meeting):
+    meeting.finish()
+    meeting.adjust_duration_to_now()
+    await meeting_repo.update(meeting)
+    await wipe_meeting_schedule(meeting)
+    await notification_manager.send_meeting_finished(meeting)

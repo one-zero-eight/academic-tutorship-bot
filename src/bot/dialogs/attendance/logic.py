@@ -1,35 +1,21 @@
-from aiogram.types import BufferedInputFile, InputFile, Message
-from aiogram_dialog import DialogManager
+from aiogram.types import BufferedInputFile, InputFile
 
-from src.bot.dialog_extension import extend_dialog
 from src.bot.user_errors import *
 from src.bot.utils import *
-from src.db.repositories import meeting_repo
-from src.scheduling.scheduling import *
+from src.db.repositories import meeting_repo, student_repo
+from src.domain.models import Meeting
+from src.notifications import notification_manager
 
 MAX_ATTENDANCE_FILE_SIZE = 5_242_880  # 5 MiB
 
 
-async def get_document_contents(message: Message, manager: DialogManager) -> str:
-    manager = extend_dialog(manager)
-    if not message.document:
-        raise NoDocumentError()
-    file = await manager.bot.get_file(message.document.file_id)
-    if not file.file_size:
-        raise ValueError("No file.file_size")
-    if not file.file_path:
-        raise ValueError("No file.file_path")
-    if file.file_size > MAX_ATTENDANCE_FILE_SIZE:
+def get_document_contents(file_size: int, file_bytes: bytes) -> str:
+    if file_size > MAX_ATTENDANCE_FILE_SIZE:
         raise FileTooBigError()
-    bytes = await manager.bot.download_file(file.file_path)
-    if not bytes:
-        raise ValueError("No bytes")
-    return bytes.read().decode("utf-8")
+    return file_bytes.decode("utf-8")
 
 
-async def get_attendance_file_to_download(manager: DialogManager) -> InputFile:
-    manager = extend_dialog(manager)
-    meeting = await manager.state.get_meeting()
+async def get_attendance_file_to_download(meeting: Meeting) -> InputFile:
     if not await meeting_repo.has_attendance(meeting.id):
         raise NoMeetingAttendance()
     emails = await meeting_repo.get_attendance(meeting.id)
@@ -41,9 +27,15 @@ async def get_attendance_file_to_download(manager: DialogManager) -> InputFile:
     return BufferedInputFile(file_bytes, filename=filename)
 
 
-async def add_email_to_attendance(email: str, manager: DialogManager):
-    manager = extend_dialog(manager)
-    async with manager.state.sync_meeting() as meeting:
-        if not await meeting_repo.has_attendance(meeting.id):
-            raise NoMeetingAttendance()
-        await meeting_repo.add_attendee(meeting.id, email)
+async def add_email_to_attendance(email: str, meeting: Meeting):
+    if not await meeting_repo.has_attendance(meeting.id):
+        raise NoMeetingAttendance()
+    await meeting_repo.add_attendee(meeting.id, email)
+
+
+async def meeting_close(meeting: Meeting, emails: list[str], closed_by_telegram_id: int):
+    meeting.close()
+    await meeting_repo.set_attendance(meeting.id, emails)
+    await meeting_repo.update(meeting, ["status"])
+    by_admin = await student_repo.is_admin(closed_by_telegram_id)
+    await notification_manager.send_meeting_closed(meeting, by_admin=by_admin)

@@ -24,7 +24,7 @@ async def on_meeting_selected(query: CallbackQuery, meeting, manager: DialogMana
 def open_meetings_list_of_type(type: Literal["created", "announced", "closed"]):
     """Higher order function, returns Awaitable that opens specified meetings list"""
 
-    async def open_meetings_list(query: CallbackQuery, button: Button, manager: DialogManager):
+    async def open_meetings_list(query: CallbackQuery, _, manager: DialogManager):
         manager = extend_dialog(manager)
         await manager.state.update_data({"meetings_type": type})
         await manager.switch_to(MeetingStates.list)
@@ -36,16 +36,13 @@ async def get_new_title(message: Message, _, manager: DialogManager):
     manager = extend_dialog(manager)
     await manager.clear_messages()
     await message.delete()
-    try:
-        if not message.text:
-            raise NoMessageText()
-        await manager.state.update_data({"title": message.text})
-    except NoMessageText:
+    if not message.text:
         return await manager.answer_and_retry("There is no text in your message")
+    await manager.state.update_data({"title": message.text})
     await manager.switch_to(MeetingStates.create, show_mode=ShowMode.DELETE_AND_SEND)
 
 
-async def open_announce_confirm(query: CallbackQuery, button: Button, manager: DialogManager):
+async def open_announce_confirm(query: CallbackQuery, _, manager: DialogManager):
     manager = extend_dialog(manager)
     meeting = await manager.state.get_meeting()
     try:
@@ -55,18 +52,23 @@ async def open_announce_confirm(query: CallbackQuery, button: Button, manager: D
     await manager.switch_to(state=MeetingStates.announce_confirm)
 
 
-async def on_announce_confirmed(query: CallbackQuery, button: Button, manager: DialogManager):
+async def on_announce_confirmed(query: CallbackQuery, _, manager: DialogManager):
+    manager = extend_dialog(manager)
     try:
-        await announce_meeting(query, manager)
+        async with manager.state.sync_meeting() as meeting:
+            await announce_meeting(meeting)
     except Exception as e:
         return await query.answer(f"Error: {e}", show_alert=True)
-    await query.answer("Okay, announced", show_alert=True)
+    await query.answer("Meeting announced 🚀", show_alert=True)
     await manager.switch_to(state=MeetingStates.info, show_mode=ShowMode.DELETE_AND_SEND)
 
 
-async def on_delete_confirmed(query: CallbackQuery, button: Button, manager: DialogManager):
+async def on_delete_confirmed(query: CallbackQuery, _, manager: DialogManager):
+    manager = extend_dialog(manager)
     try:
-        await delete_meeting(query, manager)
+        meeting = await manager.state.get_meeting()
+        await delete_meeting(meeting)
+        await manager.state.update_data({"meeting": None})
     except Exception as e:
         return await query.answer(f"{e}", show_alert=True)
     await query.answer("Meeting deleted", show_alert=True)
@@ -82,8 +84,10 @@ async def open_finish_confirm(query: CallbackQuery, button: Button, manager: Dia
 
 
 async def on_finish_confirmed(query: CallbackQuery, button: Button, manager: DialogManager):
+    manager = extend_dialog(manager)
     try:
-        await finish_meeting(manager)
+        async with manager.state.sync_meeting() as meeting:
+            await finish_meeting(meeting)
     except Exception as e:
         return await query.answer(f"Error: {e}", show_alert=True)
     await manager.switch_to(state=MeetingStates.info, show_mode=ShowMode.DELETE_AND_SEND)
@@ -93,9 +97,7 @@ async def on_create_submit(query: CallbackQuery, button: Button, manager: Dialog
     manager = extend_dialog(manager)
     assert (discipline_dict := await manager.state.get_value("discipline"))
     assert (title := await manager.state.get_value("title"))
-    meeting = await meeting_repo.create(
-        title=title, discipline_id=discipline_dict["id"], creator_telegram_id=manager.chat.id
-    )
+    meeting = await create_meeting(title, discipline_dict["id"], manager.chat.id)
     await manager.state.set_meeting(meeting)
     await manager.state.update_data({"discipline": None, "title": None})
     await manager.switch_to(state=MeetingStates.info)

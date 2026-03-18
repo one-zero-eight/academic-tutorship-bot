@@ -64,6 +64,7 @@ class NotificationManager:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
         await self._send_students_who_interested(meeting, exclude=sent, text=text)
 
+    # TODO: add this notification somewhere in scheduling logic
     async def send_meeting_reminder(self, meeting: Meeting):
         text = MEETING_REMINDER.format_map(meeting.model_dump())
         sent = await self._send_admins(text=text)

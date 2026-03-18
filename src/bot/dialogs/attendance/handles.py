@@ -14,17 +14,30 @@ from .logic import *
 from .states import *
 
 
+async def download_document_contents(message: Message, manager: DialogManager) -> str:
+    manager = extend_dialog(manager)
+    if not message.document:
+        raise NoDocumentError()
+    file = await manager.bot.get_file(message.document.file_id)
+    if not file.file_size:
+        raise ValueError("No file.file_size")
+    if not file.file_path:
+        raise ValueError("No file.file_path")
+    file_data = await manager.bot.download_file(file.file_path)
+    if not file_data:
+        raise ValueError("No file bytes")
+    return get_document_contents(file.file_size, file_data.read())
+
+
 async def get_attendance_file_close(message: Message, _: MessageInput, manager: DialogManager):
     manager = extend_dialog(manager)
     await manager.clear_messages()
     await message.delete()
     try:
-        contents = await get_document_contents(message, manager)
+        contents = await download_document_contents(message, manager)
         emails = parse_attendance(contents)
         async with manager.state.sync_meeting() as meeting:
-            meeting.close()
-            await meeting_repo.set_attendance(meeting.id, emails)
-            await meeting_repo.update(meeting, ["status"])
+            await meeting_close(meeting, emails, closed_by_telegram_id=message.chat.id)
     except NoDocumentError:
         return await manager.answer_and_retry("You've sent no file ‼️")
     except FileTooBigError:
@@ -39,7 +52,7 @@ async def get_attendance_file_resend(message: Message, _: MessageInput, manager:
     await manager.clear_messages()
     await message.delete()
     try:
-        contents = await get_document_contents(message, manager)
+        contents = await download_document_contents(message, manager)
         emails = parse_attendance(contents)
         async with manager.state.sync_meeting() as meeting:
             await meeting_repo.set_attendance(meeting.id, emails)
@@ -55,7 +68,8 @@ async def get_attendance_file_resend(message: Message, _: MessageInput, manager:
 async def on_download_attendance(query: CallbackQuery, button: Button, manager: DialogManager):
     manager = extend_dialog(manager)
     try:
-        input_file = await get_attendance_file_to_download(manager)
+        meeting = await manager.state.get_meeting()
+        input_file = await get_attendance_file_to_download(meeting)
         await query.answer("Sending attendance file...")
         await manager.bot.send_document(manager.chat.id, document=input_file)
     except NoMeetingAttendance:
@@ -73,7 +87,8 @@ async def get_email_to_add(message: Message, _: MessageInput, manager: DialogMan
         if not message.text:
             raise NoMessageText
         email = message.text.strip()
-        await add_email_to_attendance(email, manager)
+        async with manager.state.sync_meeting() as meeting:
+            await add_email_to_attendance(email, meeting)
     except NoMessageText:
         return await manager.answer_and_retry("There's no text in your message, enter email of a person to add")
     except NoMeetingAttendance:

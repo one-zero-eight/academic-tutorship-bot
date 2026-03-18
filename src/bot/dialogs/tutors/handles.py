@@ -1,7 +1,5 @@
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, SharedUser
 from aiogram_dialog import DialogManager, ShowMode
-from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Button
 
 from src.bot.dialog_extension import extend_dialog
 from src.bot.user_errors import *
@@ -13,18 +11,27 @@ from .logic import *
 from .states import *
 
 
-async def on_tutor_selected(query: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
+def extract_shared_user(message: Message) -> SharedUser:
+    if not message.users_shared:
+        raise NoMessageUsersShared()
+    return message.users_shared.users[0]
+
+
+async def on_tutor_selected(query: CallbackQuery, _, manager: DialogManager, item_id: str):
     manager = extend_dialog(manager)
     tutor = await tutor_repo.get(id=int(item_id))
     await manager.state.set_tutor(tutor)
     await manager.switch_to(TutorsStates.info)
 
 
-async def on_remove_tutor(query: CallbackQuery, button: Button, manager: DialogManager):
+async def on_remove_tutor(query: CallbackQuery, _, manager: DialogManager):
     manager = extend_dialog(manager)
     try:
         tutor = await manager.state.get_tutor()
-        await remove_tutor(tutor, manager)
+        await remove_tutor(tutor)
+        await manager.state.update_data({"tutor": None})
+        await query.answer(f"@{tutor.username} is no longer a Tutor", show_alert=True)
+        await manager.switch_to(TutorsStates.list)
     except TutorStillAssigned:
         return await query.answer(
             (
@@ -35,26 +42,30 @@ async def on_remove_tutor(query: CallbackQuery, button: Button, manager: DialogM
         )
     except Exception as e:
         return await query.answer(f"Error: {e}")
-    await query.answer(f"@{tutor.username} is no longer a Tutor", show_alert=True)
-    await manager.switch_to(TutorsStates.list)
 
 
-async def open_add_tutor(query: CallbackQuery, button: Button, manager: DialogManager):
+async def open_add_tutor(query: CallbackQuery, _, manager: DialogManager):
     manager = extend_dialog(manager)
     await manager.answer_and_track(text="Click the button to choose a user 👇", reply_markup=CHOOSE_USER_KB)
 
 
-async def get_added_tutor(message: Message, _: MessageInput, manager: DialogManager):
+async def get_added_tutor(message: Message, _, manager: DialogManager):
     manager = extend_dialog(manager)
     await manager.clear_messages()
     try:
-        await add_tutor_from_shared_user(message, manager)
+        shared_user = extract_shared_user(message)
+        if shared_user.username is None:
+            raise NoSharedUserUsername()
+        tutor = await add_tutor_from_telegram_id(shared_user.user_id)
+        await manager.state.set_tutor(tutor)
+        await manager.switch_to(TutorsStates.info, show_mode=ShowMode.DELETE_AND_SEND)
     except NoMessageUsersShared:
-        await manager.answer_and_retry("You've shared no users, use the keyboard below", reply_markup=CHOOSE_USER_KB)
+        return await manager.answer_and_retry(
+            "You've shared no users, use the keyboard below", reply_markup=CHOOSE_USER_KB
+        )
     except NoSharedUserUsername:
-        await manager.answer_and_retry(text="Tutor must have a username ⚠️", reply_markup=CHOOSE_USER_KB)
+        return await manager.answer_and_retry(text="Tutor must have a username ⚠️", reply_markup=CHOOSE_USER_KB)
     except UserAlreadyTutor:
-        await manager.answer_and_retry(text="User is already a Tutor ⚠️", reply_markup=CHOOSE_USER_KB)
+        return await manager.answer_and_retry(text="User is already a Tutor ⚠️", reply_markup=CHOOSE_USER_KB)
     except Exception as e:
-        await manager.answer_and_retry(f"Unkown Error, {e}", reply_markup=CHOOSE_USER_KB)
-    await manager.switch_to(TutorsStates.info, show_mode=ShowMode.DELETE_AND_SEND)
+        return await manager.answer_and_retry(f"Unkown Error, {e}", reply_markup=CHOOSE_USER_KB)
