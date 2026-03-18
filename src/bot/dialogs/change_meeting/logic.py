@@ -12,7 +12,7 @@ MAX_ROOM_LEN = 64
 async def update_meeting_title(meeting: Meeting, title: str):
     meeting.title = title
     await meeting_repo.update(meeting, ["title"])
-    await notification_manager.send_meeting_updated(meeting, "title")
+    # NOTE: do not notify on changed title (that's irrelevant)
 
 
 async def update_meeting_date(meeting: Meeting, meeting_date: datetime):

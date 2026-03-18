@@ -6,6 +6,7 @@ from aiogram_dialog.widgets.text import Const, Format
 from src.bot.custom_widgets import MeetingInfoText
 from src.bot.dialogs.attendance.states import AttendanceStates
 from src.bot.dialogs.change_meeting.states import ChangeStates
+from src.bot.dialogs.discipline_picker.states import DisciplinePickerStates
 from src.bot.filters import *
 
 from .dialog_buttons import *
@@ -44,7 +45,7 @@ create_ww = Window(
     Const("New Meeting"),
     Format("Title: {title}"),
     Format("Discipline: {discipline_name}"),
-    # Start(Const("Choose Discipline"), id="choose_discipline", state=DisciplinePickerStates.language),
+    Start(Const("Choose Discipline"), id="choose_discipline", state=DisciplinePickerStates.language),
     Next(Const("Enter Title")),
     Button(Const("Create"), id="create_submit", on_click=on_create_submit, when="can_be_created"),
     Row(SwitchTo(Const("Back"), "to_type", MeetingStates.type), BLANK_BUTTON),

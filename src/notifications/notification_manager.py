@@ -1,7 +1,7 @@
 from aiogram import Bot
 
-from src.db.repositories import admin_repo, meeting_repo, student_repo
-from src.domain.models import Meeting, Tutor
+from src.db.repositories import admin_repo, meeting_repo, student_repo, tutor_repo
+from src.domain.models import Meeting, MeetingStatus, Tutor
 
 from .texts import *
 
@@ -24,34 +24,43 @@ class NotificationManager:
 
     async def send_meeting_tutor_assigned(self, meeting: Meeting, tutor: Tutor):
         tutor_data = tutor.model_dump()
-        meeting_data = meeting.model_dump()
-        data = {**tutor_data, **meeting_data}
+        meeting_data = meeting.model_dump(by_alias=True)
+        data = {**tutor_data, **meeting_data, "link": self._gen_meeting_link(meeting)}
         admins_text = TUTOR_ASSIGNED_FOR_ADMINS.format_map(data)
         tutor_text = TUTOR_ASSIGNED_FOR_TUTOR.format_map(data)
         sent = await self._send_admins(text=admins_text)
         await self._send_telegram_ids(tutor.telegram_id, exclude=sent, text=tutor_text)
+        # NOTE: don't notify students , they don't know the meeting yet, so they won't care
 
     async def send_meeting_tutor_changed(self, meeting: Meeting, old_tutor: Tutor, new_tutor: Tutor):
-        meeting_data = meeting.model_dump()
+        meeting_data = meeting.model_dump(by_alias=True)
         data = {**meeting_data}
         data["old_username"] = old_tutor.username
         data["new_username"] = new_tutor.username
+        data["link"] = self._gen_meeting_link(meeting)
         admins_text = TUTOR_CHANGED_FOR_ADMINS.format_map(data)
         old_tutor_text = TUTOR_CHANGED_FOR_OLD_TUTOR.format_map(data)
         new_tutor_text = TUTOR_CHANGED_FOR_NEW_TUTOR.format_map(data)
+        students_text = TUTOR_CHANGED_FOR_STUDENTS.format_map(data)
         sent = await self._send_admins(text=admins_text)
         await self._send_telegram_ids(old_tutor.telegram_id, exclude=sent, text=old_tutor_text)
         await self._send_telegram_ids(new_tutor.telegram_id, exclude=sent, text=new_tutor_text)
+        if meeting.status == MeetingStatus.ANNOUNCED:
+            # NOTE: students would only care if meeting already announced
+            await self._send_students_who_interested(meeting, exclude=sent, text=students_text)
 
     async def send_meeting_updated(self, meeting: Meeting, changed_key: str):
         text = self._format_meeting_updated_text(meeting, changed_key)
         sent = await self._send_admins(text=text)
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
-        await self._send_students_who_interested(meeting, exclude=sent, text=text)
+        if meeting.status == MeetingStatus.ANNOUNCED:
+            # NOTE: students would only care if meeting already announced
+            await self._send_students_who_interested(meeting, exclude=sent, text=text)
 
     async def send_meeting_announced(self, meeting: Meeting, tutor: Tutor):
-        data = {**meeting.model_dump(), "username": tutor.username, "link": self._gen_meeting_link(meeting)}
+        meeting_data = meeting.model_dump(by_alias=True)
+        data = {**meeting_data, "username": tutor.username, "link": self._gen_meeting_link(meeting)}
         text = MEETING_ANNOUNCED.format_map(data)
         sent = await self._send_admins(text=text)
         sent.extend(await self._send_telegram_ids(tutor.telegram_id, exclude=sent, text=text))
@@ -62,18 +71,33 @@ class NotificationManager:
         sent = await self._send_admins(text=text)
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
-        await self._send_students_who_interested(meeting, exclude=sent, text=text)
+        if meeting.status == MeetingStatus.ANNOUNCED:
+            # NOTE: students would only care if meeting already announced
+            await self._send_students_who_interested(meeting, exclude=sent, text=text)
 
     # TODO: add this notification somewhere in scheduling logic
     async def send_meeting_reminder(self, meeting: Meeting):
-        text = MEETING_REMINDER.format_map(meeting.model_dump())
+        tutor = await tutor_repo.get(id=meeting.tutor_id) if meeting.tutor_id else None
+        data = {
+            **meeting.model_dump(by_alias=True),
+            "link": self._gen_meeting_link(meeting),
+            "username": tutor.username if tutor else None,
+        }
+        text = MEETING_REMINDER.format_map(data)
         sent = await self._send_admins(text=text)
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
-        await self._send_students_who_interested(meeting, exclude=sent, text=text)
+        if meeting.status == MeetingStatus.ANNOUNCED:
+            # NOTE: students would only care if meeting already announced
+            await self._send_students_who_interested(meeting, exclude=sent, text=text)
 
     async def send_meeting_started(self, meeting: Meeting):
-        data = {**meeting.model_dump(), "link": self._gen_meeting_link(meeting)}
+        tutor = await tutor_repo.get(id=meeting.tutor_id) if meeting.tutor_id else None
+        data = {
+            **meeting.model_dump(),
+            "link": self._gen_meeting_link(meeting),
+            "username": tutor.username if tutor else None,
+        }
         text = MEETING_STARTED.format_map(data)
         sent = await self._send_admins(text=text)
         if meeting.tutor_id:
@@ -81,7 +105,13 @@ class NotificationManager:
         await self._send_students_who_interested(meeting, exclude=sent, text=text)
 
     async def send_meeting_finished(self, meeting: Meeting):
-        text = MEETING_FINISHED.format(title=meeting.title)
+        tutor = await tutor_repo.get(id=meeting.tutor_id) if meeting.tutor_id else None
+        data = {
+            "title": meeting.title,
+            "link": self._gen_meeting_link(meeting),
+            "username": tutor.username if tutor else None,
+        }
+        text = MEETING_FINISHED.format_map(data)
         sent = await self._send_admins(text=text)
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
@@ -92,10 +122,16 @@ class NotificationManager:
         assert meeting.tutor_id
         # NOTE: The meeting could be in this state only if tutor present,
         #       so the assert should never fail.
+        attendance_count = len(await meeting_repo.get_attendance(meeting.id))
+        data = {
+            "title": meeting.title,
+            "attendance_count": attendance_count,
+            "link": self._gen_meeting_link(meeting),
+        }
         if by_admin:
-            text = MEETING_CLOSED_FOR_ADMINS.format(title=meeting.title)
+            text = MEETING_CLOSED_FOR_ADMINS.format_map(data)
         else:
-            text = MEETING_CLOSED_FOR_TUTOR.format(title=meeting.title)
+            text = MEETING_CLOSED_FOR_TUTOR.format_map(data)
         sent = await self._send_admins(text=text)
         await self._send_ids(meeting.tutor_id, exclude=sent, text=text)
 
@@ -114,18 +150,12 @@ class NotificationManager:
         await self._send_telegram_ids(tutor.telegram_id, exclude=sent, text=tutor_text)
 
     def _format_meeting_updated_text(self, meeting: Meeting, changed_key: str) -> str:
-        changed_value = getattr(meeting, changed_key)
-        meeting_data = meeting.model_dump()
+        link = self._gen_meeting_link(meeting)
         if changed_key in ("datetime", "datetime_"):
-            return MEETING_UPDATED_DATETIME.format(title=meeting_data.get("title", ""), datetime=changed_value)
+            return MEETING_UPDATED_DATETIME.format(title=meeting.title, datetime=meeting.datetime_, link=link)
         elif changed_key == "room":
-            return MEETING_UPDATED_ROOM.format(title=meeting_data.get("title", ""), room=changed_value)
-        elif changed_key == "tutor":
-            return MEETING_UPDATED_TUTOR.format(
-                title=meeting_data.get("title", ""), username=meeting_data.get("tutor_username", "")
-            )
-        else:
-            return f"Meeting '{meeting_data.get('title', '')}' updated: {changed_key} -> {changed_value}"
+            return MEETING_UPDATED_ROOM.format(title=meeting.title, room=meeting.room, link=link)
+        raise ValueError(f"Unknown changed_key: {changed_key}")
 
     async def _send_students_who_interested(self, meeting: Meeting, *, exclude: list[int] = [], text: str):
         """Sends a message to all students who are interested in the meeting, excluding the provided telegram ids."""

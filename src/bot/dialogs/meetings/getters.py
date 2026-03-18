@@ -73,6 +73,7 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
         {
             "title": meeting.title,
             "description": meeting.description,
+            "discipline": meeting.discipline,
             "status": meeting.status,
             "date": meeting.datetime_,
             "duration": meeting.duration_human,

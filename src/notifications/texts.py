@@ -6,19 +6,32 @@ BOT_SHUTDOWN = """
 <a href="{link}">Academic Tutorship Bot</a> has been shut down 💤
 """
 
+MEETING_UPDATED_TITLE = """
+Changed title for meeting "{old_title}"
+- New title: "{title}"
+
+🔗 <a href="{link}">Click to see the details</a>
+"""
+
 MEETING_UPDATED_ROOM = """
-Changed room for meeting {title}
+Changed room for meeting "{title}"
 - New room: {room}
+
+🔗 <a href="{link}">Click to see the details</a>
 """
 
 MEETING_UPDATED_DATETIME = """
-Changed date for meeting {title}
+Changed date for meeting "{title}"
 - New date & time: {datetime}
+
+🔗 <a href="{link}">Click to see the details</a>
 """
 
 MEETING_UPDATED_TUTOR = """
-Changed tutor for meeting {title}
+Changed tutor for meeting "{title}"
 - New tutor: @{username}
+
+🔗 <a href="{link}">Click to see the details</a>
 """
 "Text for when new tutor is assigned to meeting, for all interested students (must be formatted)"
 
@@ -53,43 +66,59 @@ Your tutor profile won't be shown to students anymore
 
 
 TUTOR_ASSIGNED_FOR_ADMINS = """
-Tutor @{username} assigned to meeting '{title}'
+Tutor @{username} assigned to meeting "{title}"
 - Date & time: {datetime}
 - Room: {room}
+
+🔗 <a href="{link}">Click to see the details</a>
 """
 
 TUTOR_ASSIGNED_FOR_TUTOR = """
-You have been assigned to meeting '{title}'!
+You have been assigned to meeting "{title}"!
 - Date & time: {datetime}
 - Room: {room}
-Please check your schedule.
+
+🔗 <a href="{link}">Click to see the details</a>
 """
 
 TUTOR_CHANGED_FOR_ADMINS = """
-Tutor changed for meeting '{title}'
+Tutor changed for meeting "{title}"
 - Old tutor: @{old_username}
 - New tutor: @{new_username}
+
+🔗 <a href="{link}">Click to see the details</a>
 """
 
 TUTOR_CHANGED_FOR_NEW_TUTOR = """
-You have been assigned as the new tutor for meeting '{title}'.
+You have been assigned as the new tutor for meeting "{title}".
 - Date & time: {datetime}
 - Room: {room}
-Please check your schedule.
+
+🔗 <a href="{link}">Click to see the details</a>
 """
 
 TUTOR_CHANGED_FOR_OLD_TUTOR = """
-You are no longer the tutor for meeting '{title}'.
+You are no longer the tutor for meeting "{title}".
+"""
+
+TUTOR_CHANGED_FOR_STUDENTS = """
+Changed tutor for meeting "{title}"
+- New tutor: @{new_username}
+
+🔗 <a href="{link}">Click to see the details</a>
 """
 
 MEETING_CANCELLED = """
-Meeting '{title}' has been cancelled.
+Meeting "{title}" has been cancelled.
 """
 
 MEETING_REMINDER = """
-Reminder: Meeting '{title}' is upcoming!
+Reminder: Meeting "{title}" is upcoming!
 - Date & time: {datetime}
 - Room: {room}
+- Tutor: @{username}
+
+🔗 <a href="{link}">Click to see the details</a>
 """
 
 MEETING_ANNOUNCED = """
@@ -130,6 +159,7 @@ Meeting has been closed by the tutor.
 MEETING_CLOSED_FOR_TUTOR = """
 Meeting has been closed by the admin.
 "{title}"
-
 👥 Attendance count: {attendance_count}
+
+🔗 <a href="{link}">Click to see the details</a>
 """

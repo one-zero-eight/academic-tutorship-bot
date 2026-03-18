@@ -6,6 +6,7 @@ LINES = [
     "ℹ️ Meeting Information",
     "",
     "<b>{title}</b>",
+    "[{d_lang} {d_year}y] {d_name}",  # discipline info: language, year, name
     "",
     "📆 Date: <b>{date}</b>",
     "⏱️ Duration: <b>{duration}</b>",
@@ -35,6 +36,9 @@ class MeetingInfoText(Text):
         data: dict,
         manager: DialogManager,
     ) -> str:
+        data["d_lang"] = data.get("discipline", {}).language
+        data["d_year"] = data.get("discipline", {}).year
+        data["d_name"] = data.get("discipline", {}).name
         lines = []
         lines.extend(LINES)
         if self.show_admin_info:
