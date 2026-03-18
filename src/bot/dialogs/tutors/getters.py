@@ -22,4 +22,6 @@ async def tutor_info_getter(dialog_manager: DialogManager, **kwargs):
         "username": tutor.username,
         "full_name": tutor.full_name,
         "profile_set": tutor.profile_name is not None,
+        "own_tutor_profile": tutor.telegram_id == manager.chat.id,
+        "other_tutor_profile": tutor.telegram_id != manager.chat.id,
     }

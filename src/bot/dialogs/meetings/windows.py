@@ -7,6 +7,7 @@ from src.bot.custom_widgets import MeetingInfoText
 from src.bot.dialogs.attendance.states import AttendanceStates
 from src.bot.dialogs.change_meeting.states import ChangeStates
 from src.bot.dialogs.discipline_picker.states import DisciplinePickerStates
+from src.bot.dialogs.tutors_profile.states import TutorProfileStates
 from src.bot.filters import *
 
 from .dialog_buttons import *
@@ -72,6 +73,19 @@ info_ww = Window(
         state=ChangeStates.init,
         show_mode=ShowMode.EDIT,
         when="can_be_changed",
+    ),
+    Start(
+        Const("Tutor Profile"),
+        id="to_tutor_profile",
+        state=TutorProfileStates.profile,
+        when="can_see_tutor_profile",
+        on_click=load_tutor_profile,
+    ),
+    Start(
+        Const("To Your Profile"),
+        id="to_tutor_profile_control",
+        state=TutorProfileStates.profile_control,
+        when="can_see_tutor_profile_control",
     ),
     Button(Const("Announce"), id="announce_start", on_click=open_announce_confirm, when="can_be_announced"),
     Button(Const("Finish"), id="finish_start", on_click=open_finish_confirm, when="can_be_finished"),

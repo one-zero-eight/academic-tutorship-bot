@@ -86,6 +86,8 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
             "can_be_closed": is_authorized and meeting.status == MeetingStatus.FINISHED,
             "can_be_deleted": is_authorized,
             "can_see_attendance": is_authorized and meeting.status >= MeetingStatus.CLOSED,
+            "can_see_tutor_profile": bool(tutor) and not is_assigned_tutor,
+            "can_see_tutor_profile_control": is_assigned_tutor,
         }  # type: ignore
     )
     return data
