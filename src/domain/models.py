@@ -33,6 +33,7 @@ class Student(BaseModel):
     "Telegram username (without @)"
     is_admin: bool = False
 
+    @computed_field
     @property
     def full_name(self) -> str:
         name_parts = [self.first_name, self.last_name]
@@ -62,6 +63,7 @@ class Tutor(BaseModel):
     about: str | None = None
     photo: Photo | None = None
 
+    @computed_field
     @property
     def full_name(self) -> str:
         name_parts = [self.first_name, self.last_name]
