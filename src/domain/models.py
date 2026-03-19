@@ -125,6 +125,8 @@ class Meeting(BaseModel):
     def _check_for_announce(self):
         if self.status != MeetingStatus.CREATED:
             raise ValueError("Cannot Announce Meeting: it is not in CREATED status")
+        if self.room is None:
+            raise ValueError("Cannot Announce Meeting: room is not set")
         if self.datetime_ is None:
             raise ValueError("Cannot Announce Meeting: date is not set")
         if self.datetime_ <= datetime.now():
