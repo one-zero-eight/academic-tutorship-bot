@@ -34,7 +34,7 @@ class MeetingRepository(Repository):
         return await self.get(id)
 
     async def update(self, meeting_: Meeting, attrs: list[str] | None = None):
-        data = meeting_.model_dump(by_alias=True)
+        data = meeting_.model_dump(by_alias=True, exclude={"discipline", "created_at", "duration_human"})
         if attrs:
             changed = {key: data[key] for key in attrs if key in data}
         else:
