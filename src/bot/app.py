@@ -128,6 +128,8 @@ async def on_startup():
 
     logger.info("Starting Scheduler...")
     scheduler.start()
+    logger.info("Starting Notification Bot Polling...")
+    await notification_manager.start_polling()
     logger.info("Sending startup notification...")
     await notification_manager.send_bot_started()
 
@@ -137,6 +139,8 @@ async def on_shutdown():
     logger.info("Bot shutting down...")
     logger.info("Sending shutdown notification...")
     await notification_manager.send_bot_shutdown()
+    logger.info("Stopping Notification Bot Polling...")
+    await notification_manager.stop_polling()
     logger.info("Shutting down Scheduler...")
     scheduler.shutdown()
     logger.info("Disposing Repository...")

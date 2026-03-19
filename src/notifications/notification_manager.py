@@ -1,4 +1,6 @@
-from aiogram import Bot
+import asyncio
+
+from aiogram import Bot, Dispatcher
 
 from src.db.repositories import admin_repo, meeting_repo, student_repo, tutor_repo
 from src.domain.models import Meeting, MeetingStatus, Tutor
@@ -7,12 +9,28 @@ from .texts import *
 
 
 class NotificationManager:
-    def __init__(self, notification_bot: Bot):
+    def __init__(self, notification_bot: Bot, notification_dispatcher: Dispatcher):
         self._bot = notification_bot
+        self._dispatcher = notification_dispatcher
+        self._polling_task = None
 
     def set_main_bot_username(self, username: str):
         """Sets the username of the main bot, used for generating meeting links."""
         self._main_bot_username = username
+
+    async def start_polling(self):
+        """Starts the unblocking polling task for the notification bot. Should be called once during startup."""
+        self._polling_task = asyncio.create_task(self._dispatcher.start_polling(self._bot))
+
+    async def stop_polling(self):
+        """Stops the polling task for the notification bot. Should be called during shutdown."""
+        if not self._polling_task:
+            raise RuntimeError("Polling task is not running")
+        self._polling_task.cancel()
+        try:
+            await self._polling_task
+        except asyncio.CancelledError:
+            pass
 
     async def send_bot_started(self):
         text = BOT_STARTED.format(link=self._gen_bot_link())
