@@ -70,11 +70,12 @@ class NotificationManager:
 
     async def send_meeting_updated(self, meeting: Meeting, changed_key: str):
         text = self._format_meeting_updated_text(meeting, changed_key)
-        sent = await self._send_admins(text=text)
+        sent = []
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
         if meeting.status == MeetingStatus.ANNOUNCED:
             # NOTE: students would only care if meeting already announced
+            sent.extend(await self._send_admins(text=text))
             await self._send_students_who_interested(meeting, exclude=sent, text=text)
 
     async def send_meeting_announced(self, meeting: Meeting, tutor: Tutor):
@@ -87,11 +88,12 @@ class NotificationManager:
 
     async def send_meeting_cancelled(self, meeting: Meeting):
         text = MEETING_CANCELLED.format(title=meeting.title)
-        sent = await self._send_admins(text=text)
+        sent = []
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
         if meeting.status == MeetingStatus.ANNOUNCED:
             # NOTE: students would only care if meeting already announced
+            sent.extend(await self._send_admins(text=text))
             await self._send_students_who_interested(meeting, exclude=sent, text=text)
 
     # TODO: add this notification somewhere in scheduling logic
@@ -103,11 +105,12 @@ class NotificationManager:
             "username": tutor.username if tutor else None,
         }
         text = MEETING_REMINDER.format_map(data)
-        sent = await self._send_admins(text=text)
+        sent = []
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
         if meeting.status == MeetingStatus.ANNOUNCED:
             # NOTE: students would only care if meeting already announced
+            sent.extend(await self._send_admins(text=text))
             await self._send_students_who_interested(meeting, exclude=sent, text=text)
 
     async def send_meeting_started(self, meeting: Meeting):
@@ -118,9 +121,10 @@ class NotificationManager:
             "username": tutor.username if tutor else None,
         }
         text = MEETING_STARTED.format_map(data)
-        sent = await self._send_admins(text=text)
+        sent = []
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
+        sent.extend(await self._send_admins(text=text))
         await self._send_students_who_interested(meeting, exclude=sent, text=text)
 
     async def send_meeting_finished(self, meeting: Meeting):
@@ -131,7 +135,8 @@ class NotificationManager:
             "username": tutor.username if tutor else None,
         }
         text = MEETING_FINISHED.format_map(data)
-        sent = await self._send_admins(text=text)
+        sent = []
+        sent.extend(await self._send_admins(text=text))
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
         # NOTE: we don't send finished meeting notification to students,
@@ -151,21 +156,24 @@ class NotificationManager:
             text = MEETING_CLOSED_FOR_ADMINS.format_map(data)
         else:
             text = MEETING_CLOSED_FOR_TUTOR.format_map(data)
-        sent = await self._send_admins(text=text)
+        sent = []
+        sent.extend(await self._send_admins(text=text))
         await self._send_ids(meeting.tutor_id, exclude=sent, text=text)
 
     async def send_tutor_promoted(self, tutor: Tutor):
         tutor_data = tutor.model_dump()
         admins_text = TUTOR_PROMOTED_FOR_ADMINS.format_map(tutor_data)
         tutor_text = TUTOR_PROMOTED_FOR_TUTOR.format_map(tutor_data)
-        sent = await self._send_admins(text=admins_text)
+        sent = []
+        sent.extend(await self._send_admins(text=admins_text))
         await self._send_telegram_ids(tutor.telegram_id, exclude=sent, text=tutor_text)
 
     async def send_tutor_dismissed(self, tutor: Tutor):
         tutor_data = tutor.model_dump()
         admins_text = TUTOR_DISMISSED_FOR_ADMINS.format_map(tutor_data)
         tutor_text = TUTOR_DISMISSED_FOR_TUTOR.format_map(tutor_data)
-        sent = await self._send_admins(text=admins_text)
+        sent = []
+        sent.extend(await self._send_admins(text=admins_text))
         await self._send_telegram_ids(tutor.telegram_id, exclude=sent, text=tutor_text)
 
     def _format_meeting_updated_text(self, meeting: Meeting, changed_key: str) -> str:
