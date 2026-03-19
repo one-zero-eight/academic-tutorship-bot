@@ -20,6 +20,7 @@ class NotificationManager:
 
     async def start_polling(self):
         """Starts the unblocking polling task for the notification bot. Should be called once during startup."""
+        await self._bot.delete_webhook(drop_pending_updates=True)
         self._polling_task = asyncio.create_task(self._dispatcher.start_polling(self._bot))
 
     async def stop_polling(self):
