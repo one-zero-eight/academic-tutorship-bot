@@ -10,7 +10,7 @@ from sqlalchemy import (
     update,
 )
 
-from src.db.schema import admin, attendance, discipline, email, meeting, settings, student, student_discipline
+from src.db.schema import admin, attendance, discipline, email, meeting, settings, student, student_discipline, tutor
 from src.domain.models import Discipline, Meeting, MeetingStatus
 
 from .sql import Repository
@@ -18,17 +18,34 @@ from .sql import Repository
 
 class MeetingRepository(Repository):
     async def create(self, title: str, discipline_id: int, creator_telegram_id: int) -> Meeting:
-        creator_stmt = (
+        is_tutor = is_admin = False
+        creator_tutor_stmt = (
+            select(student.c.id).select_from(student.join(tutor)).where(student.c.telegram_id == creator_telegram_id)
+        )
+        creator_admin_stmt = (
             select(student.c.id).select_from(student.join(admin)).where(student.c.telegram_id == creator_telegram_id)
         )
         async with self._db.engine.begin() as conn:
-            result = await conn.execute(creator_stmt)
-            assert (creator_id := result.scalar_one_or_none())
-            stmt = (
-                insert(meeting)
-                .values(title=title, discipline_id=discipline_id, creator_id=creator_id)
-                .returning(meeting.c.id)
-            )
+            result = await conn.execute(creator_tutor_stmt)
+            if creator_id := result.scalar_one_or_none():
+                is_tutor = True
+            result = await conn.execute(creator_admin_stmt)
+            if creator_id := result.scalar_one_or_none():
+                is_admin = True
+            if is_tutor:  # automatically assign tutor as meeting's tutor
+                stmt = (
+                    insert(meeting)
+                    .values(title=title, discipline_id=discipline_id, creator_id=creator_id, tutor_id=creator_id)
+                    .returning(meeting.c.id)
+                )
+            elif is_admin:  # admins can create meetings without tutor
+                stmt = (
+                    insert(meeting)
+                    .values(title=title, discipline_id=discipline_id, creator_id=creator_id)
+                    .returning(meeting.c.id)
+                )
+            else:
+                raise PermissionError("Only tutors and admins can create meetings")
             result = await conn.execute(stmt)
             id = result.scalar_one()
         return await self.get(id)

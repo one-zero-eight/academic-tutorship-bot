@@ -22,8 +22,7 @@ type_ww: Window = Window(
     Const("Meetings"),
     Row(
         Cancel(Const("Back")),
-        SwitchTo(Const("Create New"), id="create_meeting", state=MeetingStates.create, when="is_admin"),
-        Button(Const(" "), id="blank", on_click=None, when="is_not_admin"),
+        SwitchTo(Const("Create New"), id="create_meeting", state=MeetingStates.create),
     ),
     Button(Const("See Created"), id="a_meetings_created", on_click=omlot("created"), when="can_see_created"),
     Button(Const("See Announced"), id="a_meetings_announced", on_click=omlot("announced"), when="can_see_announced"),
@@ -47,10 +46,15 @@ create_ww = Window(
     Const("New Meeting"),
     Format("Title: {title}"),
     Format("Discipline: {discipline_name}"),
-    Start(Const("Choose Discipline"), id="choose_discipline", state=DisciplinePickerStates.language),
-    Next(Const("Enter Title")),
-    Button(Const("Create"), id="create_submit", on_click=on_create_submit, when="can_be_created"),
-    Row(SwitchTo(Const("Back"), "to_type", MeetingStates.type), BLANK_BUTTON),
+    Row(
+        Next(Const("Title")),
+        Start(Const("Discipline"), id="choose_discipline", state=DisciplinePickerStates.language),
+    ),
+    Row(
+        SwitchTo(Const("Back"), "to_type", MeetingStates.type),
+        Button(Const(" "), id="blank", when="cannot_be_created"),
+        Button(Const("Create ✅"), id="create_submit", on_click=on_create_submit, when="can_be_created"),
+    ),
     getter=meeting_create_getter,
     state=MeetingStates.create,
 )

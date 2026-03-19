@@ -112,4 +112,5 @@ async def meeting_create_getter(dialog_manager: DialogManager, **kwargs):
         "title": html.escape(title) if title else "Untitled",
         "discipline_name": html.escape(discipline["name"]) if discipline else "Not set",
         "can_be_created": can_be_created,
+        "cannot_be_created": not can_be_created,
     }
