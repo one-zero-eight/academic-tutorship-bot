@@ -38,7 +38,7 @@ DISCIPLINE_YEAR_SCROLL = ScrollingGroup(
 
 DISCIPLINE_SCROLL = ScrollingGroup(
     Select(
-        Format("{item[1].name}"),
+        Format("{item[1][display]}"),
         id="select_discipline",
         item_id_getter=(lambda item: item[0]),
         items="disciplines",
@@ -53,7 +53,7 @@ DISCIPLINE_SCROLL = ScrollingGroup(
 
 DISCIPLINE_MULTI_SCROLL = ScrollingGroup(
     Select(
-        Format("{item[2]} {item[1].name}"),
+        Format("{item[2]} {item[1][display]}"),
         id="select_discipline",
         item_id_getter=(lambda item: item[0]),
         items="disciplines_multi",

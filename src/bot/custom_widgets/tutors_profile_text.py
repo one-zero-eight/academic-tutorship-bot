@@ -1,3 +1,5 @@
+import html
+
 from aiogram_dialog.api.protocols import DialogManager
 from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.text.base import Text
@@ -25,7 +27,7 @@ DISCIPLINE_LINES = [
 ]
 
 
-DISCIPLINE_FORMAT = "- <b>[{discipline.language} {discipline.year}y] {discipline.name}</b>"
+DISCIPLINE_FORMAT = "- <b>[{discipline[language]} {discipline[year]}y] {discipline[name]}</b>"
 
 ABOUT_LINES = [
     "",
@@ -51,6 +53,14 @@ class TutorProfileText(Text):
         lines.extend(DISCIPLINE_LINES)
         disciplines: list[Discipline] = data["disciplines"]
         for discipline in disciplines:
-            lines.append(DISCIPLINE_FORMAT.format(discipline=discipline))
+            lines.append(
+                DISCIPLINE_FORMAT.format(
+                    discipline={
+                        "language": html.escape(str(discipline.language)),
+                        "year": discipline.year,
+                        "name": html.escape(discipline.name),
+                    }
+                )
+            )
         text = "\n".join(lines)
         return text.format_map(data)

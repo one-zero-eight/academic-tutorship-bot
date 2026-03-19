@@ -1,3 +1,5 @@
+import html
+
 from aiogram_dialog import DialogManager
 
 from src.bot.dialog_extension import extend_dialog
@@ -51,9 +53,17 @@ async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
         case _:
             raise AuthorityException(f"Meetings list is inaccessible for {user_status}")
 
+    meeting_items = [
+        {
+            "id": meeting.id,
+            "display": f"[{meeting.datetime_}] {html.escape(meeting.title)}",
+        }
+        for meeting in meetings
+    ]
+
     return {
         "meetings_type": meetings_type.capitalize(),
-        "meetings": meetings,
+        "meetings": meeting_items,
     }
 
 
@@ -71,15 +81,15 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
         emails = await meeting_repo.get_attendance(meeting.id)
     data.update(
         {
-            "title": meeting.title,
-            "description": meeting.description,
+            "title": html.escape(meeting.title),
+            "description": html.escape(meeting.description) if meeting.description else None,
             "discipline": meeting.discipline,
             "status": meeting.status,
             "date": meeting.datetime_,
             "duration": meeting.duration_human,
-            "room": meeting.room if meeting.room else "---",
+            "room": html.escape(meeting.room) if meeting.room else "---",
             "attendance_count": len(emails) if emails else None,
-            "tutor_username": tutor.username if tutor else None,
+            "tutor_username": html.escape(tutor.username) if tutor and tutor.username else None,
             "can_be_changed": is_authorized and meeting.status < MeetingStatus.CLOSED,
             "can_be_announced": is_authorized and meeting.status == MeetingStatus.CREATED,
             "can_be_finished": is_authorized and meeting.status == MeetingStatus.CONDUCTING,
@@ -99,7 +109,7 @@ async def meeting_create_getter(dialog_manager: DialogManager, **kwargs):
     title = await manager.state.get_value("title", None)
     can_be_created = bool(title and discipline)
     return {
-        "title": title if title else "Untitled",
-        "discipline_name": discipline["name"] if discipline else "Not set",
+        "title": html.escape(title) if title else "Untitled",
+        "discipline_name": html.escape(discipline["name"]) if discipline else "Not set",
         "can_be_created": can_be_created,
     }

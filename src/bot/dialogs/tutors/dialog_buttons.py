@@ -9,9 +9,9 @@ BLANK_BUTTON = Button(Const(" "), id="blank")
 
 TUTORS_SCROLLING_GROUP = ScrollingGroup(
     Select(
-        Format("@{item[1].username} {item[1].full_name}"),
+        Format("{item[1][display]}"),
         id="select_tutors",
-        item_id_getter=(lambda item: item[1].id),
+        item_id_getter=(lambda item: item[1]["id"]),
         items="tutors",
         on_click=on_tutor_selected,
     ),

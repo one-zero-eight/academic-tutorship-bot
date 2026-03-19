@@ -13,9 +13,9 @@ BTN_INIT = SwitchTo(Const("Back"), id="to_init", state=ChangeStates.init, on_cli
 
 TUTORS_ASSIGN_SCROLLING_GROUP = ScrollingGroup(
     Select(
-        Format("@{item[1].username} {item[1].full_name}"),
+        Format("{item[1][display]}"),
         id="select_tutors",
-        item_id_getter=(lambda item: item[1].id),
+        item_id_getter=(lambda item: item[1]["id"]),
         items="tutors",
         on_click=on_tutor_assign,
     ),

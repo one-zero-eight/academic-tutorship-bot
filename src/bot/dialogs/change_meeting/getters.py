@@ -1,3 +1,5 @@
+import html
+
 from aiogram_dialog import DialogManager
 
 from src.bot.dialog_extension import extend_dialog
@@ -12,13 +14,23 @@ async def meeting_info_with_tutors_getter(dialog_manager: DialogManager, **kwarg
     meeting = await manager.state.get_meeting()
     tutors = await tutor_repo.get_list()
     tutor = await tutor_repo.get(id=meeting.tutor_id) if meeting.tutor_id else None
+    tutor_items = [
+        (
+            index,
+            {
+                "id": tutor_item.id,
+                "display": f"@{html.escape(tutor_item.username or '')} {html.escape(tutor_item.full_name)}",
+            },
+        )
+        for index, tutor_item in enumerate(tutors)
+    ]
     return {
-        "title": meeting.title,
-        "description": meeting.description,
+        "title": html.escape(meeting.title),
+        "description": html.escape(meeting.description) if meeting.description else None,
         "date": meeting.datetime_,
         "duration": meeting.duration_human,
-        "tutor_username": tutor.username if tutor else None,
-        "tutors": list(enumerate(tutors)),
+        "tutor_username": html.escape(tutor.username) if tutor and tutor.username else None,
+        "tutors": tutor_items,
     }
 
 

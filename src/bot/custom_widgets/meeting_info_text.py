@@ -1,3 +1,5 @@
+import html
+
 from aiogram_dialog.api.protocols import DialogManager
 from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.text.base import Text
@@ -36,9 +38,10 @@ class MeetingInfoText(Text):
         data: dict,
         manager: DialogManager,
     ) -> str:
-        data["d_lang"] = data.get("discipline", {}).language
-        data["d_year"] = data.get("discipline", {}).year
-        data["d_name"] = data.get("discipline", {}).name
+        discipline = data.get("discipline")
+        data["d_lang"] = html.escape(str(getattr(discipline, "language", "")))
+        data["d_year"] = getattr(discipline, "year", "")
+        data["d_name"] = html.escape(str(getattr(discipline, "name", "")))
         lines = []
         lines.extend(LINES)
         if self.show_admin_info:

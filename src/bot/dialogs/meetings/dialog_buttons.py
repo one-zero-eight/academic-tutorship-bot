@@ -13,9 +13,9 @@ BTN_ROW_BACK = Row(Back(), BLANK_BUTTON)
 
 MEETINGS_SCROLLING_GROUP = ScrollingGroup(
     Select(
-        Format("[{item.datetime_}] {item.title}"),
+        Format("{item[display]}"),
         id="select_meetings",
-        item_id_getter=(lambda x: x.id),
+        item_id_getter=(lambda item: item["id"]),
         items="meetings",
         on_click=on_meeting_selected,
     ),
