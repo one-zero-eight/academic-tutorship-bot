@@ -12,10 +12,11 @@ class UserStatus(StrEnum):
 
 class MeetingStatus(IntEnum):
     CREATED = 0
-    ANNOUNCED = 1
-    CONDUCTING = 2
-    FINISHED = 3
-    CLOSED = 4
+    APPROVING = 1
+    ANNOUNCED = 2
+    CONDUCTING = 3
+    FINISHED = 4
+    CLOSED = 5
 
 
 class Settings(BaseModel):
