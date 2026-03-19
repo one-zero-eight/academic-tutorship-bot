@@ -6,7 +6,7 @@ from src.db.repositories import tutor_repo
 
 
 async def tutors_list_getter(dialog_manager: DialogManager, **kwargs):
-    tutors = await tutor_repo.get_list()
+    tutors = await tutor_repo.get_list(with_profiles_only=True)
     return {
         "tutors": list(enumerate(tutors)),
     }

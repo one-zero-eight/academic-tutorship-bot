@@ -10,13 +10,12 @@ from src.domain.models import Discipline
 from .getters import *
 from .states import *
 
-# async def on_tutor_selected(query: CallbackQuery, widget: Any, manager: DialogManager, item_id: str):
-#     manager = extend_dialog(manager)
-#     tutor = await tutors_repo.get(id=int(item_id))
-#     tutor_profile = await tutor_profiles_repo.get(id=int(item_id))
-#     await manager.state.set_tutor(tutor)
-#     await manager.state.set_tutor_profile(tutor_profile)
-#     await manager.switch_to(TutorProfileStates.profile_after_list)
+
+async def on_tutor_selected(query: CallbackQuery, _, manager: DialogManager, item_id: str):
+    manager = extend_dialog(manager)
+    tutor = await tutor_repo.get(id=int(item_id))
+    await manager.state.set_tutor(tutor)
+    await manager.switch_to(TutorProfileStates.profile_after_list)
 
 
 async def on_open_disciplines(query: CallbackQuery, widget, manager: DialogManager):

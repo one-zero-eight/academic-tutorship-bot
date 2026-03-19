@@ -29,7 +29,8 @@ profile_ww = Window(
 
 list_ww = Window(
     Const("🧑‍🏫 Here are all of your Tutors!"),
-    # TUTORS_SCROLLING_GROUP,
+    TUTORS_SCROLLING_GROUP,
+    Row(Cancel(Const("Back"), id="close_profile_list"), BLANK_BUTTON),
     getter=tutors_list_getter,
     state=TutorProfileStates.list,
 )
