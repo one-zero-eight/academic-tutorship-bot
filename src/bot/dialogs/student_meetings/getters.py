@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from aiogram_dialog import DialogManager
 
 from src.bot.dialog_extension import extend_dialog
@@ -6,15 +8,23 @@ from src.db.repositories import meeting_repo, tutor_repo
 from src.domain.models import MeetingStatus
 
 
-async def meetings_type_getter(dialog_manager: DialogManager, **kwargs):
-    return {}
-
-
 async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
     meetings = await meeting_repo.get_list((MeetingStatus.ANNOUNCED, MeetingStatus.FINISHED))
+    meetings = _filter_meetings_by_date(meetings)
+    meetings.sort(key=lambda m: (m.datetime_ is None, m.datetime_), reverse=False)
     return {
         "meetings": meetings,
     }
+
+
+def _filter_meetings_by_date(meetings: list[Meeting]) -> list[Meeting]:
+    """Filter meetings  which finish date is within last 12 hours or later in future"""
+    now = datetime.now()
+    filtered = []
+    for m in meetings:
+        if m.datetime_ and (m.datetime_ + timedelta(seconds=m.duration)) > now:
+            filtered.append(m)
+    return filtered
 
 
 async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
