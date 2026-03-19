@@ -140,11 +140,6 @@ properties:
     title: Db Url
     type: string
     writeOnly: true
-  run_support_daemon:
-    default: false
-    description: Whether to run the support daemon (for debugging)
-    title: Run Support Daemon
-    type: boolean
   mock_auth:
     default: false
     description: Use MockAutoAuthMiddleware to bypass Authentication via InNoHassle

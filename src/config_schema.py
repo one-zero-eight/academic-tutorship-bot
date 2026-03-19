@@ -59,8 +59,6 @@ class Settings(SettingBaseModel):
         ],
     )
     "Connection String for SQLAlchemy"
-    run_support_daemon: bool = False
-    "Whether to run the support daemon (for debugging)"
     mock_auth: bool = False
     "Use MockAutoAuthMiddleware to bypass Authentication via InNoHassle Accounts (for testing)"
 

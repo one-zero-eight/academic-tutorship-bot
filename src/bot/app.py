@@ -128,12 +128,6 @@ async def on_startup():
 
     logger.info("Starting Scheduler...")
     scheduler.start()
-    if settings.run_support_daemon:
-        from src.support_daemon.server import support_daemon
-
-        logger.info("Starting Support Daemon...")
-        support_daemon.start()
-
     logger.info("Sending startup notification...")
     await notification_manager.send_bot_started()
 
@@ -145,11 +139,6 @@ async def on_shutdown():
     await notification_manager.send_bot_shutdown()
     logger.info("Shutting down Scheduler...")
     scheduler.shutdown()
-    if settings.run_support_daemon:
-        from src.support_daemon.server import support_daemon
-
-        logger.info("Shutting down Support Daemon...")
-        support_daemon.stop()
     logger.info("Disposing Repository...")
     await db.dispose()
 

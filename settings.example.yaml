@@ -13,5 +13,3 @@ bot_commands:
     description: "Show the menu"
 redis_url: null # Redis URL, "redis://redis:6379/0" inside the docker network
 db_url: postgresql+asyncpg://postgres:postgres@db:5432/postgres
-
-run_support_daemon: false # support daemon for admin features
