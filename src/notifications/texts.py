@@ -163,3 +163,30 @@ Meeting has been closed by the admin.
 
 🔗 <a href="{link}">Click to see the details</a>
 """
+
+
+MEETING_APPROVE_REQUEST = """
+Meeting "{title}" is awaiting approval.
+- Date & time: {datetime}
+- Room: {room}
+- Tutor: @{username}
+
+🔗 <a href="{link}">Click to see the details</a>
+"""
+
+MEETING_CONFIRM_APPROVE_APPENDIX = "The meeting will be <u>automatically announced to students</u>. Are you sure?"
+
+
+MEETING_APPROVED = """
+Meeting "{title}" has been approved!
+🔗 <a href="{link}">Click to see the details</a>
+"""
+
+MEETING_DISCARDED = """
+Meeting "{title}" has been discarded
+
+Reason:
+{reason}
+
+🔗 <a href="{link}">Click to see the details</a>
+"""

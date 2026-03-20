@@ -6,7 +6,7 @@ from aiogram.types import Message, TelegramObject, User
 from email_validator import validate_email
 from email_validator.exceptions import EmailNotValidError
 
-from src.config import settings
+from src.db.repositories import student_repo, tutor_repo
 from src.domain.models import UserStatus
 
 
@@ -24,9 +24,9 @@ class StatusFilter(Filter):
     async def __call__(self, event: TelegramObject, event_from_user: User) -> bool | dict[str, Any]:
         telegram_id = event_from_user.id
 
-        if telegram_id in settings.admins:
+        if await student_repo.is_admin(telegram_id=telegram_id):
             status = UserStatus.admin
-        elif False:  # TODO: add tutors check
+        elif await tutor_repo.exists(telegram_id=telegram_id):
             status = UserStatus.tutor
         else:
             status = UserStatus.student

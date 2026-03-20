@@ -105,7 +105,6 @@ class Meeting(BaseModel):
     def approve(self):
         if self.status != MeetingStatus.APPROVING:
             raise ValueError("Cannot Approve Meeting: it is not in APPROVING status")
-        self._check_for_announce()
         self.status = MeetingStatus.ANNOUNCED
 
     def conduct(self):

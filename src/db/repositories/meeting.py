@@ -27,10 +27,13 @@ class MeetingRepository(Repository):
         )
         async with self._db.engine.begin() as conn:
             result = await conn.execute(creator_tutor_stmt)
-            if creator_id := result.scalar_one_or_none():
+            creator_id = None
+            if tutor_id := result.scalar_one_or_none():
+                creator_id = tutor_id
                 is_tutor = True
             result = await conn.execute(creator_admin_stmt)
-            if creator_id := result.scalar_one_or_none():
+            if admin_id := result.scalar_one_or_none():
+                creator_id = admin_id
                 is_admin = True
             if is_tutor:  # automatically assign tutor as meeting's tutor
                 stmt = (

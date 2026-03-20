@@ -1,6 +1,7 @@
 import asyncio
 
 from aiogram import Bot, Dispatcher
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.db.repositories import admin_repo, meeting_repo, student_repo, tutor_repo
 from src.domain.models import Meeting, MeetingStatus, Tutor
@@ -80,7 +81,24 @@ class NotificationManager:
 
     async def send_meeting_approve_request(self, meeting: Meeting, tutor: Tutor):
         """Sends approval request to the head of AT with approve/discard buttons"""
-        raise NotImplementedError()
+        meeting_data = meeting.model_dump(by_alias=True)
+        text = MEETING_APPROVE_REQUEST.format(
+            **meeting_data, username=tutor.username, link=self._gen_meeting_link(meeting)
+        )
+        reply_markup = self._gen_approve_discard_request_reply_markup(meeting.id)
+        await self._send_admins(text=text, reply_markup=reply_markup)  # TODO: add approve/discard buttons
+
+    async def send_meeting_approved(self, meeting: Meeting):
+        text = MEETING_APPROVED.format(title=meeting.title, link=self._gen_meeting_link(meeting))
+        sent = await self._send_admins(text=text)
+        if meeting.tutor_id:
+            sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
+
+    async def send_meeting_discarded(self, meeting: Meeting, reason: str):
+        text = MEETING_DISCARDED.format(title=meeting.title, reason=reason, link=self._gen_meeting_link(meeting))
+        sent = await self._send_admins(text=text)
+        if meeting.tutor_id:
+            sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
 
     async def send_meeting_announced(self, meeting: Meeting, tutor: Tutor):
         meeting_data = meeting.model_dump(by_alias=True)
@@ -188,17 +206,21 @@ class NotificationManager:
             return MEETING_UPDATED_ROOM.format(title=meeting.title, room=meeting.room, link=link)
         raise ValueError(f"Unknown changed_key: {changed_key}")
 
-    async def _send_students_who_interested(self, meeting: Meeting, *, exclude: list[int] = [], text: str):
+    async def _send_students_who_interested(
+        self, meeting: Meeting, *, exclude: list[int] = [], text: str, reply_markup=None
+    ):
         """Sends a message to all students who are interested in the meeting, excluding the provided telegram ids."""
         telegram_ids = await meeting_repo.get_interested_student_ids(meeting.id)
-        await self._send_ids(telegram_ids, exclude=exclude, text=text)
+        await self._send_ids(telegram_ids, exclude=exclude, text=text, reply_markup=reply_markup)
 
-    async def _send_admins(self, *, text: str) -> list[int]:
+    async def _send_admins(self, *, text: str, reply_markup=None) -> list[int]:
         """Sends a message to all admins, returns the list of telegram ids the message was sent to."""
         telegram_ids = await admin_repo.get_telegram_ids()
-        return await self._send_telegram_ids(telegram_ids, text=text)
+        return await self._send_telegram_ids(telegram_ids, text=text, reply_markup=reply_markup)
 
-    async def _send_ids(self, student_ids: list[int] | int, *, exclude: list[int] = [], text: str) -> list[int]:
+    async def _send_ids(
+        self, student_ids: list[int] | int, *, exclude: list[int] = [], text: str, reply_markup=None
+    ) -> list[int]:
         """Sends a message to a list of student ids, resolves their telegram ids.
         If a single student id is provided, it will be converted to a list.
         Returns the list of telegram ids the message was sent to.
@@ -206,10 +228,10 @@ class NotificationManager:
         if isinstance(student_ids, int):
             student_ids = [student_ids]
         telegram_ids = await student_repo.get_telegram_ids(student_ids)
-        return await self._send_telegram_ids(telegram_ids, exclude=exclude, text=text)
+        return await self._send_telegram_ids(telegram_ids, exclude=exclude, text=text, reply_markup=reply_markup)
 
     async def _send_telegram_ids(
-        self, telegram_ids: list[int] | int, *, exclude: list[int] = [], text: str
+        self, telegram_ids: list[int] | int, *, exclude: list[int] = [], text: str, reply_markup=None
     ) -> list[int]:
         """Sends a message to a list of telegram ids, removing duplicates.
             If exclude list is provided, those telegram ids will be skipped.
@@ -223,7 +245,7 @@ class NotificationManager:
         sent = []
         for chat_id in telegram_ids:
             try:
-                await self._bot.send_message(chat_id=chat_id, text=text)
+                await self._bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
                 sent.append(chat_id)
             except Exception:
                 # TODO: log the error properly
@@ -235,3 +257,18 @@ class NotificationManager:
 
     def _gen_meeting_link(self, meeting: Meeting) -> str:
         return f"https://t.me/{self._main_bot_username}?start=meeting_{meeting.id}"
+
+    def _gen_approve_discard_request_reply_markup(self, meeting_id: int):
+        approve_button = InlineKeyboardButton(text="Approve ✅", callback_data=f"approve_{meeting_id}")
+        discard_button = InlineKeyboardButton(text="❌ Discard", callback_data=f"discard_{meeting_id}")
+        return InlineKeyboardMarkup(inline_keyboard=[[approve_button, discard_button]])
+
+    def _gen_confirm_approve_reply_markup(self, meeting_id: int):
+        cancel_approve = InlineKeyboardButton(text="Cancel", callback_data=f"cancel_approve_{meeting_id}")
+        confirm_approve = InlineKeyboardButton(text="Sure Approve ✅", callback_data=f"confirm_approve_{meeting_id}")
+        return InlineKeyboardMarkup(inline_keyboard=[[cancel_approve, confirm_approve]])
+
+    def _gen_confirm_discard_reply_markup(self, meeting_id: int):
+        confirm_discard = InlineKeyboardButton(text="Sure Discard ❌", callback_data=f"confirm_discard_{meeting_id}")
+        cancel_discard = InlineKeyboardButton(text="Cancel", callback_data=f"cancel_discard_{meeting_id}")
+        return InlineKeyboardMarkup(inline_keyboard=[[confirm_discard, cancel_discard]])
