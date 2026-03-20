@@ -16,7 +16,7 @@ from src.accounts_sdk import inh_accounts
 from src.bot.dialog_extension.extended_fsm_context import extend_fsm_context
 from src.bot.exceptions import UnauthenticatedException
 from src.bot.filters import UserStatus
-from src.bot.logging_ import logger
+from src.bot.logging_ import log_debug, logger
 from src.db.repositories import student_repo, tutor_repo
 
 
@@ -134,11 +134,11 @@ class AutoAuthMiddleware(LogAllEventsMiddleware):
 
     def _log_authenticated(self, chat: Chat, was_auth: bool, become_auth: bool):
         if was_auth:
-            return logger.info(f"[{chat.id}] was authenticated")
+            return log_debug("auth.was_authenticated", user_id=chat.id)
         elif become_auth:
-            return logger.info(f"[{chat.id}] become auto authenticated")
+            return log_debug("auth.became_authenticated", user_id=chat.id)
         else:
-            return logger.info(f"[{chat.id}] failed to auto authenticate")
+            return log_debug("auth.failed_to_authenticate", user_id=chat.id)
 
     async def _update_status(self, event: TelegramObject, data: dict[str, Any]) -> UserStatus:
         state: FSMContext = data["state"]
@@ -166,7 +166,7 @@ class AuthGuardMiddleware(BaseMiddleware):
         chat: Chat = data["event_chat"]
         authenticated = data.get("authenticated", False)
         if not authenticated:
-            logger.info(f"[{chat.id}] un authenticated")
+            log_debug("auth.unauthenticated", user_id=chat.id)
             raise UnauthenticatedException
         return await handler(event, data)
 
@@ -181,7 +181,7 @@ class MockAutoAuthMiddleware(AutoAuthMiddleware):
         authenticated = False
         if not authenticated:
             if await student_repo.exists(telegram_id=chat.id):
-                authenticated = True
+                authenticated = was_auth = True
                 self_student = await student_repo.get(telegram_id=chat.id)
                 await state.set_self_student(self_student)
             else:
@@ -200,10 +200,12 @@ class MockAutoAuthMiddleware(AutoAuthMiddleware):
                         authenticated = become_auth = True
                         await state.set_self_student(self_student)
                 else:
+                    log_debug("mock_auth.ask_email", chat_id=chat.id)
                     await bot.send_message(chat.id, "Enter your innopolis email to authenticate")
             await state.update_data({"authenticated": authenticated})
         self._log_authenticated(chat, was_auth, become_auth)
         if become_auth:
+            log_debug("mock_auth.success", chat_id=chat.id)
             await bot.send_message(chat.id, "Authenticated succescfully, now use /start again")
         return authenticated
 

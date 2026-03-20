@@ -20,9 +20,7 @@ from aiogram_dialog.widgets.text import Const
 from email_validator import EmailNotValidError, validate_email
 from pydantic import TypeAdapter
 
-from src.bot import bot_container
 from src.bot.dialog_extension import extend_dialog
-from src.config import settings
 from src.domain.models import Meeting, UserStatus
 
 commands_type_adapter = TypeAdapter(list[BotCommand])
@@ -96,42 +94,6 @@ def parse_time(text: str) -> time:
     if not (0 <= minute <= 59):
         raise ValueError("Minutes not in range [0, 59]")
     return time(hour, minute)
-
-
-async def send_to(chat_id: int, text: str, **kwargs):
-    bot = bot_container.get_bot()
-    try:
-        await bot.send_message(chat_id=chat_id, text=text, **kwargs)
-    except Exception as e:
-        print(f"Could not send message to [{chat_id}], {e}")
-
-
-async def send_to_admins(meeting: Meeting, text: str, *, skip_tutor: bool = False, **kwargs):
-    whom_to_send = settings.admins
-    whom_to_send = list(set(whom_to_send))  # remove duplicates
-
-    if skip_tutor and meeting.tutor_id:
-        whom_to_send.remove(meeting.tutor_id)
-
-    for tg_id in whom_to_send:
-        await send_to(tg_id, text, **kwargs)
-
-
-async def send_to_tutor(meeting: Meeting, text: str, **kwargs):
-    if not meeting.tutor_id:
-        raise ValueError("No meeting.tutor_id")
-    tg_id = meeting.tutor_id
-    await send_to(tg_id, text, **kwargs)
-
-
-async def send_to_admins_and_tutor(meeting: Meeting, text: str, **kwargs):
-    whom_to_send = settings.admins
-    if meeting.tutor_id:
-        whom_to_send.append(meeting.tutor_id)
-    whom_to_send = list(set(whom_to_send))  # remove duplicates
-
-    for tg_id in whom_to_send:
-        await send_to(tg_id, text, **kwargs)
 
 
 def create_attendance_sending_kb(meeting: Meeting) -> InlineKeyboardMarkup:

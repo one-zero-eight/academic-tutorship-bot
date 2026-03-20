@@ -2,6 +2,8 @@ from aiogram import Bot
 from aiogram.types import Chat, Message
 from aiogram_dialog import DialogManager, ShowMode
 
+from src.bot.logging_ import log_debug
+
 from .dialog_wrapper import DialogManagerWrapper
 from .extended_fsm_context import ExtendedFSMContext, extend_fsm_context
 
@@ -26,11 +28,11 @@ class ExtendedDialogManager(DialogManagerWrapper):
     async def clear_messages(self):
         """Delete tracked messages ("to_delete_id" in state)"""
         to_delete_list = await self.state.get_to_delete_list()
-        print("TRYING TO CLEAR:", to_delete_list)
+        log_debug("ext_dialog_manager.clear_messages.requested", to_delete_list=to_delete_list)
         try:
             await self.bot.delete_messages(self.chat.id, to_delete_list)
         except Exception as e:
-            print(f"clear_messages could not delete {len(to_delete_list)} messages, {e}")
+            log_debug("ext_dialog_manager.clear_messages.failed", to_delete_list=to_delete_list, error=str(e))
         await self.state.set_to_delete_list([])
 
     async def switch_to_current(self, show_mode: ShowMode = ShowMode.AUTO):

@@ -11,6 +11,7 @@ from src.bot.dialogs.student_meetings import StudentMeetingStates
 from src.bot.dialogs.tutors_profile import TutorProfileStates
 from src.bot.exceptions import UnauthenticatedException
 from src.bot.filters import EMAIL_ENTERED_FILTER, USER_AUTHENTICATED_FILTER, StatusFilter
+from src.bot.logging_ import log_error, log_info, log_warning
 from src.bot.routers.admin import AdminStates
 from src.bot.routers.authentication import AuthStates
 from src.bot.routers.student import StudentStates
@@ -44,27 +45,60 @@ def _extract_start_payload(message: types.Message) -> str | None:
 async def on_start(
     message: types.Message, state: FSMContext, dialog_manager: DialogManager, authenticated: bool, status: US
 ):
-    if authenticated:
-        manager = extend_dialog(dialog_manager)
-        payload = _extract_start_payload(message)
-        await dialog_manager.start(MATCHING_START_STATE[status], mode=StartMode.RESET_STACK)
-        if payload and payload != "welcome":
-            if payload.startswith("meeting_"):
-                meeting_id_text = payload.removeprefix("meeting_")
-                if meeting_id_text.isdigit():
-                    meeting = await meeting_repo.get(int(meeting_id_text))
-                    await manager.state.set_meeting(meeting)
-                    target_state = MeetingStates.info if status in (US.tutor, US.admin) else StudentMeetingStates.info
-                    return await manager.start(target_state, show_mode=ShowMode.DELETE_AND_SEND)
-            if payload == "promoted_tutor":
-                if await tutor_repo.exists(telegram_id=message.chat.id):
-                    self_tutor = await tutor_repo.get(telegram_id=message.chat.id)
-                    await manager.state.set_self_tutor(self_tutor)
-                    return await manager.start(TutorProfileStates.profile_control, show_mode=ShowMode.DELETE_AND_SEND)
-    if settings.mock_auth:
-        # NOTE: Do nothing if using mock_auth, MockAutoAuthMiddleware handles everything
-        return
-    return await dialog_manager.start(AuthStates.bind_tg_inh, mode=StartMode.RESET_STACK)
+    payload = _extract_start_payload(message)
+    log_info(
+        "user.start.requested",
+        user_id=message.chat.id,
+        status=status.value,
+        authenticated=authenticated,
+        payload_present=bool(payload),
+    )
+    try:
+        if authenticated:
+            manager = extend_dialog(dialog_manager)
+            await dialog_manager.start(MATCHING_START_STATE[status], mode=StartMode.RESET_STACK)
+            log_info("user.start.routed", user_id=message.chat.id, target_state=str(MATCHING_START_STATE[status]))
+            if payload and payload != "welcome":
+                if payload.startswith("meeting_"):
+                    meeting_id_text = payload.removeprefix("meeting_")
+                    if not meeting_id_text.isdigit():
+                        log_warning(
+                            "user.start.payload_invalid", user_id=message.chat.id, reason="meeting_id_not_digit"
+                        )
+                    else:
+                        try:
+                            meeting = await meeting_repo.get(int(meeting_id_text))
+                        except LookupError:
+                            log_warning(
+                                "user.start.payload_invalid", user_id=message.chat.id, reason="meeting_not_found"
+                            )
+                        else:
+                            await manager.state.set_meeting(meeting)
+                            target_state = (
+                                MeetingStates.info if status in (US.tutor, US.admin) else StudentMeetingStates.info
+                            )
+                            log_info("user.start.routed", user_id=message.chat.id, target_state=str(target_state))
+                            return await manager.start(target_state, show_mode=ShowMode.DELETE_AND_SEND)
+                if payload == "promoted_tutor":
+                    if await tutor_repo.exists(telegram_id=message.chat.id):
+                        self_tutor = await tutor_repo.get(telegram_id=message.chat.id)
+                        await manager.state.set_self_tutor(self_tutor)
+                        log_info(
+                            "user.start.routed",
+                            user_id=message.chat.id,
+                            target_state=str(TutorProfileStates.profile_control),
+                        )
+                        return await manager.start(
+                            TutorProfileStates.profile_control, show_mode=ShowMode.DELETE_AND_SEND
+                        )
+                    log_warning("user.start.payload_invalid", user_id=message.chat.id, reason="tutor_not_found")
+        if settings.mock_auth:
+            return
+        log_info("user.start.routed", user_id=message.chat.id, target_state=str(AuthStates.bind_tg_inh))
+        return await dialog_manager.start(AuthStates.bind_tg_inh, mode=StartMode.RESET_STACK)
+    except Exception:
+        log_error("user.start.failed", user_id=message.chat.id)
+        raise
 
 
 @router.message(~USER_AUTHENTICATED_FILTER, EMAIL_ENTERED_FILTER)
