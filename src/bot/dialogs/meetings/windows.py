@@ -102,7 +102,9 @@ info_ww = Window(
     Button(Const("Finish"), id="finish_start", on_click=open_finish_confirm, when="can_be_finished"),
     Start(Const("Close"), id="start_close", state=AttendanceStates.close, when="can_be_closed"),
     Start(Const("Attendance"), id="start_attendance", state=AttendanceStates.init, when="can_see_attendance"),
-    SwitchTo(Const("Delete"), id="delete_start", state=MeetingStates.delete_confirm, when="can_be_deleted"),
+    SwitchTo(
+        Const("Cancel Meeting"), id="cancel_meeting_start", state=MeetingStates.delete_confirm, when="can_be_deleted"
+    ),
     Row(SwitchTo(Const("Back"), "to_list", MeetingStates.list), BLANK_BUTTON),
     state=MeetingStates.info,
     getter=meeting_info_getter,
@@ -149,9 +151,12 @@ finish_confirm_ww = Window(
 
 
 delete_confirm_ww = Window(
-    Format('Do you really want to delete "{title}"?'),
+    Format('Do you really want to cancel "{title}"?'),
+    Const("This action cannot be undone and the meeting will be deleted."),
+    Const(""),
+    Const("The notification will be sent to students 💌.", when="interesting_to_students"),
     Row(
-        Button(Const("Delete 🗑️"), id="delete", when="can_be_deleted", on_click=on_delete_confirmed),
+        Button(Const("Cancel Meeting 🗑️"), id="delete", when="can_be_deleted", on_click=on_delete_confirmed),
         SwitchTo(Const("Cancel"), id="cancel_delete", state=MeetingStates.info),
     ),
     state=MeetingStates.delete_confirm,

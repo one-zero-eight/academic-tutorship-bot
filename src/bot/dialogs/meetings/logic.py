@@ -30,11 +30,10 @@ async def announce_meeting(meeting: Meeting):
     await notification_manager.send_meeting_announced(meeting, tutor)
 
 
-async def delete_meeting(meeting: Meeting):
+async def cancel_meeting(meeting: Meeting):
+    await notification_manager.send_meeting_cancelled(meeting)
     await meeting_repo.remove(meeting.id)
     await wipe_meeting_schedule(meeting)
-    if meeting.status == MeetingStatus.ANNOUNCED:
-        await notification_manager.send_meeting_cancelled(meeting)
 
 
 async def finish_meeting(meeting: Meeting):

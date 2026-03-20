@@ -109,7 +109,9 @@ Changed tutor for meeting "{title}"
 """
 
 MEETING_CANCELLED = """
-Meeting "{title}" has been cancelled.
+Meeting "{title}" has been cancelled 😞
+
+Sorry for the inconvenience. We hope to see you in other meetings!
 """
 
 MEETING_REMINDER = """

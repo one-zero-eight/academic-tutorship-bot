@@ -67,11 +67,11 @@ async def on_delete_confirmed(query: CallbackQuery, _, manager: DialogManager):
     manager = extend_dialog(manager)
     try:
         meeting = await manager.state.get_meeting()
-        await delete_meeting(meeting)
+        await cancel_meeting(meeting)
         await manager.state.update_data({"meeting": None})
     except Exception as e:
         return await query.answer(f"{e}", show_alert=True)
-    await query.answer("Meeting deleted", show_alert=True)
+    await query.answer("Meeting cancelled 🚮", show_alert=True)
     await manager.switch_to(state=MeetingStates.list, show_mode=ShowMode.DELETE_AND_SEND)
 
 

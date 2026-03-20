@@ -50,13 +50,13 @@ async def wipe_meeting_schedule(meeting: Meeting):
         try:
             scheduler.remove_job(job_id)
         except Exception as e:
-            logger.error(f'Scheduler could not remove job "{job_id}", {e}')
+            logger.info(f'Scheduler could not remove job "{job_id}", {e}')
 
 
 async def _job_meeting_conduct(meeting_id: int):
     meeting = await meeting_repo.get(meeting_id)
     if not meeting:
-        logger.error("error in _job_meeting_conduct: no meeting")
+        logger.warning("error in _job_meeting_conduct: no meeting")
     try:
         meeting.conduct()
         await meeting_repo.update(meeting, ["status"])

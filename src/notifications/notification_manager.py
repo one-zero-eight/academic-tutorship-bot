@@ -113,9 +113,11 @@ class NotificationManager:
         sent = []
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
-        if meeting.status == MeetingStatus.ANNOUNCED:
-            # NOTE: students would only care if meeting already announced
+        if meeting.status >= MeetingStatus.APPROVING:
+            # NOTE: admins should not now about the meeting while it is not sent for approval or announced
             sent.extend(await self._send_admins(text=text))
+        if meeting.status in (MeetingStatus.ANNOUNCED, MeetingStatus.CONDUCTING):
+            # NOTE: students would only care if meeting already announced and not finished
             await self._send_students_who_interested(meeting, exclude=sent, text=text)
 
     # TODO: add this notification somewhere in scheduling logic

@@ -2,7 +2,7 @@ from aiogram import Bot, F, Router, types
 from aiogram.filters import CommandStart, ExceptionTypeFilter, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import ErrorEvent, InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.bot.filters import StatusFilter, UserStatus
 from src.db.repositories import meeting_repo, tutor_repo
@@ -42,8 +42,11 @@ def _extract_start_payload(message: types.Message) -> str | None:
 
 
 @router.error(ExceptionTypeFilter(Exception))
-async def on_error(query: types.CallbackQuery, error: Exception):
-    await query.answer(f"Error: {error}", show_alert=True)
+async def on_error(event: ErrorEvent):
+    if event.update.callback_query:
+        await event.update.callback_query.answer(f"Error: {event.exception}", show_alert=True)
+        if isinstance(event.update.callback_query.message, types.Message):
+            await event.update.callback_query.message.edit_reply_markup(reply_markup=None)
     # TODO: Log the error
 
 
