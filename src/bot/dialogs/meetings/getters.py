@@ -56,6 +56,7 @@ async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
         case _:
             raise AuthorityException(f"Meetings list is inaccessible for {user_status}")
 
+    meetings.sort(key=lambda m: (m.datetime_ is None, m.datetime_), reverse=False)
     meeting_items = [
         {
             "id": meeting.id,
