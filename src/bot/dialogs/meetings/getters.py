@@ -15,6 +15,7 @@ async def meetings_type_getter(dialog_manager: DialogManager, **kwargs):
     data.update(
         {
             "can_see_created": data["is_tutor"] or data["is_admin"],
+            "can_see_approving": data["is_tutor"] or data["is_admin"],
             "can_see_closed": data["is_tutor"] or data["is_admin"],
             "can_see_announced": True,  # anybody can
         }
@@ -37,6 +38,8 @@ async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
     match meetings_type:
         case "created":
             status_range = MeetingStatus.CREATED
+        case "approving":
+            status_range = MeetingStatus.APPROVING
         case "announced":
             status_range = (MeetingStatus.ANNOUNCED, MeetingStatus.FINISHED)
         case "closed":

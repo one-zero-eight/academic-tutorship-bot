@@ -21,7 +21,7 @@ async def on_meeting_selected(query: CallbackQuery, meeting, manager: DialogMana
     await manager.switch_to(MeetingStates.info)
 
 
-def open_meetings_list_of_type(type: Literal["created", "announced", "closed"]):
+def open_meetings_list_of_type(type: Literal["created", "approving", "announced", "closed"]):
     """Higher order function, returns Awaitable that opens specified meetings list"""
 
     async def open_meetings_list(query: CallbackQuery, _, manager: DialogManager):

@@ -25,6 +25,7 @@ type_ww: Window = Window(
         SwitchTo(Const("Create New"), id="create_meeting", state=MeetingStates.create),
     ),
     Button(Const("See Created"), id="a_meetings_created", on_click=omlot("created"), when="can_see_created"),
+    Button(Const("See Approving"), id="a_meetings_approving", on_click=omlot("approving"), when="can_see_approving"),
     Button(Const("See Announced"), id="a_meetings_announced", on_click=omlot("announced"), when="can_see_announced"),
     Button(Const("See Closed"), id="a_meetings_closed", on_click=omlot("closed"), when="can_see_closed"),
     state=MeetingStates.type,
