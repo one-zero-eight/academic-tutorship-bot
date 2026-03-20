@@ -40,3 +40,7 @@ class NoSharedUserUsername(Exception):
 
 class UserAlreadyTutor(Exception):
     pass
+
+
+class MeetingIsApproving(Exception):
+    pass

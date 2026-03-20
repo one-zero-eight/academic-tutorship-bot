@@ -78,6 +78,10 @@ class NotificationManager:
             sent.extend(await self._send_admins(text=text))
             await self._send_students_who_interested(meeting, exclude=sent, text=text)
 
+    async def send_meeting_approve_request(self, meeting: Meeting, tutor: Tutor):
+        """Sends approval request to the head of AT with approve/discard buttons"""
+        raise NotImplementedError()
+
     async def send_meeting_announced(self, meeting: Meeting, tutor: Tutor):
         meeting_data = meeting.model_dump(by_alias=True)
         data = {**meeting_data, "username": tutor.username, "link": self._gen_meeting_link(meeting)}

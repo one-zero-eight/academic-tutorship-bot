@@ -101,3 +101,24 @@ async def on_create_submit(query: CallbackQuery, button: Button, manager: Dialog
     await manager.state.set_meeting(meeting)
     await manager.state.update_data({"discipline": None, "title": None})
     await manager.switch_to(state=MeetingStates.info)
+
+
+async def open_send_for_approval_confirm(query: CallbackQuery, button: Button, manager: DialogManager):
+    manager = extend_dialog(manager)
+    meeting = await manager.state.get_meeting()
+    try:
+        meeting._check_for_approval()
+    except Exception as e:
+        return await query.answer(f"{e}", show_alert=True)
+    await manager.switch_to(state=MeetingStates.send_for_approval_confirm)
+
+
+async def on_send_for_approval_confirmed(query: CallbackQuery, button: Button, manager: DialogManager):
+    manager = extend_dialog(manager)
+    try:
+        async with manager.state.sync_meeting() as meeting:
+            await send_for_approval(meeting)
+    except Exception as e:
+        return await query.answer(f"Error: {e}", show_alert=True)
+    await query.answer("Meeting sent for approval 📩\nWait for notification", show_alert=True)
+    await manager.switch_to(state=MeetingStates.info, show_mode=ShowMode.DELETE_AND_SEND)

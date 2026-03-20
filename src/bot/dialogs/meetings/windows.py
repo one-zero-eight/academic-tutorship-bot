@@ -92,12 +92,35 @@ info_ww = Window(
         when="can_see_tutor_profile_control",
     ),
     Button(Const("Announce"), id="announce_start", on_click=open_announce_confirm, when="can_be_announced"),
+    Button(
+        Const("Send for Approval"),
+        id="approval_start",
+        on_click=open_send_for_approval_confirm,
+        when="can_be_sent_for_approval",
+    ),
     Button(Const("Finish"), id="finish_start", on_click=open_finish_confirm, when="can_be_finished"),
     Start(Const("Close"), id="start_close", state=AttendanceStates.close, when="can_be_closed"),
     Start(Const("Attendance"), id="start_attendance", state=AttendanceStates.init, when="can_see_attendance"),
     SwitchTo(Const("Delete"), id="delete_start", state=MeetingStates.delete_confirm, when="can_be_deleted"),
     Row(SwitchTo(Const("Back"), "to_list", MeetingStates.list), BLANK_BUTTON),
     state=MeetingStates.info,
+    getter=meeting_info_getter,
+)
+
+
+send_for_approval_confirm_ww = Window(
+    Format('Are you surely ready to send "{title}" for approval?'),
+    Const("After approval, the meeting will be <u>announced automatically</u>."),
+    Row(
+        Button(
+            Const("Send for Approval 📩"),
+            id="send_for_approval",
+            when="can_be_sent_for_approval",
+            on_click=on_send_for_approval_confirmed,
+        ),
+        SwitchTo(Const("Cancel"), id="cancel_send_for_approval", state=MeetingStates.info),
+    ),
+    state=MeetingStates.send_for_approval_confirm,
     getter=meeting_info_getter,
 )
 

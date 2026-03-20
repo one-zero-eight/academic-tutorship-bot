@@ -8,6 +8,7 @@ class MeetingStates(StatesGroup):
     create = State()
     create_title = State()
 
+    send_for_approval_confirm = State()
     announce_confirm = State()
     finish_confirm = State()
     delete_confirm = State()

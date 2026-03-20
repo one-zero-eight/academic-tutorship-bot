@@ -88,7 +88,23 @@ class Meeting(BaseModel):
         self.tutor_id = tutor.id
 
     def announce(self):
-        "To announce, date and tutor must be set"
+        self._check_for_announce()
+        self.status = MeetingStatus.ANNOUNCED
+
+    def set_approving(self):
+        self._check_for_approval()
+        if self.status != MeetingStatus.CREATED:
+            raise ValueError("Cannot Send for Approval: it is not in CREATED status")
+        self.status = MeetingStatus.APPROVING
+
+    def discard_approval(self):
+        if self.status != MeetingStatus.APPROVING:
+            raise ValueError("Cannot Discard Approval: it is not in APPROVING status")
+        self.status = MeetingStatus.CREATED
+
+    def approve(self):
+        if self.status != MeetingStatus.APPROVING:
+            raise ValueError("Cannot Approve Meeting: it is not in APPROVING status")
         self._check_for_announce()
         self.status = MeetingStatus.ANNOUNCED
 
@@ -134,6 +150,18 @@ class Meeting(BaseModel):
             raise ValueError("Cannot Announce Meeting: date is in the past")
         if self.tutor_id is None:
             raise ValueError("Cannot Announce Meeting: tutor is not set")
+
+    def _check_for_approval(self):
+        if self.status != MeetingStatus.CREATED:
+            raise ValueError("Cannot Send for Approval: it is not in CREATED status")
+        if self.room is None:
+            raise ValueError("Cannot Send for Approval: room is not set")
+        if self.datetime_ is None:
+            raise ValueError("Cannot Send for Approval: date is not set")
+        if self.datetime_ <= datetime.now():
+            raise ValueError("Cannot Send for Approval: date is in the past")
+        if self.tutor_id is None:
+            raise ValueError("Cannot Send for Approval: tutor is not set")
 
 
 class Attendance(BaseModel):

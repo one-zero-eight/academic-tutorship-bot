@@ -37,6 +37,11 @@ async def get_assigned_tutor(message: Message, _, manager: DialogManager):
         return await manager.answer_and_retry(
             text=f"The user [{shared_user.user_id}] @{shared_user.username} is not a Tutor", reply_markup=CHOOSE_USER_KB
         )
+    except MeetingIsApproving:
+        return await manager.answer_and_retry(
+            text="This meeting is currently pending approval, you cannot change tutor at the moment",
+            reply_markup=CHOOSE_USER_KB,
+        )
     except Exception as e:
         return await manager.answer_and_retry(text=f"Unknown Error: {e}", reply_markup=CHOOSE_USER_KB)
     await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
@@ -53,6 +58,11 @@ async def get_meeting_title(message: Message, _, manager: DialogManager):
             await update_meeting_title(meeting, message.text)
     except NoMessageText:
         return await manager.answer_and_retry("There is no text in your message")
+    except MeetingIsApproving:
+        return await manager.answer_and_retry(
+            text="This meeting is currently pending approval, you cannot change title at the moment",
+            reply_markup=CHOOSE_USER_KB,
+        )
     await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
 
 
@@ -67,6 +77,11 @@ async def get_meeting_description(message: Message, _, manager: DialogManager):
             await update_meeting_description(meeting, message.text)
     except NoMessageText:
         return await manager.answer_and_retry("There is no text in your message")
+    except MeetingIsApproving:
+        return await manager.answer_and_retry(
+            text="This meeting is currently pending approval, you cannot change description at the moment",
+            reply_markup=CHOOSE_USER_KB,
+        )
     await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
 
 
@@ -113,6 +128,11 @@ async def get_meeting_duration(message: Message, _: MessageInput, manager: Dialo
         return await manager.answer_and_retry("There is no text in your message")
     except ValueError:
         return await manager.answer_and_retry("Incorrect format, try like that 00:00")
+    except MeetingIsApproving:
+        return await manager.answer_and_retry(
+            text="This meeting is currently pending approval, you cannot change duration at the moment",
+            reply_markup=CHOOSE_USER_KB,
+        )
     await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
 
 
@@ -124,6 +144,10 @@ async def on_tutor_assign(query: CallbackQuery, widget: Any, manager: DialogMana
             await assign_tutor_to_meeting_by_id(meeting, int(item_id))
     except LookupError:
         return await query.answer("The tutor is not found (somehow)", show_alert=True)
+    except MeetingIsApproving:
+        return await query.answer(
+            text="This meeting is currently pending approval, you cannot change tutor at the moment", show_alert=True
+        )
     except Exception as e:
         return await query.answer(f"Unknown Error: {e}", show_alert=True)
     await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
@@ -133,12 +157,22 @@ async def get_meeting_room(message: Message, _: MessageInput, manager: DialogMan
     manager = extend_dialog(manager)
     await manager.clear_messages()
     await message.delete()
-    if not message.text:
+    try:
+        if not message.text:
+            raise NoMessageText()
+        if len(message.text) > MAX_ROOM_LEN:
+            raise ValueError("Length must not be more than 64 simbols")
+        async with manager.state.sync_meeting() as meeting:
+            await update_meeting_room(meeting, message.text)
+    except NoMessageText:
         return await manager.answer_and_retry("There is no text in your message")
-    if len(message.text) > MAX_ROOM_LEN:
-        return await manager.answer_and_retry("Length must not be more than 64 simbols")
-    async with manager.state.sync_meeting() as meeting:
-        await update_meeting_room(meeting, message.text)
+    except ValueError as e:
+        return await manager.answer_and_retry(f"Incorrect format: {e}")
+    except MeetingIsApproving:
+        return await manager.answer_and_retry(
+            text="This meeting is currently pending approval, you cannot change room at the moment",
+            reply_markup=CHOOSE_USER_KB,
+        )
     await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
 
 
