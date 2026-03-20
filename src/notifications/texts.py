@@ -186,7 +186,7 @@ MEETING_DISCARDED = """
 Meeting "{title}" has been discarded
 
 Reason:
-{reason}
+<blockquote>{reason}</blockquote>
 
 🔗 <a href="{link}">Click to see the details</a>
 """
