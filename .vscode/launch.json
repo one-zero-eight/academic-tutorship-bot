@@ -8,7 +8,7 @@
       "module": "src.bot",
       "cwd": "${workspaceFolder}",
       "justMyCode": true,
-      "console": "integratedTerminal",
+      "console": "internalConsole",
       "env": {
         "PYTHONUNBUFFERED": "1"
       }
