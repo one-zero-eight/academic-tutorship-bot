@@ -2,8 +2,10 @@ from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager
 
 from src.bot.dialog_extension import extend_dialog
-from src.bot.logging_ import log_error, log_info
+from src.bot.logging_ import log_error, log_info, log_warning
 from src.db.repositories import student_repo
+from src.domain.models import NotificationBotStatus
+from src.notifications import notification_manager
 
 NOTIFICATIONS_ON = "Thanks! Notifications set up ✅"
 NOTIFICATIONS_OFF = "We won't bother you with notifications anymore 💤"
@@ -12,21 +14,39 @@ NOTIFICATIONS_OFF = "We won't bother you with notifications anymore 💤"
 async def on_toggle_notifications(query: CallbackQuery, _, manager: DialogManager):
     manager = extend_dialog(manager)
     try:
-        async with manager.state.sync_self_student() as self_student:
-            s = self_student.settings
-            log_info(
-                "student.notifications.toggle.requested",
-                user_id=query.from_user.id,
-                current_value=s.receive_notifications,
-            )
-            s.receive_notifications = not s.receive_notifications
-            await student_repo.update(self_student, ["receive_notifications"])
-            await query.answer(NOTIFICATIONS_ON if s.receive_notifications else NOTIFICATIONS_OFF)
-            log_info(
-                "student.notifications.toggle.succeeded",
-                user_id=query.from_user.id,
-                new_value=s.receive_notifications,
-            )
+        self_student = await manager.state.get_self_student()
+        s = self_student.settings
+        log_info(
+            "student.notifications.toggle.requested",
+            user_id=query.from_user.id,
+            current_value=s.receive_notifications,
+        )
+        s.receive_notifications = not s.receive_notifications
+        await student_repo.update(self_student, ["receive_notifications"])
+        await notification_manager.send_receive_notification_toggled(self_student.id, s.receive_notifications)
+        self_student = await student_repo.get(self_student.telegram_id)  # check if notification really sent
+
+        if self_student.notification_bot_status != NotificationBotStatus.ACTIVATED:
+            # NOTE: we don't care if user deactivates notifications and blocks bot
+            if s.receive_notifications:
+                raise PermissionError("Notification bot is not activated")
+
+        await student_repo.update(self_student, ["receive_notifications"])
+        await query.answer(NOTIFICATIONS_ON if s.receive_notifications else NOTIFICATIONS_OFF)
+        await manager.state.set_self_student(self_student)
+        log_info(
+            "student.notifications.toggle.succeeded",
+            user_id=query.from_user.id,
+            new_value=s.receive_notifications,
+        )
+    except PermissionError:
+        log_warning(
+            "student.notifications.toggle.permission_denied",
+            user_id=query.from_user.id,
+        )
+        self_student.settings.receive_notifications = False
+        await student_repo.update(self_student, ["receive_notifications"])
+        await query.answer("Please, activate the notification bot first ⚠️")
     except Exception as e:
         log_error("student.notifications.toggle.failed", user_id=query.from_user.id, reason=str(e))
         raise

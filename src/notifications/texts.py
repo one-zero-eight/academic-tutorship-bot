@@ -192,3 +192,30 @@ Reason:
 
 🔗 <a href="{link}">Click to see the details</a>
 """
+
+RECEIVE_NOTIFICATION_ENABLED = """
+Thank you for enabling notifications 🎉
+
+<a href="{link}">Go back to the main bot</a>
+"""
+
+RECEIVE_NOTIFICATION_DISABLED = """
+Notifications disabled 💤
+
+To receive them again, <a href="{link}">go to bot settings</a>
+"""
+
+
+START_DEFAULT = """
+Hello, I am a notification bot for Academic Tutorship of Innopolis.
+I do nothing but sending notifications 💌
+
+To see more go to <a href="{link}">Academic Tutorship</a>
+"""
+
+START_FROM_CONTROL_BOT = """
+Thank you for activating the notification bot! 🎉
+Here you will receive all notifications from Academic Tutorship 💌
+
+To go back to the main bot <a href="{link}">click the link</a>
+"""

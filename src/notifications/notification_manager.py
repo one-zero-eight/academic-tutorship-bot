@@ -51,6 +51,13 @@ class NotificationManager:
         text = BOT_SHUTDOWN.format(link=self.gen_control_bot_link())
         await self._send_admins(text=text)
 
+    async def send_receive_notification_toggled(self, student_id: int, enabled: bool):
+        if enabled:
+            text = RECEIVE_NOTIFICATION_ENABLED.format(link=self.gen_control_bot_link())
+        else:
+            text = RECEIVE_NOTIFICATION_DISABLED.format(link=self.gen_control_bot_link("settings"))
+        await self._send_ids(student_id, text=text)
+
     async def send_meeting_tutor_assigned(self, meeting: Meeting, tutor: Tutor):
         tutor_data = tutor.model_dump()
         meeting_data = meeting.model_dump(by_alias=True)
