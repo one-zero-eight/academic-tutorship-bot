@@ -120,8 +120,9 @@ async def on_startup():
         logger.info(f"Bot commands updated. Success: {_}.")
     logger.info(f"Bot started https://t.me/{existing_bot['username']} in {perf_counter() - _time1:.2f} sec.")
 
-    # Set bot username for notifications
-    notification_manager.set_main_bot_username(existing_bot["username"])
+    # Set bots usernames in notification_manager
+    await notification_manager.load_notification_bot_username()
+    notification_manager.set_control_bot_username(existing_bot["username"])
 
     logger.info("Starting Scheduler...")
     scheduler.start()

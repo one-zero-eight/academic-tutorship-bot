@@ -54,9 +54,15 @@ start_ww = Window(
 # TODO: move to separate settings dialog (issue #50)
 settings_ww = Window(
     Const("⚙️ Settings️"),
+    Const(" "),
+    Const("📚 Relevant disciplines:"),
     List(Format("- [{item[language]} {item[year]}y] {item[name]}"), items="relevant_disciplines"),
+    Const(" "),
+    Format("🔗 <i><a href='{notification_bot_link}'>link to Notifications Bot</a></i>"),
+    Const("Activate bot ☝️ to receive notifications", when="notification_bot_unactivated"),
+    Const("Unblock the bot ☝️ to receive notifications", when="notification_bot_blocked"),
     Button(Format("Notifications: {receive_notifications}"), id="toggle_notif", on_click=on_toggle_notifications),
-    SwitchTo(Const("Relevant Disciplines"), id="open_disciplines", state=RootStates.settings_disciplines),
+    SwitchTo(Const("📚 Change disciplines"), id="open_disciplines", state=RootStates.settings_disciplines),
     Row(SwitchTo(Const("Back"), id="to_start", state=RootStates.start), BLANK_BTN),
     getter=student_settings_getter,
     state=RootStates.settings,

@@ -54,12 +54,13 @@ async def on_error(event: ErrorEvent):
 async def start_command_handler(message: types.Message):
     from src.notifications import notification_manager  # i am a rascal and want to avoid circular imports
 
-    link = notification_manager._gen_bot_link()
     payload = _extract_start_payload(message)
     if payload == "from_control_bot":
-        await message.reply(START_FROM_CONTROL_BOT.format(link=link))
+        link = notification_manager.gen_control_bot_link("settings")
+        await message.answer(START_FROM_CONTROL_BOT.format(link=link))
     else:
-        await message.reply(START_DEFAULT.format(link=link))
+        link = notification_manager.gen_control_bot_link()
+        await message.answer(START_DEFAULT.format(link=link))
 
 
 @router.callback_query(StatusFilter(UserStatus.admin), F.data.startswith(("approve_", "discard_")))
@@ -73,11 +74,11 @@ async def handle_admin_approve_discard(query: types.CallbackQuery):
         return
     meeting_id = int(meeting_id_text)
     if action == "approve":
-        reply_markup = notification_manager._gen_confirm_approve_reply_markup(meeting_id)
+        reply_markup = notification_manager.gen_confirm_approve_reply_markup(meeting_id)
         text = query.message.html_text + "\n\n" + MEETING_CONFIRM_APPROVE_APPENDIX
         await query.message.edit_text(text=text, reply_markup=reply_markup)
     elif action == "discard":
-        reply_markup = notification_manager._gen_confirm_discard_reply_markup(meeting_id)
+        reply_markup = notification_manager.gen_confirm_discard_reply_markup(meeting_id)
         await query.message.edit_reply_markup(reply_markup=reply_markup)
 
 
@@ -154,7 +155,7 @@ async def handle_admin_cancel_approve_discard(query: types.CallbackQuery, state:
         return
     # Go step back
     text = await _text_meeting_approve_request(int(meeting_id_text))
-    reply_markup = notification_manager._gen_approve_discard_request_reply_markup(int(meeting_id_text))
+    reply_markup = notification_manager.gen_approve_discard_request_reply_markup(int(meeting_id_text))
     await query.message.edit_text(text, reply_markup=reply_markup)
 
 
@@ -177,7 +178,7 @@ async def _text_meeting_approve_request(meeting_id: int):
     assert meeting.tutor_id
     tutor = await tutor_repo.get(id=meeting.tutor_id)
     meeting_data = meeting.model_dump(by_alias=True)
-    link = notification_manager._gen_meeting_link(meeting)
+    link = notification_manager.gen_meeting_link(meeting)
     return MEETING_APPROVE_REQUEST.format(**meeting_data, username=tutor.username, link=link)
 
 

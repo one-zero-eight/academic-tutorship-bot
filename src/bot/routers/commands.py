@@ -47,7 +47,7 @@ async def on_start(
             manager = extend_dialog(dialog_manager)
             await dialog_manager.start(RootStates.start, mode=StartMode.RESET_STACK, show_mode=ShowMode.DELETE_AND_SEND)
             log_info("user.start.routed", user_id=message.chat.id, target_state=str(RootStates.start))
-            if payload and payload != "welcome":
+            if payload and payload != "default":
                 if payload.startswith("meeting_"):
                     meeting_id_text = payload.removeprefix("meeting_")
                     if not meeting_id_text.isdigit():
@@ -81,6 +81,9 @@ async def on_start(
                             TutorProfileStates.profile_control, show_mode=ShowMode.DELETE_AND_SEND
                         )
                     log_warning("user.start.payload_invalid", user_id=message.chat.id, reason="tutor_not_found")
+                if payload == "settings":
+                    log_info("user.start.routed", user_id=message.chat.id, target_state=str(RootStates.settings))
+                    return await manager.start(RootStates.settings, show_mode=ShowMode.DELETE_AND_SEND)
         else:
             log_info("user.start.routed", user_id=message.chat.id, target_state=str(AuthStates.bind_tg_inh))
             return await dialog_manager.start(
