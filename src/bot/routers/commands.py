@@ -6,6 +6,7 @@ from aiogram_dialog import DialogManager, ShowMode, StartMode
 from src.accounts_sdk import inh_accounts
 from src.bot.dialog_extension import extend_dialog
 from src.bot.dialogs.authentication import AuthStates
+from src.bot.dialogs.guide import GuideStates
 from src.bot.dialogs.meetings import MeetingStates
 from src.bot.dialogs.root import RootStates
 from src.bot.dialogs.student_meetings import StudentMeetingStates
@@ -84,6 +85,14 @@ async def on_start(
                 if payload == "settings":
                     log_info("user.start.routed", user_id=message.chat.id, target_state=str(RootStates.settings))
                     return await manager.start(RootStates.settings, show_mode=ShowMode.DELETE_AND_SEND)
+                if payload == "guide":
+                    log_info("user.start.routed", user_id=message.chat.id, target_state=str(GuideStates.notifications))
+                    return await manager.start(GuideStates.notifications, show_mode=ShowMode.DELETE_AND_SEND)
+            else:
+                student = await manager.state.get_self_student()
+                if not student.saw_guide:
+                    log_info("user.start.routed", user_id=message.chat.id, target_state=str(GuideStates.init))
+                    return await manager.start(GuideStates.init, show_mode=ShowMode.DELETE_AND_SEND)
         else:
             log_info("user.start.routed", user_id=message.chat.id, target_state=str(AuthStates.bind_tg_inh))
             return await dialog_manager.start(

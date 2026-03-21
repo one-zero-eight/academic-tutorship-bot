@@ -66,4 +66,9 @@ async def disciplines_multi_getter(dialog_manager: DialogManager, **kwargs):
 async def selected_disciplines_getter(dialog_manager: DialogManager, **kwargs):
     manager = extend_dialog(dialog_manager)
     selected_disciplines = await manager.state.get_value("selected_disciplines", [])
-    return {"selected_disciplines": selected_disciplines}
+    something_chosen = len(selected_disciplines) > 0
+    return {
+        "selected_disciplines": selected_disciplines,
+        "something_chosen": something_chosen,
+        "nothing_chosen": not something_chosen,
+    }

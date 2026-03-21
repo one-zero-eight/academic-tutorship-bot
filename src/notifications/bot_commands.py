@@ -43,12 +43,16 @@ async def start_command_handler(message: types.Message):
     await student_repo.set_notification_bot_activated(telegram_id=message.from_user.id)
 
     payload = _extract_start_payload(message)
-    if payload == "from_control_bot":
-        link = notification_manager.gen_control_bot_link("settings")
-        await message.answer(START_FROM_CONTROL_BOT.format(link=link))
-    else:
-        link = notification_manager.gen_control_bot_link()
-        await message.answer(START_DEFAULT.format(link=link))
+    match payload:
+        case "from_control_bot":
+            link = notification_manager.gen_control_bot_link("settings")
+            await message.answer(START_FROM_CONTROL_BOT.format(link=link))
+        case "guide":
+            link = notification_manager.gen_control_bot_link("guide")
+            await message.answer(START_FROM_CONTROL_BOT.format(link=link))
+        case _:
+            link = notification_manager.gen_control_bot_link()
+            await message.answer(START_DEFAULT.format(link=link))
 
 
 @router.callback_query(StatusFilter(UserStatus.admin), F.data.startswith(("approve_", "discard_")))
