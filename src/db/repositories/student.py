@@ -8,7 +8,7 @@ from sqlalchemy import (
 )
 
 from src.db.schema import admin, discipline, email, settings, student, student_discipline
-from src.domain.models import Discipline, Settings, Student
+from src.domain.models import Discipline, NotificationBotStatus, Settings, Student
 
 from .sql import Repository
 
@@ -157,6 +157,7 @@ class StudentRepository(Repository):
             username=row.username,
             is_admin=row.is_admin,
             settings=Settings(receive_notifications=row.receive_notifications),
+            notification_bot_status=NotificationBotStatus(row.notification_bot_status),
         )
 
     def _row_to_discipline(self, row: Row) -> Discipline:

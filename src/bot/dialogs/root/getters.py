@@ -4,6 +4,7 @@ from aiogram_dialog import DialogManager
 from src.bot.dialog_extension import extend_dialog
 from src.bot.utils import user_status_getter
 from src.db.repositories import student_repo
+from src.domain.models import NotificationBotStatus
 from src.notifications import notification_manager
 
 
@@ -22,6 +23,6 @@ async def student_settings_getter(dialog_manager: DialogManager, **kwargs):
         "receive_notifications": "✅" if student.settings.receive_notifications else "❌",
         "relevant_disciplines": [disc.model_dump() for disc in relevant_disciplines],
         "notification_bot_link": notification_bot_link,
-        "notification_bot_unactivated": False,  # TODO: this
-        "notification_bot_blocked": False,  # TODO: this
+        "notification_bot_unactivated": student.notification_bot_status == NotificationBotStatus.UNACTIVATED,
+        "notification_bot_blocked": student.notification_bot_status == NotificationBotStatus.BLOCKED,
     }

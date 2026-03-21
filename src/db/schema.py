@@ -26,6 +26,7 @@ student = Table(
     Column("last_name", String(128)),
     Column("username", String(36), unique=True),
     Column("email_id", Integer, ForeignKey("email.id", onupdate="RESTRICT", ondelete="RESTRICT"), nullable=False),
+    Column("notification_bot_status", SmallInteger, nullable=False, default=1, server_default="1"),
 )
 
 
@@ -101,7 +102,7 @@ meeting = Table(
     "meeting",
     metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
-    Column("status", SmallInteger, nullable=False, default=0),
+    Column("status", SmallInteger, nullable=False, default=0, server_default="0"),
     Column("title", String(256), nullable=False),
     Column("discipline_id", ForeignKey("discipline.id", ondelete="SET NULL"), nullable=False),
     Column("created_datetime", DateTime, nullable=False, default=datetime.datetime.now),

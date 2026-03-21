@@ -19,6 +19,12 @@ class MeetingStatus(IntEnum):
     CLOSED = 5
 
 
+class NotificationBotStatus(IntEnum):
+    ACTIVATED = 0
+    UNACTIVATED = 1
+    BLOCKED = 2
+
+
 class Settings(BaseModel):
     receive_notifications: bool = True
 
@@ -33,6 +39,8 @@ class Student(BaseModel):
     username: str | None = None
     "Telegram username (without @)"
     is_admin: bool = False
+    notification_bot_status: NotificationBotStatus = NotificationBotStatus.UNACTIVATED
+    "Status of notification bot: whether it was activated, was not, or was blocked by user"
 
     @computed_field
     @property
