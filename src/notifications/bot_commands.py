@@ -5,7 +5,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ErrorEvent, InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.bot.filters import StatusFilter, UserStatus
-from src.db.repositories import meeting_repo, tutor_repo
+from src.db.repositories import meeting_repo, student_repo, tutor_repo
 
 from .texts import *
 
@@ -53,6 +53,9 @@ async def on_error(event: ErrorEvent):
 @router.message(CommandStart())
 async def start_command_handler(message: types.Message):
     from src.notifications import notification_manager  # i am a rascal and want to avoid circular imports
+
+    assert message.from_user
+    await student_repo.set_notification_bot_activated(telegram_id=message.from_user.id)
 
     payload = _extract_start_payload(message)
     if payload == "from_control_bot":

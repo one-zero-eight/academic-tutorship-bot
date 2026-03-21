@@ -1,8 +1,10 @@
 import asyncio
 
 from aiogram import Bot, Dispatcher
+from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from src.bot.logging_ import log_error, log_info
 from src.db.repositories import admin_repo, meeting_repo, student_repo, tutor_repo
 from src.domain.models import Meeting, MeetingStatus, Tutor
 
@@ -256,9 +258,14 @@ class NotificationManager:
             try:
                 await self._bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
                 sent.append(chat_id)
-            except Exception:
-                # TODO: log the error properly
-                pass
+            except TelegramForbiddenError as e:
+                await student_repo.set_notification_bot_blocked(telegram_id=chat_id)
+                log_info("notification_manager.send.blocked", user_id=chat_id, reason=str(e))
+            except TelegramBadRequest as e:
+                await student_repo.set_notification_bot_unactivated(telegram_id=chat_id)
+                log_info("notification_manager.send.unactivated", user_id=chat_id, reason=str(e))
+            except Exception as e:
+                log_error("notification_manager.send.failed", user_id=chat_id, reason=str(e))
         return sent
 
     def gen_control_bot_link(self, payload: str = "default") -> str:

@@ -147,6 +147,33 @@ class StudentRepository(Repository):
             result = await conn.execute(stmt)
             return [row.telegram_id for row in result.all()]
 
+    async def set_notification_bot_activated(self, *, telegram_id: int):
+        stmt = (
+            update(student)
+            .where(student.c.telegram_id == telegram_id)
+            .values(notification_bot_status=NotificationBotStatus.ACTIVATED.value)
+        )
+        async with self._db.engine.begin() as conn:
+            await conn.execute(stmt)
+
+    async def set_notification_bot_unactivated(self, *, telegram_id: int):
+        stmt = (
+            update(student)
+            .where(student.c.telegram_id == telegram_id)
+            .values(notification_bot_status=NotificationBotStatus.UNACTIVATED.value)
+        )
+        async with self._db.engine.begin() as conn:
+            await conn.execute(stmt)
+
+    async def set_notification_bot_blocked(self, *, telegram_id: int):
+        stmt = (
+            update(student)
+            .where(student.c.telegram_id == telegram_id)
+            .values(notification_bot_status=NotificationBotStatus.BLOCKED.value)
+        )
+        async with self._db.engine.begin() as conn:
+            await conn.execute(stmt)
+
     def _row_to_student(self, row: Row) -> Student:
         return Student(
             id=row.id,

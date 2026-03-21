@@ -11,7 +11,7 @@ from sqlalchemy import (
 )
 
 from src.db.schema import admin, attendance, discipline, email, meeting, settings, student, student_discipline, tutor
-from src.domain.models import Discipline, Meeting, MeetingStatus
+from src.domain.models import Discipline, Meeting, MeetingStatus, NotificationBotStatus
 
 from .sql import Repository
 
@@ -168,7 +168,12 @@ class MeetingRepository(Repository):
         discipline_id = (await self.get(id)).discipline.id
         stmt = select(sd.c.student_id).where(sd.c.discipline_id == discipline_id)
         if notifications_only:
-            stmt = stmt.join(settings, settings.c.id == sd.c.student_id).where(settings.c.receive_notifications)
+            stmt = (
+                stmt.join(settings, settings.c.id == sd.c.student_id)
+                .join(student, student.c.id == sd.c.student_id)
+                .where(settings.c.receive_notifications)
+                .where(student.c.notification_bot_status == NotificationBotStatus.ACTIVATED.value)
+            )
         async with self._db.engine.connect() as conn:
             result = await conn.execute(stmt)
             return [row.student_id for row in result.all()]
