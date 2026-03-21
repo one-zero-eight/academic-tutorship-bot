@@ -41,6 +41,8 @@ class Student(BaseModel):
     is_admin: bool = False
     notification_bot_status: NotificationBotStatus = NotificationBotStatus.UNACTIVATED
     "Status of notification bot: whether it was activated, was not, or was blocked by user"
+    saw_guide: bool = False
+    "Whether the user has seen the guide message on first interaction with bot"
 
     @computed_field
     @property

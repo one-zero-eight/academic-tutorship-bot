@@ -185,6 +185,7 @@ class StudentRepository(Repository):
             is_admin=row.is_admin,
             settings=Settings(receive_notifications=row.receive_notifications),
             notification_bot_status=NotificationBotStatus(row.notification_bot_status),
+            saw_guide=row.saw_guide,
         )
 
     def _row_to_discipline(self, row: Row) -> Discipline:

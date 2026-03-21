@@ -27,6 +27,7 @@ student = Table(
     Column("username", String(36), unique=True),
     Column("email_id", Integer, ForeignKey("email.id", onupdate="RESTRICT", ondelete="RESTRICT"), nullable=False),
     Column("notification_bot_status", SmallInteger, nullable=False, default=1, server_default="1"),
+    Column("saw_guide", Boolean, nullable=False, default=False, server_default="false"),
 )
 
 
