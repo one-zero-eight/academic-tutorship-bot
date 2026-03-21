@@ -1,33 +1,22 @@
-from aiogram import Bot, Router, types
+from aiogram import Router, types
 from aiogram.filters import Command, CommandStart, ExceptionTypeFilter
 from aiogram.fsm.context import FSMContext
-from aiogram.types import BotCommandScopeChat
 from aiogram_dialog import DialogManager, ShowMode, StartMode
 
 from src.accounts_sdk import inh_accounts
 from src.bot.dialog_extension import extend_dialog
+from src.bot.dialogs.authentication import AuthStates
 from src.bot.dialogs.meetings import MeetingStates
+from src.bot.dialogs.root import RootStates
 from src.bot.dialogs.student_meetings import StudentMeetingStates
 from src.bot.dialogs.tutors_profile import TutorProfileStates
 from src.bot.exceptions import UnauthenticatedException
 from src.bot.filters import EMAIL_ENTERED_FILTER, USER_AUTHENTICATED_FILTER, StatusFilter
 from src.bot.logging_ import log_error, log_info, log_warning
-from src.bot.routers.admin import AdminStates
-from src.bot.routers.authentication import AuthStates
-from src.bot.routers.student import StudentStates
-from src.bot.routers.tutor import TutorStates
-from src.config import settings
 from src.db.repositories import meeting_repo, tutor_repo
 from src.domain.models import UserStatus as US
 
 router = Router(name="commands")
-
-
-MATCHING_START_STATE = {
-    US.student: StudentStates.start,
-    US.tutor: TutorStates.start,
-    US.admin: AdminStates.start,
-}
 
 
 def _extract_start_payload(message: types.Message) -> str | None:
@@ -56,8 +45,8 @@ async def on_start(
     try:
         if authenticated:
             manager = extend_dialog(dialog_manager)
-            await dialog_manager.start(MATCHING_START_STATE[status], mode=StartMode.RESET_STACK)
-            log_info("user.start.routed", user_id=message.chat.id, target_state=str(MATCHING_START_STATE[status]))
+            await dialog_manager.start(RootStates.start, mode=StartMode.RESET_STACK, show_mode=ShowMode.DELETE_AND_SEND)
+            log_info("user.start.routed", user_id=message.chat.id, target_state=str(RootStates.start))
             if payload and payload != "welcome":
                 if payload.startswith("meeting_"):
                     meeting_id_text = payload.removeprefix("meeting_")
@@ -92,10 +81,11 @@ async def on_start(
                             TutorProfileStates.profile_control, show_mode=ShowMode.DELETE_AND_SEND
                         )
                     log_warning("user.start.payload_invalid", user_id=message.chat.id, reason="tutor_not_found")
-        if settings.mock_auth:
-            return
-        log_info("user.start.routed", user_id=message.chat.id, target_state=str(AuthStates.bind_tg_inh))
-        return await dialog_manager.start(AuthStates.bind_tg_inh, mode=StartMode.RESET_STACK)
+        else:
+            log_info("user.start.routed", user_id=message.chat.id, target_state=str(AuthStates.bind_tg_inh))
+            return await dialog_manager.start(
+                AuthStates.bind_tg_inh, mode=StartMode.RESET_STACK, show_mode=ShowMode.DELETE_AND_SEND
+            )
     except Exception:
         log_error("user.start.failed", user_id=message.chat.id)
         raise
@@ -107,29 +97,29 @@ async def on_email(message: types.Message, state: FSMContext):
     pass
 
 
-@router.message(Command("admin"), StatusFilter(US.admin))
-async def enable_admin_mode(message: types.Message, bot: Bot, dialog_manager: DialogManager):
-    text = "You are the Admin!"
-    await message.answer(text)
-    await bot.set_my_commands(
-        settings.bot_commands
-        or []
-        + [
-            types.BotCommand(command="admin", description="Enable admin mode"),
-        ],
-        scope=BotCommandScopeChat(chat_id=message.chat.id),
-    )
-    await dialog_manager.start(AdminStates.start, mode=StartMode.RESET_STACK)
+# @router.message(Command("admin"), StatusFilter(US.admin))
+# async def enable_admin_mode(message: types.Message, bot: Bot, dialog_manager: DialogManager):
+#     text = "You are the Admin!"
+#     await message.answer(text)
+#     await bot.set_my_commands(
+#         settings.bot_commands
+#         or []
+#         + [
+#             types.BotCommand(command="admin", description="Enable admin mode"),
+#         ],
+#         scope=BotCommandScopeChat(chat_id=message.chat.id),
+#     )
+#     await dialog_manager.start(AdminStates.start, mode=StartMode.RESET_STACK)
 
 
-@router.message(Command("admin"), ~StatusFilter(US.admin))
-async def failed_enable_admin_mode(message: types.Message, bot: Bot):
-    text = "You are not the Admin!"
-    await message.answer(text)
-    await bot.set_my_commands(
-        settings.bot_commands or [],
-        scope=BotCommandScopeChat(chat_id=message.chat.id),
-    )
+# @router.message(Command("admin"), ~StatusFilter(US.admin))
+# async def failed_enable_admin_mode(message: types.Message, bot: Bot):
+#     text = "You are not the Admin!"
+#     await message.answer(text)
+#     await bot.set_my_commands(
+#         settings.bot_commands or [],
+#         scope=BotCommandScopeChat(chat_id=message.chat.id),
+#     )
 
 
 @router.message(Command("testapi"), StatusFilter(US.admin))

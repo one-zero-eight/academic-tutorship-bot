@@ -7,4 +7,4 @@ from src.domain.models import *
 from . import windows
 from .states import *
 
-router = Dialog(*get_windows(windows))
+dialog = Dialog(*get_windows(windows))

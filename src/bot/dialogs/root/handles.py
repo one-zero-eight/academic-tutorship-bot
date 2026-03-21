@@ -5,8 +5,8 @@ from src.bot.dialog_extension import extend_dialog
 from src.bot.logging_ import log_error, log_info
 from src.db.repositories import student_repo
 
-NOTIFICATIONS_ON = "Thanks! Don't forget to launch @"
-NOTIFICATIONS_OFF = "We won't bother you with notifications anymore"
+NOTIFICATIONS_ON = "Thanks! Notifications set up ✅"
+NOTIFICATIONS_OFF = "We won't bother you with notifications anymore 💤"
 
 
 async def on_toggle_notifications(query: CallbackQuery, _, manager: DialogManager):
@@ -21,6 +21,7 @@ async def on_toggle_notifications(query: CallbackQuery, _, manager: DialogManage
             )
             s.receive_notifications = not s.receive_notifications
             await student_repo.update(self_student, ["receive_notifications"])
+            await query.answer(NOTIFICATIONS_ON if s.receive_notifications else NOTIFICATIONS_OFF)
             log_info(
                 "student.notifications.toggle.succeeded",
                 user_id=query.from_user.id,

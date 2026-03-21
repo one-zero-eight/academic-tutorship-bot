@@ -64,27 +64,24 @@ async def on_unknown_state(event: ErrorEvent, state: FSMContext, dialog_manager:
 
 
 from src.bot.dialogs.attendance import dialog as attendance_dialog  # noqa: E402
+from src.bot.dialogs.authentication import dialog as authentication_dialog  # noqa: E402
 from src.bot.dialogs.change_meeting import dialog as change_meeting_dialog  # noqa: E402
 from src.bot.dialogs.discipline_picker import dialog as discipline_picker_dialog  # noqa: E402
 from src.bot.dialogs.meetings import dialog as meetings_dialog  # noqa: E402
+from src.bot.dialogs.root import dialog as root_dialog  # noqa: E402
 from src.bot.dialogs.student_meetings import dialog as student_meetings_dialog  # noqa: E402
 from src.bot.dialogs.tutors import dialog as tutors_dialog  # noqa: E402
 from src.bot.dialogs.tutors_profile import dialog as tutors_profile_dialog  # noqa: E402
-from src.bot.routers.admin import router as admin_router  # noqa: E402
-from src.bot.routers.authentication import router as authentication_router  # noqa: E402
 from src.bot.routers.commands import router as commands_router  # noqa: E402
 from src.bot.routers.queries import router as queries_router  # noqa: E402
-from src.bot.routers.student import router as student_router  # noqa: E402
-from src.bot.routers.tutor import router as tutor_router  # noqa: E402
 
+# non dialog handlers
 dp.include_router(commands_router)  # start, help, menu commands
 dp.include_router(queries_router)  # callback handles for notification messages
-dp.include_router(authentication_router)
-dp.include_router(student_router)
-dp.include_router(tutor_router)
-dp.include_router(admin_router)  # admin mode
 
 # separate functional dialogs
+dp.include_router(root_dialog)
+dp.include_router(authentication_dialog)
 dp.include_router(meetings_dialog)
 dp.include_router(discipline_picker_dialog)
 dp.include_router(student_meetings_dialog)
