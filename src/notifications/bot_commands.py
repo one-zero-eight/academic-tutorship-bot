@@ -6,6 +6,7 @@ from aiogram.types import ErrorEvent, InlineKeyboardButton, InlineKeyboardMarkup
 
 from src.bot.filters import StatusFilter, UserStatus
 from src.db.repositories import meeting_repo, student_repo, tutor_repo
+from src.domain.models import MeetingStatus
 
 from .texts import *
 
@@ -64,7 +65,14 @@ async def handle_admin_approve_discard(query: types.CallbackQuery):
     if not meeting_id_text.isdigit():
         await query.answer("Invalid callback data", show_alert=True)
         return
+
     meeting_id = int(meeting_id_text)
+    meeting = await meeting_repo.get(meeting_id)
+    if meeting.status != MeetingStatus.APPROVING:
+        await query.answer("This meeting is not pending approval anymore", show_alert=True)
+        await query.message.edit_reply_markup(reply_markup=None)
+        return
+
     if action == "approve":
         reply_markup = notification_manager.gen_confirm_approve_reply_markup(meeting_id)
         text = query.message.html_text + "\n\n" + MEETING_CONFIRM_APPROVE_APPENDIX
@@ -85,6 +93,12 @@ async def handle_admin_confirm_approve_discard(query: types.CallbackQuery, state
         return
     meeting_id = int(meeting_id_text)
     meeting = await meeting_repo.get(meeting_id)
+
+    if meeting.status != MeetingStatus.APPROVING:
+        await query.answer("This meeting is not pending approval anymore", show_alert=True)
+        await query.message.edit_reply_markup(reply_markup=None)
+        return
+
     if action == "approve":  # TODO: maybe move that to logic layer?
         assert meeting.tutor_id
         tutor = await tutor_repo.get(id=meeting.tutor_id)
@@ -115,6 +129,7 @@ async def handle_admin_discard_reason(message: types.Message, bot: Bot, state: F
     assert meeting_id and message.html_text
 
     meeting = await meeting_repo.get(meeting_id)
+
     meeting.discard_approval()
     await meeting_repo.update(meeting, attrs=["status"])
     await notification_manager.send_meeting_discarded(meeting, message.html_text)
