@@ -18,7 +18,7 @@ from src.bot.logging_ import logger
 from src.bot.middlewares import AutoAuthMiddleware
 from src.bot.utils import check_commands_equality
 from src.config import settings
-from src.db.repositories import db
+from src.db.repositories import admin_repo, db
 from src.notifications import notification_manager
 from src.scheduling.scheduler import scheduler
 
@@ -132,6 +132,9 @@ async def on_startup():
     await notification_manager.start_polling()
     logger.info("Sending startup notification...")
     await notification_manager.send_bot_started()
+    logger.info("Syncing admins with config...")
+    added, removed = await admin_repo.sync_with_config(settings.admins)
+    logger.info(f"Admins synced, added: {added}, removed: {removed}")
 
 
 @dp.shutdown()
