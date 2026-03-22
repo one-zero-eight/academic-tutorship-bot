@@ -15,3 +15,5 @@ settings.yaml
 .DS_Store
 try/
 *.drawio.bkp
+.logs/
+.VSCodeCounter

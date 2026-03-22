@@ -16,6 +16,12 @@ class RelativePathFilter(logging.Filter):
 
 with open("logging.yaml") as f:
     config = yaml.safe_load(f)
+
+for handler in config.get("handlers", {}).values():
+    filename = handler.get("filename")
+    if filename:
+        os.makedirs(os.path.dirname(filename) or ".", exist_ok=True)
+
     logging.config.dictConfig(config)
 
 logger = logging.getLogger("src.bot")

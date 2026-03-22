@@ -8,9 +8,11 @@
       "module": "src.bot",
       "cwd": "${workspaceFolder}",
       "justMyCode": true,
+      "logToFile": true,
       "console": "internalConsole",
       "env": {
-        "PYTHONUNBUFFERED": "1"
+        "PYTHONUNBUFFERED": "1",
+        "DEBUGPY_LOG_DIR": "${workspaceFolder}/.logs/debugpy"
       }
     }
   ]
