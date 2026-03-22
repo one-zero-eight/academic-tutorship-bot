@@ -1,6 +1,13 @@
 import pytest_asyncio
 
-from src.db.repositories import DisciplineRepository, MeetingRepository, SQLDatabase, StudentRepository, TutorRepository
+from src.db.repositories import (
+    AdminRepository,
+    DisciplineRepository,
+    MeetingRepository,
+    SQLDatabase,
+    StudentRepository,
+    TutorRepository,
+)
 from src.db.schema import metadata
 
 
@@ -21,6 +28,11 @@ async def student_repo(db):
 @pytest_asyncio.fixture
 async def tutor_repo(db):
     return TutorRepository(db)
+
+
+@pytest_asyncio.fixture
+async def admin_repo(db):
+    return AdminRepository(db)
 
 
 @pytest_asyncio.fixture

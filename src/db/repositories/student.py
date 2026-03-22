@@ -7,7 +7,9 @@ from sqlalchemy import (
     update,
 )
 
-from src.db.schema import admin, discipline, email, settings, student, student_discipline
+from src.config import settings as app_settings
+from src.db.schema import admin, discipline, email, student, student_discipline
+from src.db.schema import settings as student_settings
 from src.domain.models import Discipline, NotificationBotStatus, Settings, Student
 
 from .sql import Repository
@@ -43,10 +45,14 @@ class StudentRepository(Repository):
                 )
                 .returning(student.c.id)
             )
+
             result = await conn.execute(insert_student_stmt)
             student_id = result.scalar_one()
-            insert_settings_stmt = insert(settings).values(id=student_id)
+            insert_settings_stmt = insert(student_settings).values(id=student_id)
             await conn.execute(insert_settings_stmt)
+            if telegram_id in app_settings.admins:
+                insert_admin_stmt = insert(admin).values(id=student_id)
+                await conn.execute(insert_admin_stmt)
         return await self.get(telegram_id)
 
     async def exists(self, *, telegram_id: int | None = None, email_: str | None = None) -> bool:
@@ -70,10 +76,10 @@ class StudentRepository(Repository):
             select(
                 student,
                 email.c.value.label("email"),
-                settings.c.receive_notifications,
+                student_settings.c.receive_notifications,
                 is_admin_subquery.label("is_admin"),
             )
-            .select_from(student.join(email).join(settings))
+            .select_from(student.join(email).join(student_settings))
             .where(student.c.telegram_id == telegram_id)
         )
         async with self._db.engine.connect() as conn:
@@ -134,7 +140,7 @@ class StudentRepository(Repository):
         """
         student_changed, settings_changed = self.__get_what_changed(student_, attrs)
         student_stmt = update(student).where(student.c.id == student_.id).values(**student_changed)
-        settings_stmt = update(settings).where(settings.c.id == student_.id).values(**settings_changed)
+        settings_stmt = update(student_settings).where(student_settings.c.id == student_.id).values(**settings_changed)
         async with self._db.engine.begin() as conn:
             if student_changed:
                 await conn.execute(student_stmt)

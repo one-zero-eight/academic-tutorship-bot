@@ -25,14 +25,21 @@ class AdminRepository(Repository):
         current_admin_telegram_ids = await self.get_telegram_ids()
         to_add = set(admin_telegram_ids) - set(current_admin_telegram_ids)
         to_remove = set(current_admin_telegram_ids) - set(admin_telegram_ids)
+        added = []
 
         async with self._db.engine.begin() as conn:
-            for telegram_id in to_add:
+            existing_to_add = set()
+            if to_add:
+                result = await conn.execute(select(student.c.telegram_id).where(student.c.telegram_id.in_(to_add)))
+                existing_to_add = {row.telegram_id for row in result.all()}
+
+            for telegram_id in existing_to_add:
                 await conn.execute(
                     admin.insert().values(
                         id=select(student.c.id).where(student.c.telegram_id == telegram_id).scalar_subquery()
                     )
                 )
+                added.append(telegram_id)
             for telegram_id in to_remove:
                 await conn.execute(
                     admin.delete().where(
@@ -40,4 +47,4 @@ class AdminRepository(Repository):
                     )
                 )
 
-        return list(to_add), list(to_remove)
+        return added, list(to_remove)

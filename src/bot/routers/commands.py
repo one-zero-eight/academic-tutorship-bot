@@ -14,6 +14,7 @@ from src.bot.dialogs.tutors_profile import TutorProfileStates
 from src.bot.exceptions import UnauthenticatedException
 from src.bot.filters import EMAIL_ENTERED_FILTER, USER_AUTHENTICATED_FILTER, StatusFilter
 from src.bot.logging_ import log_error, log_info, log_warning
+from src.config import settings
 from src.db.repositories import meeting_repo, tutor_repo
 from src.domain.models import UserStatus as US
 
@@ -93,6 +94,8 @@ async def on_start(
                 if not student.saw_guide:
                     log_info("user.start.routed", user_id=message.chat.id, target_state=str(GuideStates.init))
                     return await manager.start(GuideStates.init, show_mode=ShowMode.DELETE_AND_SEND)
+        elif settings.mock_auth:
+            pass
         else:
             log_info("user.start.routed", user_id=message.chat.id, target_state=str(AuthStates.bind_tg_inh))
             return await dialog_manager.start(
