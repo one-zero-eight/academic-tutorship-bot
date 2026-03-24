@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from src.bot.logging_ import log_error, log_info
 from src.db.repositories import meeting_repo, tutor_repo
 from src.domain.models import Meeting, MeetingStatus
@@ -44,6 +46,25 @@ async def announce_meeting(meeting: Meeting):
         log_error("meeting.logic.announce.failed", meeting_id=meeting.id, reason=str(e))
         raise
     log_info("meeting.logic.announce.persisted_scheduled_notified", meeting_id=meeting.id, tutor_id=meeting.tutor_id)
+
+
+async def approve_meeting(meeting: Meeting):
+    assert meeting.tutor_id
+    assert meeting.datetime_
+    assert meeting.status == MeetingStatus.APPROVING
+    if meeting.datetime_ < datetime.now():
+        raise TimeoutError("Meeting date is in the past")
+    try:
+        meeting.approve()
+        await update_meeting_schedule(meeting)
+        await meeting_repo.update(meeting, ["status"])
+        tutor = await tutor_repo.get(id=meeting.tutor_id)
+        await notification_manager.send_meeting_approved(meeting)
+        await notification_manager.send_meeting_announced(meeting, tutor)
+    except Exception as e:
+        log_error("meeting.logic.approve.failed", meeting_id=meeting.id, reason=str(e))
+        raise
+    log_info("meeting.logic.approve.persisted_scheduled_notified", meeting_id=meeting.id, tutor_id=meeting.tutor_id)
 
 
 async def cancel_meeting(meeting: Meeting):

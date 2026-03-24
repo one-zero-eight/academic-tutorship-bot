@@ -35,17 +35,26 @@ async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
     if not user_status:
         raise ValueError("No status")
 
+    STATUS_RANGE_ANNOUNCED_FINISHED = (MeetingStatus.ANNOUNCED, MeetingStatus.FINISHED)
+
     match meetings_type:
         case "created":
             status_range = MeetingStatus.CREATED
         case "approving":
             status_range = MeetingStatus.APPROVING
         case "announced":
-            status_range = (MeetingStatus.ANNOUNCED, MeetingStatus.FINISHED)
+            status_range = STATUS_RANGE_ANNOUNCED_FINISHED
         case "closed":
             status_range = MeetingStatus.CLOSED
         case _:
-            raise ValueError("Unknown meeting type")
+            try:
+                meeting = await manager.state.get_meeting()
+                if meeting.status in STATUS_RANGE_ANNOUNCED_FINISHED:
+                    status_range = STATUS_RANGE_ANNOUNCED_FINISHED
+                else:
+                    status_range = meeting.status
+            except ValueError:
+                raise ValueError("Unknown meeting type")
 
     match user_status:
         case UserStatus.admin:

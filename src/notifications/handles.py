@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from aiogram import Bot, F, Router, types
 from aiogram.filters import CommandStart, ExceptionTypeFilter, StateFilter
 from aiogram.fsm.context import FSMContext
@@ -7,10 +9,12 @@ from aiogram.types import ErrorEvent, InlineKeyboardButton, InlineKeyboardMarkup
 from src.bot.filters import StatusFilter, UserStatus
 from src.db.repositories import meeting_repo, student_repo, tutor_repo
 from src.domain.models import MeetingStatus
+from src.notifications import notification_dp, notification_manager
 
 from .texts import *
 
-router = Router(name="notification_bot_commands")
+router = Router(name="notification_bot_handles")
+notification_dp.include_router(router)
 
 
 class ApprovalStates(StatesGroup):
@@ -38,8 +42,6 @@ async def on_error(event: ErrorEvent):
 
 @router.message(CommandStart())
 async def start_command_handler(message: types.Message):
-    from src.notifications import notification_manager  # i am a rascal and want to avoid circular imports
-
     assert message.from_user
     await student_repo.set_notification_bot_activated(telegram_id=message.from_user.id)
 
@@ -57,9 +59,7 @@ async def start_command_handler(message: types.Message):
 
 
 @router.callback_query(StatusFilter(UserStatus.admin), F.data.startswith(("approve_", "discard_")))
-async def handle_admin_approve_discard(query: types.CallbackQuery):
-    from src.notifications import notification_manager  # i am a rascal and want to avoid circular imports
-
+async def handle_admin_approve_or_discard(query: types.CallbackQuery):
     assert query.data and isinstance(query.message, types.Message) and query.message.text
     action, meeting_id_text = query.data.split("_", maxsplit=1)
     if not meeting_id_text.isdigit():
@@ -68,24 +68,29 @@ async def handle_admin_approve_discard(query: types.CallbackQuery):
 
     meeting_id = int(meeting_id_text)
     meeting = await meeting_repo.get(meeting_id)
+    assert meeting.datetime_  # it should be set to be sent for approval
     if meeting.status != MeetingStatus.APPROVING:
         await query.answer("This meeting is not pending approval anymore", show_alert=True)
         await query.message.edit_reply_markup(reply_markup=None)
         return
 
-    if action == "approve":
-        reply_markup = notification_manager.gen_confirm_approve_reply_markup(meeting_id)
-        text = query.message.html_text + "\n\n" + MEETING_CONFIRM_APPROVE_APPENDIX
-        await query.message.edit_text(text=text, reply_markup=reply_markup)
-    elif action == "discard":
-        reply_markup = notification_manager.gen_confirm_discard_reply_markup(meeting_id)
-        await query.message.edit_reply_markup(reply_markup=reply_markup)
+    try:
+        match action:
+            case "approve":
+                if meeting.datetime_ <= datetime.now():
+                    raise TimeoutError("Meeting date is in the past")
+                reply_markup = notification_manager.gen_confirm_approve_reply_markup(meeting_id)
+                text = query.message.html_text + "\n\n" + MEETING_CONFIRM_APPROVE_APPENDIX
+                await query.message.edit_text(text=text, reply_markup=reply_markup)
+            case "discard":
+                reply_markup = notification_manager.gen_confirm_discard_reply_markup(meeting_id)
+                await query.message.edit_reply_markup(reply_markup=reply_markup)
+    except TimeoutError as e:
+        await query.answer(str(e), show_alert=True)
 
 
 @router.callback_query(StatusFilter(UserStatus.admin), F.data.startswith(("confirm_approve_", "confirm_discard_")))
-async def handle_admin_confirm_approve_discard(query: types.CallbackQuery, state: FSMContext):
-    from src.notifications import notification_manager  # i am a rascal and want to avoid circular imports
-
+async def handle_admin_confirm_approve_or_confirm_discard(query: types.CallbackQuery, state: FSMContext):
     assert query.data and isinstance(query.message, types.Message)
     action, meeting_id_text = query.data.split("_", maxsplit=2)[1:]
     if not meeting_id_text.isdigit():
@@ -99,31 +104,30 @@ async def handle_admin_confirm_approve_discard(query: types.CallbackQuery, state
         await query.message.edit_reply_markup(reply_markup=None)
         return
 
-    if action == "approve":  # TODO: maybe move that to logic layer?
-        assert meeting.tutor_id
-        tutor = await tutor_repo.get(id=meeting.tutor_id)
-        meeting.approve()
-        await meeting_repo.update(meeting, attrs=["status"])
-        await query.answer("Meeting approval confirmed ✅", show_alert=True)
-        await notification_manager.send_meeting_approved(meeting)
-        await notification_manager.send_meeting_announced(meeting, tutor)
-        await query.message.edit_reply_markup(reply_markup=None)
-    elif action == "discard":
-        await query.answer("Enter reason to discard the meeting", show_alert=True)
-        await state.set_state(ApprovalStates.discard_reason)
-        await state.update_data(
-            {
-                "approving_meeting_id": meeting_id,
-                "message_id": query.message.message_id,
-            }
-        )
-        await query.message.edit_reply_markup(reply_markup=_cancel_approval_discard_kbd(meeting_id))
+    try:
+        match action:
+            case "approve":  # TODO: maybe move that to logic layer?
+                from src.bot.dialogs.meetings.logic import approve_meeting
+
+                await approve_meeting(meeting)
+                await query.answer("Meeting approval confirmed ✅", show_alert=True)
+                await query.message.edit_reply_markup(reply_markup=None)
+            case "discard":
+                await query.answer("Enter reason to discard the meeting", show_alert=True)
+                await state.set_state(ApprovalStates.discard_reason)
+                await state.update_data(
+                    {
+                        "approving_meeting_id": meeting_id,
+                        "message_id": query.message.message_id,
+                    }
+                )
+                await query.message.edit_reply_markup(reply_markup=_cancel_approval_discard_kbd(meeting_id))
+    except TimeoutError as e:
+        await query.answer(str(e), show_alert=True)
 
 
 @router.message(StatusFilter(UserStatus.admin), StateFilter(ApprovalStates.discard_reason), F.text)
 async def handle_admin_discard_reason(message: types.Message, bot: Bot, state: FSMContext):
-    from src.notifications import notification_manager  # i am a rascal and want to avoid circular imports
-
     meeting_id = await state.get_value("approving_meeting_id")
     message_id = await state.get_value("message_id")
     assert meeting_id and message.html_text
@@ -145,7 +149,7 @@ async def handle_admin_discard_reason(message: types.Message, bot: Bot, state: F
 
 
 @router.callback_query(StatusFilter(UserStatus.admin), F.data.startswith(("cancel_approve_", "cancel_discard_")))
-async def handle_admin_cancel_approve_discard(query: types.CallbackQuery, state: FSMContext):
+async def handle_admin_cancel_approve_or_cancel_discard(query: types.CallbackQuery, state: FSMContext):
     await state.set_state(None)
     await state.update_data(
         {
@@ -153,7 +157,6 @@ async def handle_admin_cancel_approve_discard(query: types.CallbackQuery, state:
             "message_id": None,
         }
     )
-    from src.notifications import notification_manager  # i am a rascal and want to avoid circular imports
 
     assert query.data and isinstance(query.message, types.Message) and query.message.text
     action, meeting_id_text = query.data.split("_", maxsplit=2)[1:]
@@ -179,8 +182,6 @@ async def handle_non_admin_approve_discard(query: types.CallbackQuery):
 
 
 async def _text_meeting_approve_request(meeting_id: int):
-    from src.notifications import notification_manager  # i am a rascal and want to avoid circular imports
-
     meeting = await meeting_repo.get(meeting_id)
     assert meeting.tutor_id
     tutor = await tutor_repo.get(id=meeting.tutor_id)

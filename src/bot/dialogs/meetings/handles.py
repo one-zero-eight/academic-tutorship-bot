@@ -156,15 +156,15 @@ async def on_create_submit(query: CallbackQuery, button: Button, manager: Dialog
 async def open_send_for_approval_confirm(query: CallbackQuery, button: Button, manager: DialogManager):
     manager = extend_dialog(manager)
     meeting = await manager.state.get_meeting()
-    log_info("meeting.approval.requested", user_id=query.from_user.id, meeting_id=meeting.id)
+    log_info("meeting.ask_approval.requested", user_id=query.from_user.id, meeting_id=meeting.id)
     try:
         meeting._check_for_approval()
     except Exception as e:
         log_warning(
-            "meeting.approval.precondition_failed", user_id=query.from_user.id, meeting_id=meeting.id, reason=str(e)
+            "meeting.ask_approval.precondition_failed", user_id=query.from_user.id, meeting_id=meeting.id, reason=str(e)
         )
         return await query.answer(f"{e}", show_alert=True)
-    log_info("meeting.approval.confirm_opened", user_id=query.from_user.id, meeting_id=meeting.id)
+    log_info("meeting.ask_approval.confirm_opened", user_id=query.from_user.id, meeting_id=meeting.id)
     await manager.switch_to(state=MeetingStates.send_for_approval_confirm)
 
 
@@ -174,11 +174,11 @@ async def on_send_for_approval_confirmed(query: CallbackQuery, button: Button, m
     try:
         async with manager.state.sync_meeting() as meeting:
             meeting_id = meeting.id
-            log_info("meeting.approval.confirmed", user_id=query.from_user.id, meeting_id=meeting_id)
+            log_info("meeting.ask_approval.confirmed", user_id=query.from_user.id, meeting_id=meeting_id)
             await send_for_approval(meeting)
     except Exception as e:
-        log_error("meeting.approval.failed", user_id=query.from_user.id, meeting_id=meeting_id, reason=str(e))
+        log_error("meeting.ask_approval.failed", user_id=query.from_user.id, meeting_id=meeting_id, reason=str(e))
         return await query.answer(f"Error: {e}", show_alert=True)
-    log_info("meeting.approval.succeeded", user_id=query.from_user.id, meeting_id=meeting_id)
+    log_info("meeting.ask_approval.succeeded", user_id=query.from_user.id, meeting_id=meeting_id)
     await query.answer("Meeting sent for approval 📩\nWait for notification", show_alert=True)
     await manager.switch_to(state=MeetingStates.info, show_mode=ShowMode.DELETE_AND_SEND)

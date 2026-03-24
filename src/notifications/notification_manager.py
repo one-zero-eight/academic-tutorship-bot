@@ -202,6 +202,7 @@ class NotificationManager:
 
     async def send_tutor_promoted(self, tutor: Tutor):
         tutor_data = tutor.model_dump()
+        tutor_data.update({"link": self.gen_control_bot_link("promoted_tutor")})
         admins_text = TUTOR_PROMOTED_FOR_ADMINS.format_map(tutor_data)
         tutor_text = TUTOR_PROMOTED_FOR_TUTOR.format_map(tutor_data)
         sent = []

@@ -45,7 +45,7 @@ The student {full_name} @{username} was promoted to being a tutor
 TUTOR_PROMOTED_FOR_TUTOR = """
 You've been promoted to being a tutor!
 
-- Restart the bot (<a href="https://t.me/academic_notifications_bot?start=promoted_tutor">click here</a>)
+- Restart the bot (<a href="{link}">click here</a>)
 - Fill up your tutor profile
 """
 "Text for the tutor about his promotion"

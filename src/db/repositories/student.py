@@ -124,7 +124,8 @@ class StudentRepository(Repository):
         )
         async with self._db.engine.begin() as conn:
             await conn.execute(delete_old_stmt)
-            await conn.execute(insert_new_stmt)
+            if discipline_ids:  # avoid inserting empty values which would cause an error
+                await conn.execute(insert_new_stmt)
 
     async def get_student_id(self, telegram_id: int) -> int:
         stmt = select(student.c.id).select_from(student).where(student.c.telegram_id == telegram_id)

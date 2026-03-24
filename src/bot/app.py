@@ -19,7 +19,7 @@ from src.bot.middlewares import AutoAuthMiddleware
 from src.bot.utils import check_commands_equality
 from src.config import settings
 from src.db.repositories import admin_repo, db
-from src.notifications import notification_manager
+from src.notifications import init_handlers, notification_manager
 from src.scheduling.scheduler import scheduler
 
 _time1 = perf_counter()
@@ -98,6 +98,7 @@ setup_dialogs(dp)
 @dp.startup()
 async def on_startup():
     logger.info("Bot starting...")
+    init_handlers()
     # Set bot name, description and commands
     scope = types.BotCommandScopeAllPrivateChats()
     existing_bot = {
