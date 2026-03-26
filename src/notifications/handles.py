@@ -5,6 +5,7 @@ from aiogram.filters import CommandStart, ExceptionTypeFilter, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ErrorEvent, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.i18n import gettext as _
 
 from src.bot.filters import StatusFilter, UserStatus
 from src.db.repositories import meeting_repo, student_repo, tutor_repo
@@ -34,7 +35,8 @@ def _extract_start_payload(message: types.Message) -> str | None:
 @router.error(ExceptionTypeFilter(Exception))
 async def on_error(event: ErrorEvent):
     if event.update.callback_query:
-        await event.update.callback_query.answer(f"Error: {event.exception}", show_alert=True)
+        error_txt = _("Error: {error}").format(error=event.exception)
+        await event.update.callback_query.answer(error_txt, show_alert=True)
         if isinstance(event.update.callback_query.message, types.Message):
             await event.update.callback_query.message.edit_reply_markup(reply_markup=None)
     # TODO: Log the error
@@ -62,15 +64,13 @@ async def start_command_handler(message: types.Message):
 async def handle_admin_approve_or_discard(query: types.CallbackQuery):
     assert query.data and isinstance(query.message, types.Message) and query.message.text
     action, meeting_id_text = query.data.split("_", maxsplit=1)
-    if not meeting_id_text.isdigit():
-        await query.answer("Invalid callback data", show_alert=True)
-        return
 
+    assert meeting_id_text.isdigit()
     meeting_id = int(meeting_id_text)
     meeting = await meeting_repo.get(meeting_id)
     assert meeting.datetime_  # it should be set to be sent for approval
     if meeting.status != MeetingStatus.APPROVING:
-        await query.answer("This meeting is not pending approval anymore", show_alert=True)
+        await query.answer(_("This meeting is not pending approval anymore"), show_alert=True)
         await query.message.edit_reply_markup(reply_markup=None)
         return
 

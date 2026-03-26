@@ -2,17 +2,19 @@ import asyncio
 import inspect
 import logging
 import os
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Set
 from typing import Any
 
-from aiogram import BaseMiddleware, Bot
+from aiogram import BaseMiddleware, Bot, Router
 from aiogram.dispatcher.event.handler import HandlerObject
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Chat, Message, TelegramObject
 from email_validator import validate_email
 from email_validator.exceptions import EmailNotValidError
+from fluent.runtime import FluentLocalization
 
 from src.accounts_sdk import inh_accounts
+from src.bot.constants import DIALOG_I18N_FORMAT_KEY
 from src.bot.dialog_extension.extended_fsm_context import extend_fsm_context
 from src.bot.exceptions import UnauthenticatedException
 from src.bot.filters import UserStatus
@@ -219,3 +221,55 @@ class MockAutoAuthMiddleware(AutoAuthMiddleware):
             except EmailNotValidError:
                 return False
         return False
+
+
+# That middleware used specifically for aiogram_dialog,
+# since it does not support usual aiogram i18n
+class DialogI18nMiddleware(BaseMiddleware):
+    def __init__(
+        self,
+        l10ns: dict[str, FluentLocalization],
+        default_lang: str,
+    ):
+        super().__init__()
+        self.l10ns = l10ns
+        self.default_lang = default_lang
+
+    async def __call__(
+        self,
+        handler: Callable[
+            [Message | CallbackQuery, dict[str, Any]],
+            Awaitable[Any],
+        ],
+        event: Message | CallbackQuery,
+        data: dict[str, Any],
+    ) -> Any:
+        lang = self.default_lang
+        # TODO: add caching of student language in FSMContext to avoid DB query on each message
+        if hasattr(event, "from_user") and event.from_user:
+            if await student_repo.exists(telegram_id=event.from_user.id):
+                lang = await student_repo.get_language(telegram_id=event.from_user.id, default=self.default_lang)
+            elif event.from_user.language_code == "ru":
+                lang = "ru"
+
+        l10n = self.l10ns.get(lang, self.l10ns[self.default_lang])
+        data[DIALOG_I18N_FORMAT_KEY] = l10n.format_value
+
+        return await handler(event, data)
+
+    def setup(
+        self: BaseMiddleware,
+        router: Router,
+        exclude: Set[str] | None = None,
+    ) -> BaseMiddleware:
+        """
+        Register middleware for all events in the Router
+        """
+        if exclude is None:
+            exclude = set()
+        exclude_events = {"update", *exclude}
+        for event_name, observer in router.observers.items():
+            if event_name in exclude_events:
+                continue
+            observer.outer_middleware(self)
+        return self

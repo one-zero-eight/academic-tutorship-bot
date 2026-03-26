@@ -1,9 +1,11 @@
 from aiogram_dialog.widgets.kbd import ScrollingGroup, Select
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.text import Format
+
+from src.bot.utils import BLANK_BTN
 
 from .handles import *
 
-BTN_BLANK = Button(Const(" "), id="blank")
+BTN_BLANK = BLANK_BTN
 
 
 DISCIPLINE_LANGUAGE_SCROLL = ScrollingGroup(

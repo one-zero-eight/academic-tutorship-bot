@@ -32,6 +32,7 @@ class Settings(BaseModel):
 class Student(BaseModel):
     id: int
     telegram_id: int
+    language: str = "en"
     email: EmailStr
     settings: Settings
     first_name: str | None = None

@@ -22,6 +22,7 @@ student = Table(
     metadata,
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("telegram_id", BigInteger, unique=True, nullable=False),
+    Column("language", String(2), nullable=False, default="en", server_default="en"),
     Column("first_name", String(128)),
     Column("last_name", String(128)),
     Column("username", String(36), unique=True),

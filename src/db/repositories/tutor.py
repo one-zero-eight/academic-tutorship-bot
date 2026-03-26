@@ -1,7 +1,7 @@
 from sqlalchemy import Row, delete, exists, insert, or_, select, update
 
 from src.db.schema import discipline, photo, student, tutor, tutor_discipline
-from src.domain.models import Discipline, Photo, Student, Tutor
+from src.domain.models import Discipline, Photo, Tutor
 
 from .sql import Repository
 
@@ -132,12 +132,15 @@ class TutorRepository(Repository):
         )
 
     def __get_what_changed(self, tutor_: Tutor, attrs: list[str] | None = None) -> tuple[dict, dict]:
-        data = tutor_.model_dump()
-        del data["photo"]  # photo not included in update
+        student_columns = set(student.c.keys()) - {"id", "email_id"}
+        tutor_columns = set(tutor.c.keys()) - {"id", "photo_id"}
+        data = {
+            key: value for key, value in tutor_.model_dump().items() if key in student_columns or key in tutor_columns
+        }
         if attrs:
             changed = {key: data[key] for key in attrs if key in data}
         else:
             changed = data
-        changed_student = {key: changed[key] for key in changed if key in Student.model_fields.keys()}
-        changed_tutor = {key: changed[key] for key in changed if key not in changed_student}
+        changed_student = {key: changed[key] for key in changed if key in student_columns}
+        changed_tutor = {key: changed[key] for key in changed if key in tutor_columns}
         return (changed_student, changed_tutor)

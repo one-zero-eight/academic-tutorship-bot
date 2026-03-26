@@ -1,6 +1,6 @@
 from aiogram_dialog import Window
 from aiogram_dialog.widgets.kbd import Button, Row, Start, SwitchTo
-from aiogram_dialog.widgets.text import Const, Format, List
+from aiogram_dialog.widgets.text import Const, List
 
 from src.bot.dialogs.discipline_picker import DisciplinePickerStates
 from src.bot.dialogs.discipline_picker.getters import selected_disciplines_getter
@@ -9,6 +9,7 @@ from src.bot.dialogs.student_meetings import StudentMeetingStates
 from src.bot.dialogs.tutors import TutorsStates
 from src.bot.dialogs.tutors_profile import TutorProfileStates
 from src.bot.filters import *
+from src.bot.i18n import I18NFormat as I18N
 from src.bot.utils import BLANK_BTN
 from src.domain.models import *
 
@@ -16,26 +17,22 @@ from .getters import *
 from .handles import *
 from .states import *
 
-TUTOR_START_APPENDIX = "🧑‍🏫 <i>Honorable tutor you are</i>"
-ADMIN_START_APPENDIX = "👑 <i>And admin panel is also available for you</i>"
-
 start_ww = Window(
-    Format("Hello there, {first_name} 👋"),
-    Const("Me, ArThur, will help you to keep track of upcoming AT meetings"),
+    I18N("ROOT_START_STUDENT"),
     Const(" "),
-    Const(TUTOR_START_APPENDIX, when="is_tutor"),
-    Const(ADMIN_START_APPENDIX, when="is_admin"),
+    I18N("ROOT_START_TUTOR_APPENDIX", when="is_tutor"),
+    I18N("ROOT_START_ADMIN_APPENDIX", when="is_admin"),
     # Students Buttons
     Row(
-        Start(Const("📚 Upcoming Meetings"), id="start_meetings", state=StudentMeetingStates.list),
-        Start(Const("🧑‍🏫 Tutors"), id="start_tutor_profiles", state=TutorProfileStates.list),
+        Start(I18N("ROOT_BTN_UPCOMING_MEETINGS"), id="start_meetings", state=StudentMeetingStates.list),
+        Start(I18N("ROOT_BTN_TUTORS"), id="start_tutor_profiles", state=TutorProfileStates.list),
     ),
-    SwitchTo(Const("⚙️ Settings"), "student_settings", state=RootStates.settings),
+    SwitchTo(I18N("ROOT_BTN_SETTINGS"), "student_settings", state=RootStates.settings),
     # Tutors Buttons
     Row(
-        Start(Const("🧑‍🏫 Your Meetings"), id="start_tutors_meetings", state=MeetingStates.type, when="is_tutor"),
+        Start(I18N("ROOT_BTN_YOUR_MEETINGS"), id="start_tutors_meetings", state=MeetingStates.type, when="is_tutor"),
         Start(
-            Const("🧑‍🏫 Your Profile"),
+            I18N("ROOT_BTN_YOUR_PROFILE"),
             id="start_tutors_profile",
             state=TutorProfileStates.profile_control,
             when="is_tutor",
@@ -43,8 +40,8 @@ start_ww = Window(
     ),
     # Admins Buttons
     Row(
-        Start(Const("⚙️ Meetings Control"), id="start_all_meetings", state=MeetingStates.type, when="is_admin"),
-        Start(Const("⚙️ Tutors Control"), id="start_tutors_control", state=TutorsStates.list, when="is_admin"),
+        Start(I18N("ROOT_BTN_MEETINGS_CONTROL"), id="start_all_meetings", state=MeetingStates.type, when="is_admin"),
+        Start(I18N("ROOT_BTN_TUTORS_CONTROL"), id="start_tutors_control", state=TutorsStates.list, when="is_admin"),
     ),
     getter=start_getter,
     state=RootStates.start,
@@ -53,31 +50,31 @@ start_ww = Window(
 
 # TODO: move to separate settings dialog (issue #50)
 settings_ww = Window(
-    Const("⚙️ Settings️"),
+    I18N("SETTINGS_HEADING"),
+    List(I18N("SETTINGS_DISCIPLINE_ITEM"), items="relevant_disciplines"),
     Const(" "),
-    Const("📚 Relevant disciplines:"),
-    List(Format("- [{item[language]} {item[year]}y] {item[name]}"), items="relevant_disciplines"),
-    Const(" "),
-    Format("🔗 <i><a href='{notification_bot_link}'>link to Notifications Bot</a></i>"),
-    Const("Activate bot ☝️ to receive notifications", when="notification_bot_unactivated"),
-    Const("Unblock the bot ☝️ to receive notifications", when="notification_bot_blocked"),
-    Button(Format("Notifications: {receive_notifications}"), id="toggle_notif", on_click=on_toggle_notifications),
-    SwitchTo(Const("📚 Change disciplines"), id="open_disciplines", state=RootStates.settings_disciplines),
-    Row(SwitchTo(Const("Back"), id="to_start", state=RootStates.start), BLANK_BTN),
+    I18N("SETTINGS_NOTIFICATIONS_LINK"),
+    I18N("SETTINGS_NOTIF_UNACTIVATED", when="notification_bot_unactivated"),
+    I18N("SETTINGS_NOTIF_BLOCKED", when="notification_bot_blocked"),
+    Button(I18N("SETTINGS_NOTIF_TOGGLE"), id="toggle_notif", on_click=on_toggle_notifications),
+    SwitchTo(I18N("SETTINGS_BTN_CHANGE_DISCIPLINES"), id="open_disciplines", state=RootStates.settings_disciplines),
+    Row(SwitchTo(I18N("COMMON_BTN_BACK"), id="to_start", state=RootStates.start), BLANK_BTN),
     getter=student_settings_getter,
     state=RootStates.settings,
 )
 
 select_disciplines_ww = Window(
-    Const("📚 Selected Disciplines"),
-    List(Format("- [{item[language]} {item[year]}y] {item[name]}"), items="selected_disciplines"),
+    I18N("SETTINGS_DISCIPLINES_TITLE"),
+    List(I18N("SETTINGS_DISCIPLINE_ITEM"), items="selected_disciplines"),
     Start(
-        Const("Choose other"),
+        I18N("SETTINGS_DISCIPLINES_BTN_CHOOSE_OTHER"),
         id="start_select_disciplines",
         state=DisciplinePickerStates.language,
         data={"multi": True},
     ),
-    SwitchTo(Const("Submit"), id="back_to_profile", state=RootStates.settings, on_click=on_submit_disciplines),
+    SwitchTo(
+        I18N("COMMON_BTN_SUBMIT"), id="back_to_profile", state=RootStates.settings, on_click=on_submit_disciplines
+    ),
     getter=selected_disciplines_getter,
     state=RootStates.settings_disciplines,
 )

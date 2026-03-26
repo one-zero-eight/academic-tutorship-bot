@@ -5,6 +5,7 @@ from aiogram_dialog.widgets.text import Const, Format
 
 from src.bot.dialogs.tutors_profile import TutorProfileStates
 from src.bot.filters import *
+from src.bot.utils import COMMON_BACK_TEXT
 from src.domain.models import *
 
 from .dialog_buttons import *
@@ -16,7 +17,7 @@ list_ww = Window(
     Const("Tutors List"),
     TUTORS_SCROLLING_GROUP,
     Row(
-        Cancel(Const("Back")),
+        Cancel(COMMON_BACK_TEXT),
         SwitchTo(Const("Add New"), id="to_add", state=TutorsStates.add, on_click=open_add_tutor),
     ),
     state=TutorsStates.list,
@@ -37,7 +38,7 @@ info_ww = Window(
         state=TutorProfileStates.profile_control,
         when="own_tutor_profile",
     ),
-    Row(SwitchTo(Const("Back"), id="to_list", state=TutorsStates.list), BLANK_BUTTON),
+    Row(SwitchTo(COMMON_BACK_TEXT, id="to_list", state=TutorsStates.list), BLANK_BUTTON),
     state=TutorsStates.info,
     getter=tutor_info_getter,
     parse_mode="HTML",
@@ -46,7 +47,7 @@ info_ww = Window(
 
 admin_add_tutor_ww = Window(
     Const("Share contact of the new Tutor"),
-    Row(SwitchTo(Const("Back"), id="to_list", state=TutorsStates.list, on_click=handle_clear), BLANK_BUTTON),
+    Row(SwitchTo(COMMON_BACK_TEXT, id="to_list", state=TutorsStates.list, on_click=handle_clear), BLANK_BUTTON),
     MessageInput(get_added_tutor),
     state=TutorsStates.add,
 )

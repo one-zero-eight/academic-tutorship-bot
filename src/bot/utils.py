@@ -26,6 +26,9 @@ from src.domain.models import Meeting, UserStatus
 commands_type_adapter = TypeAdapter(list[BotCommand])
 
 
+COMMON_BACK_TEXT = Const("Back")
+COMMON_CANCEL_TEXT = Const("Cancel")
+COMMON_SUBMIT_TEXT = Const("Submit")
 BLANK_BTN = Button(Const(" "), id="blank")
 
 

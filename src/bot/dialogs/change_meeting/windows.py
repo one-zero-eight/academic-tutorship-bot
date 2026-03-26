@@ -5,6 +5,7 @@ from aiogram_dialog.widgets.text import Const, Format
 
 from src.bot.custom_widgets import MeetingInfoText
 from src.bot.filters import *
+from src.bot.utils import COMMON_BACK_TEXT
 
 from .dialog_buttons import *
 from .getters import *
@@ -27,7 +28,7 @@ info_change_ww = Window(
             when="is_admin",
         ),
     ),
-    Row(Cancel(Const("Back")), BTN_BLANK),
+    Row(Cancel(COMMON_BACK_TEXT), BTN_BLANK),
     state=ChangeStates.init,
     getter=meeting_info_getter,
 )
@@ -74,7 +75,7 @@ set_time_ww = Window(
     Const("Adhere to format 00:00, e.g. 20:32"),
     MessageInput(get_meeting_time),
     Row(
-        SwitchTo(text=Const("Back"), id="to_date", state=ChangeStates.date, on_click=handle_clear),
+        SwitchTo(text=COMMON_BACK_TEXT, id="to_date", state=ChangeStates.date, on_click=handle_clear),
         BTN_BLANK,
     ),
     state=ChangeStates.time,

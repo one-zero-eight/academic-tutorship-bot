@@ -1,13 +1,14 @@
 from aiogram.fsm.state import State
 from aiogram_dialog import ShowMode, StartMode
 from aiogram_dialog.widgets.kbd import Back, Button, Row, ScrollingGroup, Select
-from aiogram_dialog.widgets.text import Const, Format, Text
+from aiogram_dialog.widgets.text import Format, Text
 
 from src.bot.filters import *
+from src.bot.utils import BLANK_BTN
 
 from .handles import *
 
-BLANK_BUTTON = Button(Const(" "), id="blank")
+BLANK_BUTTON = BLANK_BTN
 BTN_ROW_BACK = Row(Back(), BLANK_BUTTON)
 
 

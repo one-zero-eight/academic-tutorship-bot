@@ -10,6 +10,8 @@ from src.bot.dialogs.discipline_picker.states import DisciplinePickerStates
 from src.bot.dialogs.tutors_profile.handles import open_tutor_profile
 from src.bot.dialogs.tutors_profile.states import TutorProfileStates
 from src.bot.filters import *
+from src.bot.i18n import I18NFormat as I18N
+from src.bot.utils import COMMON_BACK_TEXT, COMMON_CANCEL_TEXT
 
 from .dialog_buttons import *
 from .getters import *
@@ -19,15 +21,19 @@ from .states import *
 omlot = open_meetings_list_of_type
 
 type_ww: Window = Window(
-    Const("Meetings"),
+    I18N("Meeting-Type-Head"),
     Row(
-        Cancel(Const("Back")),
-        SwitchTo(Const("Create New"), id="create_meeting", state=MeetingStates.create),
+        Cancel(I18N("Back")),
+        SwitchTo(I18N("New-Meeting-Btn"), id="create_meeting", state=MeetingStates.create),
     ),
-    Button(Const("See Created"), id="a_meetings_created", on_click=omlot("created"), when="can_see_created"),
-    Button(Const("See Approving"), id="a_meetings_approving", on_click=omlot("approving"), when="can_see_approving"),
-    Button(Const("See Announced"), id="a_meetings_announced", on_click=omlot("announced"), when="can_see_announced"),
-    Button(Const("See Closed"), id="a_meetings_closed", on_click=omlot("closed"), when="can_see_closed"),
+    Button(I18N("Type-Created-Btn"), id="a_meetings_created", on_click=omlot("created"), when="can_see_created"),
+    Button(
+        I18N("Type-Approving-Btn"), id="a_meetings_approving", on_click=omlot("approving"), when="can_see_approving"
+    ),
+    Button(
+        I18N("Type-Announced-Btn"), id="a_meetings_announced", on_click=omlot("announced"), when="can_see_announced"
+    ),
+    Button(I18N("Type-Closed-Btn"), id="a_meetings_closed", on_click=omlot("closed"), when="can_see_closed"),
     state=MeetingStates.type,
     getter=meetings_type_getter,
 )
@@ -38,13 +44,13 @@ del omlot
 list_ww: Window = Window(
     Format("{meetings_type} Meetings"),
     MEETINGS_SCROLLING_GROUP,
-    Row(SwitchTo(Const("Back"), "to_type", MeetingStates.type), BLANK_BUTTON),
+    Row(SwitchTo(I18N("Back"), "to_type", MeetingStates.type), BLANK_BUTTON),
     state=MeetingStates.list,
     getter=meetings_list_getter,
 )
 
 create_ww = Window(
-    Const("New Meeting"),
+    I18N("New-Meeting-Head"),
     Format("Title: {title}"),
     Format("Discipline: {discipline_name}"),
     Row(
@@ -52,7 +58,7 @@ create_ww = Window(
         Start(Const("Discipline"), id="choose_discipline", state=DisciplinePickerStates.language),
     ),
     Row(
-        SwitchTo(Const("Back"), "to_type", MeetingStates.type),
+        SwitchTo(COMMON_BACK_TEXT, "to_type", MeetingStates.type),
         Button(Const(" "), id="blank", when="cannot_be_created"),
         Button(Const("Create ✅"), id="create_submit", on_click=on_create_submit, when="can_be_created"),
     ),
@@ -65,7 +71,7 @@ create_enter_title_ww = Window(
     Format("Discipline: {discipline_name}"),
     Const("Enter Title:"),
     MessageInput(get_new_title),
-    Row(SwitchTo(Const("Back"), "to_type", MeetingStates.type), BLANK_BUTTON),
+    Row(SwitchTo(COMMON_BACK_TEXT, "to_type", MeetingStates.type), BLANK_BUTTON),
     getter=meeting_create_getter,
     state=MeetingStates.create_title,
 )
@@ -105,7 +111,7 @@ info_ww = Window(
     SwitchTo(
         Const("Cancel Meeting"), id="cancel_meeting_start", state=MeetingStates.delete_confirm, when="can_be_deleted"
     ),
-    Row(SwitchTo(Const("Back"), "to_list", MeetingStates.list), BLANK_BUTTON),
+    Row(SwitchTo(COMMON_BACK_TEXT, "to_list", MeetingStates.list), BLANK_BUTTON),
     state=MeetingStates.info,
     getter=meeting_info_getter,
 )
@@ -121,7 +127,7 @@ send_for_approval_confirm_ww = Window(
             when="can_be_sent_for_approval",
             on_click=on_send_for_approval_confirmed,
         ),
-        SwitchTo(Const("Cancel"), id="cancel_send_for_approval", state=MeetingStates.info),
+        SwitchTo(COMMON_CANCEL_TEXT, id="cancel_send_for_approval", state=MeetingStates.info),
     ),
     state=MeetingStates.send_for_approval_confirm,
     getter=meeting_info_getter,
@@ -132,7 +138,7 @@ announce_confirm_ww = Window(
     Format('Are you surely ready to announce "{title}"?'),
     Row(
         Button(Const("Announce 📣"), id="announce", when="can_be_announced", on_click=on_announce_confirmed),
-        SwitchTo(Const("Cancel"), id="cancel_announce", state=MeetingStates.info),
+        SwitchTo(COMMON_CANCEL_TEXT, id="cancel_announce", state=MeetingStates.info),
     ),
     state=MeetingStates.announce_confirm,
     getter=meeting_info_getter,
@@ -143,7 +149,7 @@ finish_confirm_ww = Window(
     Format('Are you surely ready to finish "{title}"?'),
     Row(
         Button(Const("Finish ☑️"), id="finish", when="can_be_finished", on_click=on_finish_confirmed),
-        SwitchTo(Const("Cancel"), id="cancel_finish", state=MeetingStates.info),
+        SwitchTo(COMMON_CANCEL_TEXT, id="cancel_finish", state=MeetingStates.info),
     ),
     state=MeetingStates.finish_confirm,
     getter=meeting_info_getter,
@@ -157,7 +163,7 @@ delete_confirm_ww = Window(
     Const("The notification will be sent to students 💌.", when="interesting_to_students"),
     Row(
         Button(Const("Cancel Meeting 🗑️"), id="delete", when="can_be_deleted", on_click=on_delete_confirmed),
-        SwitchTo(Const("Cancel"), id="cancel_delete", state=MeetingStates.info),
+        SwitchTo(COMMON_CANCEL_TEXT, id="cancel_delete", state=MeetingStates.info),
     ),
     state=MeetingStates.delete_confirm,
     getter=meeting_info_getter,

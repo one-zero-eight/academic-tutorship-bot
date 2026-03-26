@@ -9,11 +9,14 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage  # type: ignore
 from aiogram.types import ErrorEvent
+from aiogram.utils.i18n import I18n
+from aiogram.utils.i18n.middleware import SimpleI18nMiddleware
 from aiogram_dialog import DialogManager, setup_dialogs
 from aiogram_dialog.api.exceptions import UnknownIntent, UnknownState
 
 from src.bot import bot_container
 from src.bot.dispatcher import CustomDispatcher
+from src.bot.i18n import make_i18n_middleware
 from src.bot.logging_ import logger
 from src.bot.middlewares import AutoAuthMiddleware
 from src.bot.utils import check_commands_equality
@@ -93,6 +96,13 @@ dp.include_router(attendance_dialog)
 dp.include_router(guide_dialog)
 
 setup_dialogs(dp)
+
+# Localisation setup
+i18n = I18n(path="locales", default_locale="en", domain="messages")
+dialog_i18n_middleware = make_i18n_middleware(locales=["ru", "en"], default_locale="en")
+i18n_middleware = SimpleI18nMiddleware(i18n)
+i18n_middleware.setup(dp)
+dialog_i18n_middleware.setup(dp)
 
 
 @dp.startup()

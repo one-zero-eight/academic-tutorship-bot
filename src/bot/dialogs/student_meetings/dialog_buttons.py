@@ -1,11 +1,12 @@
-from aiogram_dialog.widgets.kbd import Back, Button, Row, ScrollingGroup, Select
-from aiogram_dialog.widgets.text import Const, Format
+from aiogram_dialog.widgets.kbd import Back, Row, ScrollingGroup, Select
+from aiogram_dialog.widgets.text import Format
 
 from src.bot.filters import *
+from src.bot.utils import BLANK_BTN
 
 from .handles import *
 
-BLANK_BUTTON = Button(Const(" "), id="blank")
+BLANK_BUTTON = BLANK_BTN
 BTN_ROW_BACK = Row(Back(), BLANK_BUTTON)
 
 

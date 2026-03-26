@@ -133,6 +133,20 @@ class StudentRepository(Repository):
             result = await conn.execute(stmt)
             return result.scalar_one()
 
+    async def get_language(self, *, id: int | None = None, telegram_id: int | None = None, default: str = "en") -> str:
+        if id is not None:
+            stmt = select(student.c.language).where(student.c.id == id)
+        elif telegram_id is not None:
+            stmt = select(student.c.language).where(student.c.telegram_id == telegram_id)
+        else:
+            raise ValueError("Either id or telegram_id must be provided")
+        async with self._db.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            language = result.scalar_one_or_none()
+            if language is None:
+                return default
+            return language
+
     async def update(self, student_: Student, attrs: list[str] | None = None):
         """Update student in database.
 
@@ -185,6 +199,7 @@ class StudentRepository(Repository):
         return Student(
             id=row.id,
             telegram_id=row.telegram_id,
+            language=row.language,
             email=row.email,
             first_name=row.first_name,
             last_name=row.last_name,
@@ -199,9 +214,10 @@ class StudentRepository(Repository):
         return Discipline(id=row.id, name=row.name, year=row.year, language=row.language)
 
     def __get_what_changed(self, student_: Student, attrs: list[str] | None = None) -> tuple[dict, dict]:
-        student_data = student_.model_dump()
-        del student_data["settings"]
-        settings_data = student_.settings.model_dump()
+        student_columns = set(student.c.keys()) - {"id", "email_id"}
+        settings_columns = set(student_settings.c.keys()) - {"id"}
+        student_data = {key: value for key, value in student_.model_dump().items() if key in student_columns}
+        settings_data = {key: value for key, value in student_.settings.model_dump().items() if key in settings_columns}
         if attrs:
             student_changed = {key: student_data[key] for key in attrs if key in student_data}
             settings_changed = {key: settings_data[key] for key in attrs if key in settings_data}
