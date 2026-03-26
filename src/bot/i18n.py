@@ -6,7 +6,7 @@ from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.text import Text
 from fluent.runtime import FluentLocalization, FluentResourceLoader
 
-from src.bot.constants import DIALOG_I18N_FORMAT_KEY
+from src.bot.constants import I18N_FORMAT_KEY
 from src.bot.middlewares import DialogI18nMiddleware
 
 
@@ -22,7 +22,7 @@ class I18NFormat(Text):
 
     async def _render_text(self, data: dict, manager: DialogManager) -> str:
         format_text = manager.middleware_data.get(
-            DIALOG_I18N_FORMAT_KEY,
+            I18N_FORMAT_KEY,
             default_format_text,
         )
         translated_text = format_text(self.text, data)
@@ -45,7 +45,7 @@ def make_i18n_middleware(locales: list[str], default_locale: str = "en"):
     l10ns = {
         locale: FluentLocalization(
             [locale, default_locale],
-            ["dialog.ftl"],
+            ["dialog.ftl", "handles.ftl"],
             loader,
         )
         for locale in locales

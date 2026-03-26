@@ -7,12 +7,10 @@ from src.db.repositories import student_repo
 from src.domain.models import NotificationBotStatus
 from src.notifications import notification_manager
 
-NOTIFICATIONS_ON = "Thanks! Notifications set up ✅"
-NOTIFICATIONS_OFF = "We won't bother you with notifications anymore 💤"
-
 
 async def on_toggle_notifications(query: CallbackQuery, _, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     try:
         self_student = await manager.state.get_self_student()
         s = self_student.settings
@@ -32,7 +30,7 @@ async def on_toggle_notifications(query: CallbackQuery, _, manager: DialogManage
                 raise PermissionError("Notification bot is not activated")
 
         await student_repo.update(self_student, ["receive_notifications"])
-        await query.answer(NOTIFICATIONS_ON if s.receive_notifications else NOTIFICATIONS_OFF)
+        await query.answer(_("Q_SETTINGS_NOTIF_ON") if s.receive_notifications else _("Q_SETTINGS_NOTIF_OFF"))
         await manager.state.set_self_student(self_student)
         log_info(
             "student.notifications.toggle.succeeded",
@@ -46,7 +44,7 @@ async def on_toggle_notifications(query: CallbackQuery, _, manager: DialogManage
         )
         self_student.settings.receive_notifications = False
         await student_repo.update(self_student, ["receive_notifications"])
-        await query.answer("Please, activate the notification bot first ⚠️")
+        await query.answer(_("Q_SETTINGS_NOTIF_BOT_NOT_ACTIVATED"))
     except Exception as e:
         log_error("student.notifications.toggle.failed", user_id=query.from_user.id, reason=str(e))
         raise

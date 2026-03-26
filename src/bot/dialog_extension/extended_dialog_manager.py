@@ -2,6 +2,7 @@ from aiogram import Bot
 from aiogram.types import Chat, Message
 from aiogram_dialog import DialogManager, ShowMode
 
+from src.bot.constants import I18N_FORMAT_KEY
 from src.bot.logging_ import log_debug
 
 from .dialog_wrapper import DialogManagerWrapper
@@ -20,6 +21,16 @@ class ExtendedDialogManager(DialogManagerWrapper):
     @property
     def chat(self) -> Chat:
         return self.middleware_data["event_chat"]
+
+    def tr(self, key: str, **kwargs) -> str:
+        """Translate text with given key and format with kwargs"""
+
+        format_text = self.middleware_data.get(
+            I18N_FORMAT_KEY,
+            lambda text, data: text.format_map(data),
+        )
+        translated_text = format_text(key, kwargs)
+        return translated_text.format(**kwargs)
 
     async def track_message(self, message: Message):
         """Track messages to delete later ("to_delete_list" in state)"""

@@ -14,7 +14,7 @@ from email_validator.exceptions import EmailNotValidError
 from fluent.runtime import FluentLocalization
 
 from src.accounts_sdk import inh_accounts
-from src.bot.constants import DIALOG_I18N_FORMAT_KEY
+from src.bot.constants import I18N_FORMAT_KEY
 from src.bot.dialog_extension.extended_fsm_context import extend_fsm_context
 from src.bot.exceptions import UnauthenticatedException
 from src.bot.filters import UserStatus
@@ -253,7 +253,7 @@ class DialogI18nMiddleware(BaseMiddleware):
                 lang = "ru"
 
         l10n = self.l10ns.get(lang, self.l10ns[self.default_lang])
-        data[DIALOG_I18N_FORMAT_KEY] = l10n.format_value
+        data[I18N_FORMAT_KEY] = l10n.format_value
 
         return await handler(event, data)
 
