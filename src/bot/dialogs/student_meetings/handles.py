@@ -12,12 +12,13 @@ from .states import *
 
 async def on_meeting_selected(query: CallbackQuery, meeting, manager: DialogManager, item_id: str):
     manager = extend_dialog(manager)
+    _ = manager.tr
     log_info("student_meeting.select.requested", user_id=query.from_user.id, meeting_id=item_id)
     try:
         meeting = await meeting_repo.get(int(item_id))
     except LookupError:
         log_warning("student_meeting.select.not_found", user_id=query.from_user.id, meeting_id=item_id)
-        return await query.answer("Meeting not found", show_alert=True)
+        return await query.answer(_("Q_MEETING_NOT_FOUND"), show_alert=True)
     await manager.state.set_meeting(meeting)
     log_info("student_meeting.select.succeeded", user_id=query.from_user.id, meeting_id=meeting.id)
     await manager.switch_to(StudentMeetingStates.info)

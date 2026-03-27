@@ -11,6 +11,31 @@ AUTH_BTN_CONNECT_TELEGRAM = Подключить Telegram 🔗
 AUTH_BTN_CHECK_CONNECTED = Проверить подключение ✅
 
 
+GUIDE_INIT_TEXT =
+    Привет, студент!
+    Меня зовут АрТур, и я бот Academic Tutorship (в сокращении - AT).
+
+    Эта система упрощает работу со встречами (разборами, консультациями) по различным университетским дисциплинам.
+GUIDE_DISCIPLINES_TEXT =
+    Ты можешь выбрать дисциплины, в которых ты заинтересован(-а).
+
+    Или можешь пропустить этот шаг и позднее изменить выбор в ⚙️ <b>Настройках</b>.
+GUIDE_DISCIPLINES_NONE_SELECTED = 📚 Ты еще не выбрал(-а) ни одну дисциплину
+GUIDE_DISCIPLINES_SELECTED_TITLE = 📚 Выбранные дисциплины
+GUIDE_NOTIFICATIONS_TEXT =
+    Большая часть моей ответственности – это отправка уведомлений о предстоящих встречах.
+
+    Мы отправляем уведомления через другого бота.
+    Пожалуйста, активируй его 👇 , чтобы продолжить:
+    🔗 <a href="{link}"><i>Academic Notifications Bot</i></a>
+
+    (в дальнейшем ты сможешь заблокировать уведомления в ⚙️ Настройках)
+GUIDE_BTN_NEXT = Дальше ➡️
+GUIDE_BTN_BACK = ⬅️ Назад
+GUIDE_BTN_SKIP = Пропустить ➡️
+GUIDE_BTN_FINISH = Завершить знакомство 🎉
+
+
 ROOT_START_STUDENT =
     Привет-привет, {$first_name}! 👋
     Меня зовут АрТур, и я буду помогать тебе следить за предстоящими встречами Academic Tutorship
@@ -149,28 +174,3 @@ TUTOR_PROFILE_USERNAME_LINE = @{$username}
 TUTOR_PROFILE_DISCIPLINES_HEADER = 📚 Disciplines:
 TUTOR_PROFILE_DISCIPLINE_ITEM = - <b>[{$discipline[language]} {$discipline[year]}y] {$discipline[name]}</b>
 TUTOR_PROFILE_ABOUT_BLOCK = <blockquote>{$about}</blockquote>
-
-
-GUIDE_INIT_TEXT =
-    Привет, студент!
-    Меня зовут АрТур, и я бот Academic Tutorship (в сокращении - AT).
-
-    Эта система упрощает работу со встречами (разборами, консультациями) по различным университетским дисциплинам.
-GUIDE_DISCIPLINES_TEXT =
-    Ты можешь выбрать дисциплины, в которых ты заинтересован(-а).
-
-    Или можешь пропустить этот шаг и позднее изменить выбор в ⚙️ <b>Настройках</b>.
-GUIDE_DISCIPLINES_NONE_SELECTED = 📚 Ты еще не выбрал(-а) ни одну дисциплину
-GUIDE_DISCIPLINES_SELECTED_TITLE = 📚 Выбранные дисциплины
-GUIDE_NOTIFICATIONS_TEXT =
-    Большая часть моей ответственности – это отправка уведомлений о предстоящих встречах.
-
-    Мы отправляем уведомления через другого бота.
-    Пожалуйста, активируй его 👇 , чтобы продолжить:
-    🔗 <a href="{link}"><i>Academic Notifications Bot</i></a>
-
-    (в дальнейшем ты сможешь заблокировать уведомления в ⚙️ Настройках)
-GUIDE_BTN_NEXT = Дальше ➡️
-GUIDE_BTN_BACK = ⬅️ Назад
-GUIDE_BTN_SKIP = Пропустить ➡️
-GUIDE_BTN_FINISH = Завершить знакомство 🎉

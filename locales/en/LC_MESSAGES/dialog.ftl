@@ -12,6 +12,31 @@ AUTH_BTN_CONNECT_TELEGRAM = Connect Telegram 🔗
 AUTH_BTN_CHECK_CONNECTED = Check Connection ✅
 
 
+GUIDE_INIT_TEXT =
+    Hello student!
+    My name is ArThur, I am the bot of Academic Tutorship (AT for short).
+
+    The system helps to keep track of meetings (recaps, consultations) on various university disciplines of your choice.
+GUIDE_DISCIPLINES_TEXT =
+    You may choose the disciplines you're interested in.
+
+    Or skip and do that later in ⚙️ <b>Settings</b>.
+GUIDE_DISCIPLINES_NONE_SELECTED = 📚 No disciplines selected yet
+GUIDE_DISCIPLINES_SELECTED_TITLE = 📚 Selected Disciplines
+GUIDE_NOTIFICATIONS_TEXT =
+    A huge part of my value is sending notifications about upcoming meetings.
+
+    We deliver notifications in a different bot.
+    Please, activate it 👇 to continue:
+    🔗 <a href="{$link}"><i>Academic Notifications Bot</i></a>
+
+    (you may later block notifications in ⚙️ Settings)
+GUIDE_BTN_NEXT = Next ➡️
+GUIDE_BTN_BACK = ⬅️ Back
+GUIDE_BTN_SKIP = Skip ➡️
+GUIDE_BTN_FINISH = Finish guide 🎉
+
+
 ROOT_START_STUDENT =
     Hello there, {$first_name}! 👋
     I'm ArThur, and I will help you to keep track of upcoming Academic Tutorship meetings
@@ -151,31 +176,6 @@ TUTOR_PROFILE_USERNAME_LINE = @{$username}
 TUTOR_PROFILE_DISCIPLINES_HEADER = 📚 Disciplines:
 TUTOR_PROFILE_DISCIPLINE_ITEM = - <b>[{$discipline[language]} {$discipline[year]}y] {$discipline[name]}</b>
 TUTOR_PROFILE_ABOUT_BLOCK = <blockquote>{$about}</blockquote>
-
-
-GUIDE_INIT_TEXT =
-    Hello student!
-    My name is ArThur, I am the bot of Academic Tutorship (AT for short).
-
-    The system helps to keep track of meetings (recaps, consultations) on various university disciplines of your choice.
-GUIDE_DISCIPLINES_TEXT =
-    You may choose the disciplines you're interested in.
-
-    Or skip and do that later in ⚙️ <b>Settings</b>.
-GUIDE_DISCIPLINES_NONE_SELECTED = 📚 No disciplines selected yet
-GUIDE_DISCIPLINES_SELECTED_TITLE = 📚 Selected Disciplines
-GUIDE_NOTIFICATIONS_TEXT =
-    A huge part of my value is sending notifications about upcoming meetings.
-
-    We deliver notifications in a different bot.
-    Please, activate it 👇 to continue:
-    🔗 <a href="{$link}"><i>Academic Notifications Bot</i></a>
-
-    (you may later block notifications in ⚙️ Settings)
-GUIDE_BTN_NEXT = Next ➡️
-GUIDE_BTN_BACK = ⬅️ Back
-GUIDE_BTN_SKIP = Skip ➡️
-GUIDE_BTN_FINISH = Finish guide 🎉
 
 
 ATTENDANCE_BTN_RESEND_FILE = Resend File

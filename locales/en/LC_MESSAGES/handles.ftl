@@ -38,5 +38,5 @@ Q_CHANGE_TUTOR_NOT_FOUND = The tutor is not found (somehow)
 Q_CHANGE_ROOM_INVALID_FORMAT = Incorrect format: {$error}
 Q_CHANGE_MEETING_APPROVING_CANNOT_CHANGE_ROOM = This meeting is currently pending approval, you cannot change room at the moment
 Q_CHANGE_MEETING_TOO_SOON_WARNING = Warning ⚠️
-	The meeting would be conducted in less than 24H
+    The meeting would be conducted in less than 24H
 DELETE_WARNING_BTN = Delete Warning
