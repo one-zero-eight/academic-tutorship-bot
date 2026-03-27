@@ -1,6 +1,7 @@
 COMMON_BTN_BACK = Назад
 COMMON_BTN_CANCEL = Отмена
 COMMON_BTN_SUBMIT = Подтвердить
+COMMON_BTN_CLOSE = Закрыть
 
 
 AUTH_BIND_INSTRUCTION =
@@ -174,11 +175,23 @@ ATTENDANCE_CLOSE_TITLE = Отправь посещаемость для "{title}
 ATTENDANCE_ADD_EMAIL_PROMPT = Введи электронную почту для добавления 👤
 
 
-TUTOR_LIST_TITLE_FOR_STUDENTS = 🧑‍🏫 Вот are all Academic Tutors!
+TUTOR_LIST_TITLE_FOR_STUDENTS = 🧑‍🏫 Вот все Academic Tutors!
 
-TUTOR_PROFILE_HEADER_STUDENT_VIEW = 🧑‍🏫 Academic Tutor's Profile
+TUTOR_PROFILE_HEADER_STUDENT_VIEW = 🧑‍🏫 Профиль Academic Tutor
 TUTOR_PROFILE_PROFILE_NAME_LINE = <b>{$profile_name}</b>
 TUTOR_PROFILE_USERNAME_LINE = @{$username}
-TUTOR_PROFILE_DISCIPLINES_HEADER = 📚 Disciplines:
-TUTOR_PROFILE_DISCIPLINE_ITEM = - <b>[{$discipline[language]} {$discipline[year]}y] {$discipline[name]}</b>
+TUTOR_PROFILE_DISCIPLINES_HEADER = 📚 Дисциплины:
 TUTOR_PROFILE_ABOUT_BLOCK = <blockquote>{$about}</blockquote>
+
+TUTOR_PROFILE_LIST_TITLE = 🧑‍🏫 Все Academic Tutors!
+TUTOR_PROFILE_HEADER_TUTOR_VIEW = 🧑‍🏫 Твой профиль Academic Tutor
+TUTOR_PROFILE_CONTROL_BTN_NAME = Имя
+TUTOR_PROFILE_CONTROL_BTN_ABOUT = О себе
+TUTOR_PROFILE_CONTROL_BTN_DISCIPLINES = Дисциплины
+TUTOR_PROFILE_SET_NAME =
+    Введи своё имя
+    Это имя будет доступно студентам
+TUTOR_PROFILE_SET_ABOUT =
+    Напиши что-то о себе
+    Это будет доступно студентам
+TUTOR_PROFILE_SELECT_DISCIPLINES_TITLE = Выбранные дисциплины

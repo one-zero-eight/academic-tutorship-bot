@@ -12,20 +12,21 @@ from .getters import *
 from .states import *
 
 
-async def on_tutor_selected(query: CallbackQuery, _, manager: DialogManager, item_id: str):
+async def on_tutor_selected(query: CallbackQuery, __, manager: DialogManager, item_id: str):
     manager = extend_dialog(manager)
+    _ = manager.tr
     log_info("tutor_profile.select.requested", user_id=query.from_user.id, tutor_id=item_id)
     try:
         tutor = await tutor_repo.get(id=int(item_id))
     except LookupError:
         log_warning("tutor_profile.select.not_found", user_id=query.from_user.id, tutor_id=item_id)
-        return await query.answer("Tutor not found", show_alert=True)
+        return await query.answer(_("Q_TUTOR_NOT_FOUND"), show_alert=True)
     await manager.state.set_tutor(tutor)
     log_info("tutor_profile.select.succeeded", user_id=query.from_user.id, tutor_id=tutor.id)
     await manager.switch_to(TutorProfileStates.profile_after_list)
 
 
-async def on_open_disciplines(query: CallbackQuery, widget, manager: DialogManager):
+async def on_open_disciplines(query: CallbackQuery, __, manager: DialogManager):
     manager = extend_dialog(manager)
     try:
         assert (tutor := await manager.state.get_self_tutor())
@@ -40,7 +41,7 @@ async def on_open_disciplines(query: CallbackQuery, widget, manager: DialogManag
         raise
 
 
-async def on_submit_disciplines(query: CallbackQuery, widget, manager: DialogManager):
+async def on_submit_disciplines(query: CallbackQuery, __, manager: DialogManager):
     manager = extend_dialog(manager)
     try:
         assert (tutor := await manager.state.get_self_tutor())
@@ -58,16 +59,17 @@ async def on_submit_disciplines(query: CallbackQuery, widget, manager: DialogMan
         raise
 
 
-async def get_profile_name(message: Message, _, manager: DialogManager):
+async def get_profile_name(message: Message, __, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     await manager.clear_messages()
     await message.delete()
     if not message.text:
         log_warning("tutor_profile.name.update.invalid", user_id=message.chat.id, reason="empty")
-        return await manager.answer_and_retry("There is no text in your message")
+        return await manager.answer_and_retry(_("Q_TUTOR_PROFILE_NO_TEXT"))
     if len(message.text.strip()) > 128:
         log_warning("tutor_profile.name.update.invalid", user_id=message.chat.id, reason="too_long")
-        return await manager.answer_and_retry("Your message must be under 128 simbols long")
+        return await manager.answer_and_retry(_("Q_TUTOR_PROFILE_NAME_TOO_LONG"))
     try:
         async with manager.state.sync_self_tutor() as tutor:
             log_info("tutor_profile.name.update.requested", user_id=message.chat.id)
@@ -80,16 +82,17 @@ async def get_profile_name(message: Message, _, manager: DialogManager):
     await manager.switch_to(state=TutorProfileStates.profile_control, show_mode=ShowMode.DELETE_AND_SEND)
 
 
-async def get_about_text(message: Message, _, manager: DialogManager):
+async def get_about_text(message: Message, __, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     await manager.clear_messages()
     await message.delete()
     if not message.text:
         log_warning("tutor_profile.about.update.invalid", user_id=message.chat.id, reason="empty")
-        return await manager.answer_and_retry("There is no text in your message")
+        return await manager.answer_and_retry(_("Q_TUTOR_PROFILE_NO_TEXT"))
     if len(message.text.strip()) > 256:
         log_warning("tutor_profile.about.update.invalid", user_id=message.chat.id, reason="too_long")
-        return await manager.answer_and_retry("Your message must be under 256 simbols long")
+        return await manager.answer_and_retry(_("Q_TUTOR_PROFILE_ABOUT_TOO_LONG"))
     try:
         async with manager.state.sync_self_tutor() as tutor:
             log_info("tutor_profile.about.update.requested", user_id=message.chat.id)
@@ -115,12 +118,13 @@ async def get_about_text(message: Message, _, manager: DialogManager):
 
 async def open_tutor_profile(query: CallbackQuery, button: Button, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     meeting = await manager.state.get_meeting()
     log_info("tutor_profile.open.requested", user_id=query.from_user.id, meeting_id=meeting.id)
     tutor = await tutor_repo.get(id=meeting.tutor_id)
     if tutor.profile_name is None:
         log_warning("tutor_profile.open.profile_not_ready", user_id=query.from_user.id, tutor_id=tutor.id)
-        return await query.answer("Tutor hasn't set up their profile yet", show_alert=True)
+        return await query.answer(_("Q_TUTOR_PROFILE_NOT_READY"), show_alert=True)
     await manager.state.set_tutor(tutor)
     log_info("tutor_profile.open.succeeded", user_id=query.from_user.id, tutor_id=tutor.id)
     await manager.start(state=TutorProfileStates.profile)

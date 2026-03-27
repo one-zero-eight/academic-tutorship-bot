@@ -50,3 +50,21 @@ Q_ATTENDANCE_NO_ATTENDANCE = This meeting has no attendance somehow
 Q_ATTENDANCE_ERROR = Error: {$error}
 Q_ATTENDANCE_NO_TEXT_ADD_EMAIL = There's no text in your message, enter email of a person to add
 Q_ATTENDANCE_NO_ATTENDANCE_RESEND = Somehow there is no attendance for this meeting, resend the file maybe
+
+
+Q_TUTOR_NOT_FOUND = Academic Tutor not found
+Q_TUTOR_REMOVED = @{$username} is no longer an Academic Tutor
+Q_TUTOR_REMOVE_BLOCKED_ASSIGNED =
+    This Academic Tutor is assigned to meetings in CREATED or ANNOUNCED state.
+    Assign another tutor to those meetings first.
+Q_TUTOR_REMOVE_ERROR = Error: {$error}
+Q_TUTOR_ADD_CHOOSE_USER = Click the button to choose a user 👇
+Q_TUTOR_ADD_NO_SHARED_USERS = You've shared no users, use the keyboard below
+Q_TUTOR_ADD_USERNAME_REQUIRED = Academic Tutor must have a username ⚠️
+Q_TUTOR_ADD_ALREADY_TUTOR = User is already an Academic Tutor ⚠️
+Q_TUTOR_ADD_UNKNOWN_ERROR = Unknown Error: {$error}
+
+Q_TUTOR_PROFILE_NO_TEXT = There is no text in your message
+Q_TUTOR_PROFILE_NAME_TOO_LONG = Profile name must be under 128 symbols
+Q_TUTOR_PROFILE_ABOUT_TOO_LONG = About text must be under 256 symbols
+Q_TUTOR_PROFILE_NOT_READY = Academic Tutor has not set up their profile yet

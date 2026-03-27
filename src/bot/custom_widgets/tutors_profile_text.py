@@ -4,35 +4,12 @@ from aiogram_dialog.api.protocols import DialogManager
 from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.text.base import Text
 
+from src.bot.constants import I18N_FORMAT_KEY
 from src.domain.models import Discipline
 
-HEADER_DISPLAY = [
-    "🧑‍🏫 Tutor's Profile",
-]
 
-HEADER_TUTOR = [
-    "🧑‍🏫 Your Tutor's Profile",
-]
-
-LINES = [
-    "",
-    "<b>{profile_name}</b>",
-    "@{username}",
-]
-
-
-DISCIPLINE_LINES = [
-    "",
-    "📚 Disciplines:",
-]
-
-
-DISCIPLINE_FORMAT = "- <b>[{discipline[language]} {discipline[year]}y] {discipline[name]}</b>"
-
-ABOUT_LINES = [
-    "",
-    "<blockquote>{about}</blockquote>",
-]
+def _default_format_text(text: str, data: dict) -> str:
+    return text.format_map(data)
 
 
 class TutorProfileText(Text):
@@ -45,21 +22,40 @@ class TutorProfileText(Text):
         data: dict,
         manager: DialogManager,
     ) -> str:
+        format_text = manager.middleware_data.get(
+            I18N_FORMAT_KEY,
+            _default_format_text,
+        )
+
         lines = []
-        lines.extend(HEADER_TUTOR if self.tutor_view else HEADER_DISPLAY)
-        lines.extend(LINES)
+        lines.append(
+            format_text(
+                "TUTOR_PROFILE_HEADER_TUTOR_VIEW" if self.tutor_view else "TUTOR_PROFILE_HEADER_STUDENT_VIEW",
+                data,
+            )
+        )
+        lines.extend(
+            [
+                "",
+                format_text("TUTOR_PROFILE_PROFILE_NAME_LINE", data),
+                format_text("TUTOR_PROFILE_USERNAME_LINE", data),
+            ]
+        )
         if data.get("about"):
-            lines.extend(ABOUT_LINES)
-        lines.extend(DISCIPLINE_LINES)
+            lines.extend(["", format_text("TUTOR_PROFILE_ABOUT_BLOCK", data)])
+        lines.extend(["", format_text("TUTOR_PROFILE_DISCIPLINES_HEADER", data)])
+
         disciplines: list[Discipline] = data["disciplines"]
         for discipline in disciplines:
             lines.append(
-                DISCIPLINE_FORMAT.format(
-                    discipline={
+                format_text(
+                    "SETTINGS_DISCIPLINE_ITEM",
+                    {
+                        **data,
                         "language": html.escape(str(discipline.language)),
                         "year": discipline.year,
                         "name": html.escape(discipline.name),
-                    }
+                    },
                 )
             )
         text = "\n".join(lines)

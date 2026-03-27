@@ -12,8 +12,8 @@ from .states import *
 language_ww = Window(
     I18N("DISCIPLINE_PICKER_LANGUAGE_TITLE"),
     DISCIPLINE_LANGUAGE_SCROLL,
-    Row(Cancel(I18N("COMMON_BTN_CANCEL")), BTN_BLANK, when="not_multi"),
-    Row(Cancel(I18N("COMMON_BTN_CLOSE")), BTN_BLANK, when="multi"),
+    Row(BTN_BLANK, Cancel(I18N("COMMON_BTN_CANCEL")), when="not_multi"),
+    Row(BTN_BLANK, Cancel(I18N("COMMON_BTN_CLOSE")), when="multi"),
     getter=languages_getter,
     state=DisciplinePickerStates.language,
 )

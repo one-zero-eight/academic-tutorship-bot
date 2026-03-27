@@ -176,27 +176,42 @@ ATTENDANCE_CLOSE_TITLE = Send attendance file to close "{$title}"
 ATTENDANCE_ADD_EMAIL_PROMPT = Enter the email to add 👤
 
 
+TUTORS_ADMIN_LIST_TITLE = Academic Tutors List
+TUTORS_ADMIN_INFO =
+    Academic Tutor [{$id}] Info
+    {$full_name}
+    @{$username}
+    Telegram ID: <code>{$telegram_id}</code>
+TUTORS_ADMIN_BTN_ADD_NEW = Add New
+TUTORS_ADMIN_BTN_DISMISS = Dismiss
+TUTORS_ADMIN_BTN_PROFILE = Profile
+TUTORS_ADMIN_BTN_EDIT_PROFILE = Edit Profile
+TUTORS_ADMIN_ADD_PROMPT = Share contact of the new Academic Tutor
+
+
 TUTOR_LIST_TITLE_FOR_STUDENTS = 🧑‍🏫 Here are all Academic Tutors!
 
 TUTOR_PROFILE_HEADER_STUDENT_VIEW = 🧑‍🏫 Academic Tutor's Profile
 TUTOR_PROFILE_PROFILE_NAME_LINE = <b>{$profile_name}</b>
 TUTOR_PROFILE_USERNAME_LINE = @{$username}
 TUTOR_PROFILE_DISCIPLINES_HEADER = 📚 Disciplines:
-TUTOR_PROFILE_DISCIPLINE_ITEM = - <b>[{$discipline[language]} {$discipline[year]}y] {$discipline[name]}</b>
 TUTOR_PROFILE_ABOUT_BLOCK = <blockquote>{$about}</blockquote>
 
 
+TUTOR_PROFILE_LIST_TITLE = 🧑‍🏫 Here are all of your Academic Tutors!
 TUTOR_PROFILE_HEADER_TUTOR_VIEW = 🧑‍🏫 Your Academic Tutor's Profile
 TUTOR_PROFILE_CONTROL_BTN_NAME = Profile Name
 TUTOR_PROFILE_CONTROL_BTN_ABOUT = About
 TUTOR_PROFILE_CONTROL_BTN_DISCIPLINES = Disciplines
-TUTOR_PROFILE_SET_NAME_PROMPT = Enter Profile Name
-TUTOR_PROFILE_SET_NAME_HINT = This name will be available to students
-TUTOR_PROFILE_SET_ABOUT_PROMPT = Write something about yourself
-TUTOR_PROFILE_SET_ABOUT_HINT = This will be available to students
+TUTOR_PROFILE_SET_NAME =
+    Enter Profile Name
+    This name will be available to students
+TUTOR_PROFILE_SET_ABOUT =
+    Write something about yourself
+    This will be available to students
 TUTOR_PROFILE_SELECT_DISCIPLINES_TITLE = Selected Disciplines
-TUTOR_PROFILE_BTN_CHOOSE_OTHER = Choose other
-TUTOR_PROFILE_BTN_SUBMIT = Submit
+
+
 NOTIF_TUTOR_PROMOTED_FOR_TUTOR =
     You've been promoted to an Academic Tutor!
 
@@ -233,16 +248,6 @@ NOTIF_MEETING_CLOSED_FOR_TUTOR =
     👥 Attendance count: {$attendance_count}
 
     🔗 <a href="{$link}">Click to see the details</a>
-TUTORS_ADMIN_LIST_TITLE = Academic Tutors List
-TUTORS_ADMIN_BTN_ADD_NEW = Add New
-TUTORS_ADMIN_INFO_TITLE = Academic Tutor [{$id}] Info
-TUTORS_ADMIN_INFO_FULL_NAME = {$full_name}
-TUTORS_ADMIN_INFO_USERNAME = @{$username}
-TUTORS_ADMIN_INFO_TELEGRAM_ID = Telegram ID: <code>{$telegram_id}</code>
-TUTORS_ADMIN_BTN_DISMISS = Dismiss
-TUTORS_ADMIN_BTN_PROFILE = Profile
-TUTORS_ADMIN_BTN_EDIT_PROFILE = Edit Profile
-TUTORS_ADMIN_ADD_PROMPT = Share contact of the new Academic Tutor
 MEETING_INFO_ADMIN_STATUS = Status: <b>{$status.name}</b>
 MEETING_INFO_ADMIN_ATTENDANCE = Attendance: <b>{$attendance_count}</b>
 NOTIF_BOT_STARTED = <a href="{$link}">Academic Tutorship Bot</a> has been started 🚀
