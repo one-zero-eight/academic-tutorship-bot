@@ -40,3 +40,13 @@ Q_CHANGE_MEETING_APPROVING_CANNOT_CHANGE_ROOM = This meeting is currently pendin
 Q_CHANGE_MEETING_TOO_SOON_WARNING = Warning ⚠️
     The meeting would be conducted in less than 24H
 DELETE_WARNING_BTN = Delete Warning
+
+
+Q_ATTENDANCE_NO_FILE = You've sent no file ‼️
+Q_ATTENDANCE_FILE_TOO_BIG = File you've sent is over 5MiB in size, I won't accept that ‼️
+Q_ATTENDANCE_FILE_ERROR = There is an error with your file: {$error}
+Q_ATTENDANCE_SENDING_FILE = Sending attendance file...
+Q_ATTENDANCE_NO_ATTENDANCE = This meeting has no attendance somehow
+Q_ATTENDANCE_ERROR = Error: {$error}
+Q_ATTENDANCE_NO_TEXT_ADD_EMAIL = There's no text in your message, enter email of a person to add
+Q_ATTENDANCE_NO_ATTENDANCE_RESEND = Somehow there is no attendance for this meeting, resend the file maybe

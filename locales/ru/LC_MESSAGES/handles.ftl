@@ -12,7 +12,7 @@ Q_DISCIPLINE_PICKER_INVALID_LANGUAGE = Ошибка: Неправильный я
 Q_DISCIPLINE_PICKER_INVALID_YEAR = Ошибка: Неправильный курс
 Q_DISCIPLINE_PICKER_INVALID_DISCIPLINE = Ошибка: Неправильная дисциплина
 
-Q_MEETING_NOT_FOUND = Встреча на найдена
+Q_MEETING_NOT_FOUND = Встреча не найдена
 Q_MEETING_NO_TEXT_IN_MESSAGE = В вашем сообщении нет текста
 Q_MEETING_ERROR = Ошибка: {$error}
 Q_MEETING_ANNOUNCED = Встреча объявлена 🚀
@@ -39,3 +39,13 @@ Q_CHANGE_MEETING_APPROVING_CANNOT_CHANGE_ROOM = Эта встреча наход
 Q_CHANGE_MEETING_TOO_SOON_WARNING = Внимание ⚠️
     Эта встреча будет проведена <b>менее чем через 24 часа</b>
 DELETE_WARNING_BTN = Удалить предупреждение
+
+
+Q_ATTENDANCE_NO_FILE = В сообщении нет файла ‼️
+Q_ATTENDANCE_FILE_TOO_BIG = Отправленный файл превышает 5 MiB, я не могу его принять ‼️
+Q_ATTENDANCE_FILE_ERROR = Произошла ошибка при обработке файла: {$error}
+Q_ATTENDANCE_SENDING_FILE = Отправка файла посещаемости...
+Q_ATTENDANCE_NO_ATTENDANCE = У этой встречи нет данных о посещаемости
+Q_ATTENDANCE_ERROR = Ошибка: {$error}
+Q_ATTENDANCE_NO_TEXT_ADD_EMAIL = В сообщении нет текста, введите email человека, которого нужно добавить
+Q_ATTENDANCE_NO_ATTENDANCE_RESEND = Для этой встречи нет данных о посещаемости, попробуй отправить файл снова

@@ -35,8 +35,9 @@ async def download_document_contents(message: Message, manager: DialogManager) -
     return get_document_contents(file.file_size, file_data.read())
 
 
-async def get_attendance_file_close(message: Message, _: MessageInput, manager: DialogManager):
+async def get_attendance_file_close(message: Message, __: MessageInput, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     await manager.clear_messages()
     await message.delete()
     try:
@@ -50,18 +51,19 @@ async def get_attendance_file_close(message: Message, _: MessageInput, manager: 
             )
     except NoDocumentError:
         log_warning("attendance.close.invalid", user_id=message.chat.id, reason="no_document")
-        return await manager.answer_and_retry("You've sent no file ‼️")
+        return await manager.answer_and_retry(_("Q_ATTENDANCE_NO_FILE"))
     except FileTooBigError:
         log_warning("attendance.close.invalid", user_id=message.chat.id, reason="file_too_big")
-        return await manager.answer_and_retry("File you've sent is over 5MiB in size, I won't accept that ‼️")
+        return await manager.answer_and_retry(_("Q_ATTENDANCE_FILE_TOO_BIG"))
     except Exception as e:
         log_error("attendance.close.failed", user_id=message.chat.id, reason=str(e))
-        return await manager.answer_and_retry(f"There is an error with your file: {html.escape(str(e))}")
+        return await manager.answer_and_retry(_("Q_ATTENDANCE_FILE_ERROR", error=html.escape(str(e))))
     await manager.done(show_mode=ShowMode.DELETE_AND_SEND)
 
 
-async def get_attendance_file_resend(message: Message, _: MessageInput, manager: DialogManager):
+async def get_attendance_file_resend(message: Message, __: MessageInput, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     await manager.clear_messages()
     await message.delete()
     try:
@@ -75,36 +77,38 @@ async def get_attendance_file_resend(message: Message, _: MessageInput, manager:
             )
     except NoDocumentError:
         log_warning("attendance.resend.invalid", user_id=message.chat.id, reason="no_document")
-        return await manager.answer_and_retry("You've sent no file ‼️")
+        return await manager.answer_and_retry(_("Q_ATTENDANCE_NO_FILE"))
     except FileTooBigError:
         log_warning("attendance.resend.invalid", user_id=message.chat.id, reason="file_too_big")
-        return await manager.answer_and_retry("File you've sent is over 5MiB in size, I won't accept that ‼️")
+        return await manager.answer_and_retry(_("Q_ATTENDANCE_FILE_TOO_BIG"))
     except Exception as e:
         log_error("attendance.resend.failed", user_id=message.chat.id, reason=str(e))
-        return await manager.answer_and_retry(f"There is an error with your file: {e}")
+        return await manager.answer_and_retry(_("Q_ATTENDANCE_FILE_ERROR", error=html.escape(str(e))))
     await manager.switch_to(state=AttendanceStates.init, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def on_download_attendance(query: CallbackQuery, button: Button, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     try:
         log_info("attendance.download.requested", user_id=query.from_user.id)
         meeting = await manager.state.get_meeting()
         input_file = await get_attendance_file_to_download(meeting)
-        await query.answer("Sending attendance file...")
+        await query.answer(_("Q_ATTENDANCE_SENDING_FILE"))
         await manager.bot.send_document(manager.chat.id, document=input_file)
         log_info("attendance.download.succeeded", user_id=query.from_user.id, meeting_id=meeting.id)
     except NoMeetingAttendance:
         log_warning("attendance.download.no_data", user_id=query.from_user.id)
-        return await query.answer("This meeting has no attendance somehow", show_alert=True)
+        return await query.answer(_("Q_ATTENDANCE_NO_ATTENDANCE"), show_alert=True)
     except Exception as e:
         log_error("attendance.download.failed", user_id=query.from_user.id, reason=str(e))
-        return await query.answer(f"Error: {html.escape(str(e))}", show_alert=True)
+        return await query.answer(_("Q_ATTENDANCE_ERROR", error=html.escape(str(e))), show_alert=True)
     await manager.switch_to_current(ShowMode.DELETE_AND_SEND)  # to make window appear after the document
 
 
-async def get_email_to_add(message: Message, _: MessageInput, manager: DialogManager):
+async def get_email_to_add(message: Message, __: MessageInput, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     await manager.clear_messages()
     await message.delete()
     try:
@@ -117,11 +121,11 @@ async def get_email_to_add(message: Message, _: MessageInput, manager: DialogMan
             log_info("attendance.add_email.succeeded", user_id=message.chat.id, meeting_id=meeting.id)
     except NoMessageText:
         log_warning("attendance.add_email.invalid", user_id=message.chat.id, reason="no_text")
-        return await manager.answer_and_retry("There's no text in your message, enter email of a person to add")
+        return await manager.answer_and_retry(_("Q_ATTENDANCE_NO_TEXT_ADD_EMAIL"))
     except NoMeetingAttendance:
         log_warning("attendance.add_email.invalid", user_id=message.chat.id, reason="no_attendance")
-        return await manager.answer_and_retry("Somehow there is no attendance for this meeting, resend the file maybe")
+        return await manager.answer_and_retry(_("Q_ATTENDANCE_NO_ATTENDANCE_RESEND"))
     except Exception as e:
         log_error("attendance.add_email.failed", user_id=message.chat.id, reason=str(e))
-        return await manager.answer_and_retry(f"️Error: {html.escape(str(e))}")
+        return await manager.answer_and_retry(_("Q_ATTENDANCE_ERROR", error=html.escape(str(e))))
     await manager.switch_to(AttendanceStates.init, show_mode=ShowMode.DELETE_AND_SEND)

@@ -166,6 +166,14 @@ CHANGE_ASSIGN_TUTOR_TITLE =
     Вот список Academic Tutors:
 
 
+ATTENDANCE_BTN_RESEND_FILE = Отправить файл повторно
+ATTENDANCE_BTN_ADD_EMAIL = Добавить электронную почту
+ATTENDANCE_BTN_DOWNLOAD_FILE = Скачать файл
+ATTENDANCE_RESEND_TITLE = Повторно отправь посещаемость для "{title}"
+ATTENDANCE_CLOSE_TITLE = Отправь посещаемость для "{title}"
+ATTENDANCE_ADD_EMAIL_PROMPT = Введи электронную почту для добавления 👤
+
+
 TUTOR_LIST_TITLE_FOR_STUDENTS = 🧑‍🏫 Вот are all Academic Tutors!
 
 TUTOR_PROFILE_HEADER_STUDENT_VIEW = 🧑‍🏫 Academic Tutor's Profile

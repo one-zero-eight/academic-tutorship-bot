@@ -168,6 +168,14 @@ CHANGE_ASSIGN_TUTOR_TITLE =
     Here's the list of all Academic Tutors:
 
 
+ATTENDANCE_BTN_RESEND_FILE = Resend File
+ATTENDANCE_BTN_ADD_EMAIL = Add email
+ATTENDANCE_BTN_DOWNLOAD_FILE = Download File
+ATTENDANCE_RESEND_TITLE = Resend attendance file for "{$title}"
+ATTENDANCE_CLOSE_TITLE = Send attendance file to close "{$title}"
+ATTENDANCE_ADD_EMAIL_PROMPT = Enter the email to add 👤
+
+
 TUTOR_LIST_TITLE_FOR_STUDENTS = 🧑‍🏫 Here are all Academic Tutors!
 
 TUTOR_PROFILE_HEADER_STUDENT_VIEW = 🧑‍🏫 Academic Tutor's Profile
@@ -178,12 +186,6 @@ TUTOR_PROFILE_DISCIPLINE_ITEM = - <b>[{$discipline[language]} {$discipline[year]
 TUTOR_PROFILE_ABOUT_BLOCK = <blockquote>{$about}</blockquote>
 
 
-ATTENDANCE_BTN_RESEND_FILE = Resend File
-ATTENDANCE_BTN_ADD_EMAIL = Add email
-ATTENDANCE_BTN_DOWNLOAD_FILE = Download File
-ATTENDANCE_RESEND_TITLE = Resend attendance file for "{$title}"
-ATTENDANCE_CLOSE_TITLE = Send attendance file to close "{$title}"
-ATTENDANCE_ADD_EMAIL_PROMPT = Enter the email to add 👤
 TUTOR_PROFILE_HEADER_TUTOR_VIEW = 🧑‍🏫 Your Academic Tutor's Profile
 TUTOR_PROFILE_CONTROL_BTN_NAME = Profile Name
 TUTOR_PROFILE_CONTROL_BTN_ABOUT = About
