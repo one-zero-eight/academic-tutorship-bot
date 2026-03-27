@@ -1,3 +1,7 @@
+Q_AUTH_FAIL = You are not authenticated yet, try again 🔄
+Q_AUTH_SUCCESS = Authentication Success ✅
+
+
 Q_SETTINGS_NOTIF_ON = Thanks! Notifications set up 🔔
 Q_SETTINGS_NOTIF_OFF = We won't bother you with notifications anymore 💤
 

@@ -2,6 +2,15 @@ COMMON_BTN_BACK = Назад
 COMMON_BTN_CANCEL = Отмена
 COMMON_BTN_SUBMIT = Подтвердить
 
+
+AUTH_BIND_INSTRUCTION =
+    Чтобы продолжить, пожалуйста, свяжи Telegram с аккаунтом InNoHassle, нажав кнопку "Подключить Telegram 🔗"
+
+    После этого нажми "Проверить подключение ✅"
+AUTH_BTN_CONNECT_TELEGRAM = Подключить Telegram 🔗
+AUTH_BTN_CHECK_CONNECTED = Проверить подключение ✅
+
+
 ROOT_START_STUDENT =
     Привет-привет, {$first_name}! 👋
     Меня зовут АрТур, и я буду помогать тебе следить за предстоящими встречами Academic Tutorship

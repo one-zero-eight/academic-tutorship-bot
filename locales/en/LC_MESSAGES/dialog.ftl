@@ -3,6 +3,15 @@ COMMON_BTN_CANCEL = Cancel
 COMMON_BTN_SUBMIT = Submit
 COMMON_BTN_CLOSE = Close
 
+
+AUTH_BIND_INSTRUCTION =
+    To proceed, please, connect your Telegram with your InNoHassle Account by pressing the button "Connect Telegram 🔗"
+
+    After that, press "Check Connection ✅"
+AUTH_BTN_CONNECT_TELEGRAM = Connect Telegram 🔗
+AUTH_BTN_CHECK_CONNECTED = Check Connection ✅
+
+
 ROOT_START_STUDENT =
     Hello there, {$first_name}! 👋
     I'm ArThur, and I will help you to keep track of upcoming Academic Tutorship meetings
@@ -54,12 +63,6 @@ TUTOR_PROFILE_USERNAME_LINE = @{$username}
 TUTOR_PROFILE_DISCIPLINES_HEADER = 📚 Disciplines:
 TUTOR_PROFILE_DISCIPLINE_ITEM = - <b>[{$discipline[language]} {$discipline[year]}y] {$discipline[name]}</b>
 TUTOR_PROFILE_ABOUT_BLOCK = <blockquote>{$about}</blockquote>
-AUTH_BIND_INSTRUCTION =
-    To proceed, please, connect your Telegram with your InNoHassle Account by pressing the button "Connect Telegram 🔗"
-
-    After that, press "Check Connection ✅"
-AUTH_BTN_CONNECT_TELEGRAM = Connect Telegram 🔗
-AUTH_BTN_CHECK_CONNECTED = Check Connection ✅
 MEETING_INFO_TEMPLATE_STUDENT =
     ℹ️ Meeting Information
 
