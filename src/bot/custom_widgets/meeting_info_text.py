@@ -4,28 +4,11 @@ from aiogram_dialog.api.protocols import DialogManager
 from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.text.base import Text
 
-LINES = [
-    "ℹ️ Meeting Information",
-    "",
-    "<b>{title}</b>",
-    "[{d_lang} {d_year}y] {d_name}",  # discipline info: language, year, name
-    "",
-    "📆 Date: <b>{date}</b>",
-    "⏱️ Duration: <b>{duration}</b>",
-    "📍 Room: <b>{room}</b>",
-    "🧑‍🏫 Tutor: @{tutor_username}",
-]
+from src.bot.constants import I18N_FORMAT_KEY
 
-ADMIN_LINES = [
-    "",
-    "Status: <b>{status.name}</b>",
-    "Attendance: <b>{attendance_count}</b>",
-]
 
-DESCRIPTION_LINES = [
-    "",
-    "Description:\n<blockquote>{description}</blockquote>",
-]
+def _default_format_text(text: str, data: dict) -> str:
+    return text.format_map(data)
 
 
 class MeetingInfoText(Text):
@@ -38,18 +21,57 @@ class MeetingInfoText(Text):
         data: dict,
         manager: DialogManager,
     ) -> str:
-        discipline = data.get("discipline")
-        data["d_lang"] = html.escape(str(getattr(discipline, "language", "")))
-        data["d_year"] = getattr(discipline, "year", "")
-        data["d_name"] = html.escape(str(getattr(discipline, "name", "")))
+        format_text = manager.middleware_data.get(
+            I18N_FORMAT_KEY,
+            _default_format_text,
+        )
+
+        payload = dict(data)
+        discipline = payload.get("discipline")
+        payload["d_lang"] = html.escape(str(getattr(discipline, "language", "")))
+        payload["d_year"] = getattr(discipline, "year", "")
+        payload["d_name"] = html.escape(str(getattr(discipline, "name", "")))
+        payload["status_name"] = getattr(payload.get("status"), "name", "")
+        payload["date"] = str(payload["date"]) if payload.get("date") else "N/A"
+        payload["attendance_count"] = (
+            payload["attendance_count"] if payload.get("attendance_count") is not None else "N/A"
+        )
+
         lines = []
-        lines.extend(LINES)
+        lines.extend(
+            [
+                format_text("MEETING_INFO_HEADER", payload),
+                "",
+                format_text("MEETING_INFO_TITLE_LINE", payload),
+                format_text("MEETING_INFO_DISCIPLINE_LINE", payload),
+                "",
+                format_text("MEETING_INFO_DATE_LINE", payload),
+                format_text("MEETING_INFO_DURATION_LINE", payload),
+                format_text("MEETING_INFO_ROOM_LINE", payload),
+                format_text("MEETING_INFO_TUTOR_LINE", payload),
+            ]
+        )
+
         if self.show_admin_info:
-            lines.extend(ADMIN_LINES)
+            lines.extend(
+                [
+                    "",
+                    format_text("MEETING_INFO_ADMIN_STATUS_LINE", payload),
+                    format_text("MEETING_INFO_ADMIN_ATTENDANCE_LINE", payload),
+                ]
+            )
+
         if self.__has_description(data):
-            lines.extend(DESCRIPTION_LINES)
+            lines.extend(
+                [
+                    "",
+                    format_text("MEETING_INFO_DESCRIPTION_HEADER", payload),
+                    format_text("MEETING_INFO_DESCRIPTION_BLOCK", payload),
+                ]
+            )
+
         text = "\n".join(lines)
-        return text.format_map(data)
+        return text.format(**payload)
 
     def __has_description(self, data) -> bool:
         description = data.get("description")

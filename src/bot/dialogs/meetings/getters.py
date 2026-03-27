@@ -74,9 +74,27 @@ async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
         for meeting in meetings
     ]
 
+    type_created = False
+    type_approving = False
+    type_announced = False
+    type_closed = False
+    match meetings_type:
+        case "created":
+            type_created = True
+        case "approving":
+            type_approving = True
+        case "announced":
+            type_announced = True
+        case "closed":
+            type_closed = True
+
     return {
         "meetings_type": meetings_type.capitalize(),
         "meetings": meeting_items,
+        "type_created": type_created,
+        "type_approving": type_approving,
+        "type_announced": type_announced,
+        "type_closed": type_closed,
     }
 
 

@@ -53,44 +53,44 @@ DISCIPLINE_PICKER_DISCIPLINE_TITLE = Choose Discipline
 DISCIPLINE_PICKER_DISCIPLINES_TITLE = Choose Disciplines
 
 
-STUDENT_MEETINGS_LIST_TITLE = Upcoming Meetings
-STUDENT_MEETING_BTN_TUTOR_PROFILE = Academic Tutor Profile
-STUDENT_MEETING_BTN_TO_YOUR_PROFILE = To Your Profile
-TUTOR_LIST_TITLE_FOR_STUDENTS = 🧑‍🏫 Here are all Academic Tutors!
-TUTOR_PROFILE_HEADER_STUDENT_VIEW = 🧑‍🏫 Academic Tutor's Profile
-TUTOR_PROFILE_PROFILE_NAME_LINE = <b>{$profile_name}</b>
-TUTOR_PROFILE_USERNAME_LINE = @{$username}
-TUTOR_PROFILE_DISCIPLINES_HEADER = 📚 Disciplines:
-TUTOR_PROFILE_DISCIPLINE_ITEM = - <b>[{$discipline[language]} {$discipline[year]}y] {$discipline[name]}</b>
-TUTOR_PROFILE_ABOUT_BLOCK = <blockquote>{$about}</blockquote>
-MEETING_INFO_TEMPLATE_STUDENT =
-    ℹ️ Meeting Information
-
-    <b>{$title}</b>
-    {"["}{$d_lang} {$d_year}y] {$d_name}
-
-    📆 Date: <b>{$date}</b>
-    ⏱️ Duration: <b>{$duration}</b>
-    📍 Room: <b>{$room}</b>
-    🧑‍🏫 Academic Tutor: @{$tutor_username}
-
-    Description:
-    <blockquote>{$description}</blockquote>
 MEETINGS_TYPE_TITLE = Meetings
 MEETINGS_BTN_CREATE_NEW = Create New
 MEETINGS_BTN_SEE_CREATED = See Created
 MEETINGS_BTN_SEE_APPROVING = See Approving
 MEETINGS_BTN_SEE_ANNOUNCED = See Announced
 MEETINGS_BTN_SEE_CLOSED = See Closed
-MEETINGS_LIST_TITLE = {$meetings_type} Meetings
-MEETING_CREATE_TITLE = New Meeting
-MEETING_CREATE_FIELD_TITLE = Title: {$title}
-MEETING_CREATE_FIELD_DISCIPLINE = Discipline: {$discipline_name}
+
+MEETINGS_LIST_CREATED_TITLE = Created Meetings
+MEETINGS_LIST_APPROVING_TITLE = Approving Meetings
+MEETINGS_LIST_ANNOUNCED_TITLE = Announced Meetings
+MEETINGS_LIST_CLOSED_TITLE = Closed Meetings
+
+MEETING_CREATE_TITLE =
+    Create New Meeting
+    Title: {$title}
+    Discipline: {$discipline_name}
+
 MEETING_CREATE_BTN_TITLE = Title
 MEETING_CREATE_BTN_DISCIPLINE = Discipline
 MEETING_CREATE_BTN_SUBMIT = Create ✅
-MEETING_CREATE_ENTER_TITLE_TITLE = Create New Meeting
-MEETING_CREATE_ENTER_TITLE_PROMPT = Enter Title:
+
+MEETING_CREATE_ENTER_TITLE_TITLE =
+    Create New Meeting
+    Discipline: {$discipline_name}
+    Enter Title:
+
+MEETING_INFO_HEADER = ℹ️ Meeting Information
+MEETING_INFO_TITLE_LINE = <b>{$title}</b>
+MEETING_INFO_DISCIPLINE_LINE = [{$d_lang} {$d_year}y] {$d_name}
+MEETING_INFO_DATE_LINE = 📆 Date: <b>{$date}</b>
+MEETING_INFO_DURATION_LINE = ⏱️ Duration: <b>{$duration}</b>
+MEETING_INFO_ROOM_LINE = 📍 Room: <b>{$room}</b>
+MEETING_INFO_TUTOR_LINE = 🧑‍🏫 Tutor: @{$tutor_username}
+MEETING_INFO_ADMIN_STATUS_LINE = Status: <b>{$status_name}</b>
+MEETING_INFO_ADMIN_ATTENDANCE_LINE = Attendance: <b>{$attendance_count}</b>
+MEETING_INFO_DESCRIPTION_HEADER = Description:
+MEETING_INFO_DESCRIPTION_BLOCK = <blockquote>{$description}</blockquote>
+
 MEETING_INFO_BTN_CHANGE_INFO = Change Info
 MEETING_INFO_BTN_SEND_FOR_APPROVAL = Send for Approval
 MEETING_INFO_BTN_ANNOUNCE = Announce
@@ -98,17 +98,36 @@ MEETING_INFO_BTN_FINISH = Finish
 MEETING_INFO_BTN_CLOSE = Close
 MEETING_INFO_BTN_ATTENDANCE = Attendance
 MEETING_INFO_BTN_CANCEL_MEETING = Cancel Meeting
-MEETING_CONFIRM_SEND_FOR_APPROVAL_TITLE = Are you sure that you want to send "{$title}" for approval?
-MEETING_CONFIRM_SEND_FOR_APPROVAL_APPENDIX = After approval, the meeting will be <u>announced automatically</u>.
+
+MEETING_CONFIRM_SEND_FOR_APPROVAL_TITLE =
+    Are you sure that you want to send "{$title}" for approval?
+    After approval, the meeting will be <u>announced automatically</u>.
 MEETING_CONFIRM_SEND_FOR_APPROVAL_BTN = Send for Approval 📩
+
 MEETING_CONFIRM_ANNOUNCE_TITLE = Are you sure that you want to announce "{$title}"?
 MEETING_CONFIRM_ANNOUNCE_BTN = Announce 📣
+
 MEETING_CONFIRM_FINISH_TITLE = Are you sure that you want to finish "{$title}"?
 MEETING_CONFIRM_FINISH_BTN = Finish ☑️
-MEETING_CONFIRM_DELETE_TITLE = Are you sure that you want to cancel "{$title}"?
-MEETING_CONFIRM_DELETE_APPENDIX = This action cannot be undone and the meeting will be deleted.
-MEETING_CONFIRM_DELETE_STUDENT_NOTIFY = The notification will be sent to students 💌
+
+MEETING_CONFIRM_DELETE_TITLE =
+    Are you sure that you want to cancel "{$title}"?
+    This action cannot be undone and the meeting will be deleted.
+MEETING_CONFIRM_DELETE_STUDENT_NOTIF_APPENDIX = The notification will be sent to students 💌
 MEETING_CONFIRM_DELETE_BTN = Cancel Meeting 🗑️
+
+STUDENT_MEETINGS_LIST_TITLE = Upcoming Meetings
+STUDENT_MEETING_BTN_TUTOR_PROFILE = Academic Tutor Profile
+STUDENT_MEETING_BTN_TO_YOUR_PROFILE = To Your Profile
+
+
+TUTOR_LIST_TITLE_FOR_STUDENTS = 🧑‍🏫 Here are all Academic Tutors!
+TUTOR_PROFILE_HEADER_STUDENT_VIEW = 🧑‍🏫 Academic Tutor's Profile
+TUTOR_PROFILE_PROFILE_NAME_LINE = <b>{$profile_name}</b>
+TUTOR_PROFILE_USERNAME_LINE = @{$username}
+TUTOR_PROFILE_DISCIPLINES_HEADER = 📚 Disciplines:
+TUTOR_PROFILE_DISCIPLINE_ITEM = - <b>[{$discipline[language]} {$discipline[year]}y] {$discipline[name]}</b>
+TUTOR_PROFILE_ABOUT_BLOCK = <blockquote>{$about}</blockquote>
 CHANGE_INFO_BTN_SET_TITLE = Set Title
 CHANGE_INFO_BTN_SET_DESCRIPTION = Set Description
 CHANGE_INFO_BTN_SET_ROOM = Set Room

@@ -17,12 +17,13 @@ from .states import *
 
 async def on_meeting_selected(query: CallbackQuery, meeting, manager: DialogManager, item_id: str):
     manager = extend_dialog(manager)
+    _ = manager.tr
     log_info("meeting.select.requested", user_id=query.from_user.id, meeting_id=item_id)
     try:
         meeting = await meeting_repo.get(int(item_id))
     except LookupError:
         log_warning("meeting.select.not_found", user_id=query.from_user.id, meeting_id=item_id)
-        return await query.answer("Meeting not found", show_alert=True)
+        return await query.answer(_("Q_MEETING_NOT_FOUND"), show_alert=True)
     await manager.state.set_meeting(meeting)
     log_info("meeting.select.succeeded", user_id=query.from_user.id, meeting_id=meeting.id)
     await manager.switch_to(MeetingStates.info)
@@ -43,11 +44,12 @@ def open_meetings_list_of_type(type: Literal["created", "approving", "announced"
 
 async def get_new_title(message: Message, _, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     await manager.clear_messages()
     await message.delete()
     if not message.text:
         log_warning("meeting.title.empty", user_id=message.chat.id)
-        return await manager.answer_and_retry("There is no text in your message")
+        return await manager.answer_and_retry(_("Q_MEETING_NO_TEXT_IN_MESSAGE"))
     log_info("meeting.title.accepted", user_id=message.chat.id, title=message.text[:64])
     await manager.state.update_data({"title": message.text})
     await manager.switch_to(MeetingStates.create, show_mode=ShowMode.DELETE_AND_SEND)
@@ -55,6 +57,7 @@ async def get_new_title(message: Message, _, manager: DialogManager):
 
 async def open_announce_confirm(query: CallbackQuery, _, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     meeting = await manager.state.get_meeting()
     log_info("meeting.announce.requested", user_id=query.from_user.id, meeting_id=meeting.id)
     try:
@@ -63,13 +66,14 @@ async def open_announce_confirm(query: CallbackQuery, _, manager: DialogManager)
         log_warning(
             "meeting.announce.precondition_failed", user_id=query.from_user.id, meeting_id=meeting.id, reason=str(e)
         )
-        return await query.answer(f"{e}", show_alert=True)
+        return await query.answer(_("Q_MEETING_ERROR", error=str(e)), show_alert=True)
     log_info("meeting.announce.confirm_opened", user_id=query.from_user.id, meeting_id=meeting.id)
     await manager.switch_to(state=MeetingStates.announce_confirm)
 
 
 async def on_announce_confirmed(query: CallbackQuery, _, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     meeting_id = None
     try:
         async with manager.state.sync_meeting() as meeting:
@@ -78,14 +82,15 @@ async def on_announce_confirmed(query: CallbackQuery, _, manager: DialogManager)
             await announce_meeting(meeting)
     except Exception as e:
         log_error("meeting.announce.failed", user_id=query.from_user.id, meeting_id=meeting_id, reason=str(e))
-        return await query.answer(f"Error: {e}", show_alert=True)
+        return await query.answer(_("Q_MEETING_ERROR", error=str(e)), show_alert=True)
     log_info("meeting.announce.succeeded", user_id=query.from_user.id, meeting_id=meeting_id)
-    await query.answer("Meeting announced 🚀", show_alert=True)
+    await query.answer(_("Q_MEETING_ANNOUNCED"), show_alert=True)
     await manager.switch_to(state=MeetingStates.info, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def on_delete_confirmed(query: CallbackQuery, _, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     meeting_id = None
     try:
         meeting = await manager.state.get_meeting()
@@ -95,14 +100,15 @@ async def on_delete_confirmed(query: CallbackQuery, _, manager: DialogManager):
         await manager.state.update_data({"meeting": None})
     except Exception as e:
         log_error("meeting.cancel.failed", user_id=query.from_user.id, meeting_id=meeting_id, reason=str(e))
-        return await query.answer(f"{e}", show_alert=True)
+        return await query.answer(_("Q_MEETING_ERROR", error=str(e)), show_alert=True)
     log_info("meeting.cancel.succeeded", user_id=query.from_user.id, meeting_id=meeting_id)
-    await query.answer("Meeting cancelled 🚮", show_alert=True)
+    await query.answer(_("Q_MEETING_CANCELLED"), show_alert=True)
     await manager.switch_to(state=MeetingStates.list, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def open_finish_confirm(query: CallbackQuery, button: Button, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     meeting = await manager.state.get_meeting()
     log_info("meeting.finish.requested", user_id=query.from_user.id, meeting_id=meeting.id)
     if meeting.status != MeetingStatus.CONDUCTING:
@@ -112,13 +118,14 @@ async def open_finish_confirm(query: CallbackQuery, button: Button, manager: Dia
             meeting_id=meeting.id,
             current_status=meeting.status,
         )
-        return await query.answer("Meeting must be CONDUCTING to become FINISHED", show_alert=True)
+        return await query.answer(_("Q_MEETING_FINISH_PRECONDITION"), show_alert=True)
     log_info("meeting.finish.confirm_opened", user_id=query.from_user.id, meeting_id=meeting.id)
     await manager.switch_to(state=MeetingStates.finish_confirm)
 
 
 async def on_finish_confirmed(query: CallbackQuery, button: Button, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     meeting_id = None
     try:
         async with manager.state.sync_meeting() as meeting:
@@ -127,13 +134,14 @@ async def on_finish_confirmed(query: CallbackQuery, button: Button, manager: Dia
             await finish_meeting(meeting)
     except Exception as e:
         log_error("meeting.finish.failed", user_id=query.from_user.id, meeting_id=meeting_id, reason=str(e))
-        return await query.answer(f"Error: {e}", show_alert=True)
+        return await query.answer(_("Q_MEETING_ERROR", error=str(e)), show_alert=True)
     log_info("meeting.finish.succeeded", user_id=query.from_user.id, meeting_id=meeting_id)
     await manager.switch_to(state=MeetingStates.info, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def on_create_submit(query: CallbackQuery, button: Button, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     assert (discipline_dict := await manager.state.get_value("discipline"))
     assert (title := await manager.state.get_value("title"))
     log_info(
@@ -146,7 +154,7 @@ async def on_create_submit(query: CallbackQuery, button: Button, manager: Dialog
         meeting = await create_meeting(title, discipline_dict["id"], manager.chat.id)
     except Exception as e:
         log_error("meeting.create.failed", user_id=query.from_user.id, reason=str(e))
-        return await query.answer(f"Error: {e}", show_alert=True)
+        return await query.answer(_("Q_MEETING_ERROR", error=str(e)), show_alert=True)
     log_info("meeting.create.succeeded", user_id=query.from_user.id, meeting_id=meeting.id)
     await manager.state.set_meeting(meeting)
     await manager.state.update_data({"discipline": None, "title": None})
@@ -155,6 +163,7 @@ async def on_create_submit(query: CallbackQuery, button: Button, manager: Dialog
 
 async def open_send_for_approval_confirm(query: CallbackQuery, button: Button, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     meeting = await manager.state.get_meeting()
     log_info("meeting.ask_approval.requested", user_id=query.from_user.id, meeting_id=meeting.id)
     try:
@@ -163,13 +172,14 @@ async def open_send_for_approval_confirm(query: CallbackQuery, button: Button, m
         log_warning(
             "meeting.ask_approval.precondition_failed", user_id=query.from_user.id, meeting_id=meeting.id, reason=str(e)
         )
-        return await query.answer(f"{e}", show_alert=True)
+        return await query.answer(_("Q_MEETING_ERROR", error=str(e)), show_alert=True)
     log_info("meeting.ask_approval.confirm_opened", user_id=query.from_user.id, meeting_id=meeting.id)
     await manager.switch_to(state=MeetingStates.send_for_approval_confirm)
 
 
 async def on_send_for_approval_confirmed(query: CallbackQuery, button: Button, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     meeting_id = None
     try:
         async with manager.state.sync_meeting() as meeting:
@@ -178,7 +188,7 @@ async def on_send_for_approval_confirmed(query: CallbackQuery, button: Button, m
             await send_for_approval(meeting)
     except Exception as e:
         log_error("meeting.ask_approval.failed", user_id=query.from_user.id, meeting_id=meeting_id, reason=str(e))
-        return await query.answer(f"Error: {e}", show_alert=True)
+        return await query.answer(_("Q_MEETING_ERROR", error=str(e)), show_alert=True)
     log_info("meeting.ask_approval.succeeded", user_id=query.from_user.id, meeting_id=meeting_id)
-    await query.answer("Meeting sent for approval 📩\nWait for notification", show_alert=True)
+    await query.answer(_("Q_MEETING_SENT_FOR_APPROVAL"), show_alert=True)
     await manager.switch_to(state=MeetingStates.info, show_mode=ShowMode.DELETE_AND_SEND)
