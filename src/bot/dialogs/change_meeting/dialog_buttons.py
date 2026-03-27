@@ -2,14 +2,15 @@ from aiogram_dialog.widgets.kbd import Back, Row, ScrollingGroup, Select, Switch
 from aiogram_dialog.widgets.text import Format
 
 from src.bot.filters import *
-from src.bot.utils import BLANK_BTN, COMMON_BACK_TEXT
+from src.bot.i18n import I18NFormat as I18N
+from src.bot.utils import BLANK_BTN
 
 from .handles import *
 
 BTN_BLANK = BLANK_BTN
 BTN_ROW_BACK = Row(Back(), BTN_BLANK)
 
-BTN_INIT = SwitchTo(COMMON_BACK_TEXT, id="to_init", state=ChangeStates.init, on_click=handle_clear)
+BTN_INIT = SwitchTo(I18N("COMMON_BTN_BACK"), id="to_init", state=ChangeStates.init, on_click=handle_clear)
 
 
 TUTORS_ASSIGN_SCROLLING_GROUP = ScrollingGroup(

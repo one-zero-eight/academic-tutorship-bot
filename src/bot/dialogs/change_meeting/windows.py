@@ -1,11 +1,10 @@
 from aiogram_dialog import Window
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Calendar, Cancel, Column, Row, SwitchTo
-from aiogram_dialog.widgets.text import Const, Format
 
 from src.bot.custom_widgets import MeetingInfoText
 from src.bot.filters import *
-from src.bot.utils import COMMON_BACK_TEXT
+from src.bot.i18n import I18NFormat as I18N
 
 from .dialog_buttons import *
 from .getters import *
@@ -15,27 +14,27 @@ from .states import *
 info_change_ww = Window(
     MeetingInfoText(admin_info=True),
     Column(
-        SwitchTo(Const("Set Title"), id="change_title", state=ChangeStates.title),
-        SwitchTo(Const("Set Description"), id="set_description", state=ChangeStates.description),
-        SwitchTo(Const("Set Room"), id="set_room", state=ChangeStates.room),
-        SwitchTo(Const("Set Date"), id="choose_date", state=ChangeStates.date),
-        SwitchTo(Const("Set Duration"), id="choose_duration", state=ChangeStates.duration),
+        SwitchTo(I18N("CHANGE_INFO_BTN_SET_TITLE"), id="change_title", state=ChangeStates.title),
+        SwitchTo(I18N("CHANGE_INFO_BTN_SET_DESCRIPTION"), id="set_description", state=ChangeStates.description),
+        SwitchTo(I18N("CHANGE_INFO_BTN_SET_ROOM"), id="set_room", state=ChangeStates.room),
+        SwitchTo(I18N("CHANGE_INFO_BTN_SET_DATE"), id="choose_date", state=ChangeStates.date),
+        SwitchTo(I18N("CHANGE_INFO_BTN_SET_DURATION"), id="choose_duration", state=ChangeStates.duration),
         SwitchTo(
-            Const("Assign Tutor"),
+            I18N("CHANGE_INFO_BTN_ASSIGN_TUTOR"),
             id="assign_tutor",
             state=ChangeStates.tutor,
             on_click=open_assign_tutor,
             when="is_admin",
         ),
     ),
-    Row(Cancel(COMMON_BACK_TEXT), BTN_BLANK),
+    Row(Cancel(I18N("COMMON_BTN_BACK")), BTN_BLANK),
     state=ChangeStates.init,
     getter=meeting_info_getter,
 )
 
 
 set_title_ww = Window(
-    Format('Enter new Title for "{title}"'),
+    I18N("CHANGE_SET_TITLE_PROMPT"),
     Row(BTN_INIT, BTN_BLANK),
     MessageInput(get_meeting_title),
     state=ChangeStates.title,
@@ -44,7 +43,7 @@ set_title_ww = Window(
 
 
 set_description_ww = Window(
-    Format('Enter new Description for "{title}"'),
+    I18N("CHANGE_SET_DESCRIPTION_PROMPT"),
     Row(BTN_INIT, BTN_BLANK),
     MessageInput(get_meeting_description),
     state=ChangeStates.description,
@@ -53,7 +52,7 @@ set_description_ww = Window(
 
 
 set_room_ww = Window(
-    Format('Enter new Room for "{title}"'),
+    I18N("CHANGE_SET_ROOM_PROMPT"),
     Row(BTN_INIT, BTN_BLANK),
     MessageInput(get_meeting_room),
     state=ChangeStates.room,
@@ -62,7 +61,7 @@ set_room_ww = Window(
 
 
 set_date_ww = Window(
-    Format('Enter new Date for "{title}"'),
+    I18N("CHANGE_SET_DATE_PROMPT"),
     Calendar(id="set_date_calendar", on_click=on_date_selected),  # type: ignore
     Row(BTN_INIT, BTN_BLANK),
     state=ChangeStates.date,
@@ -71,11 +70,10 @@ set_date_ww = Window(
 
 
 set_time_ww = Window(
-    Format('Enter new Time for "{title}"'),
-    Const("Adhere to format 00:00, e.g. 20:32"),
+    I18N("CHANGE_SET_TIME_PROMPT"),
     MessageInput(get_meeting_time),
     Row(
-        SwitchTo(text=COMMON_BACK_TEXT, id="to_date", state=ChangeStates.date, on_click=handle_clear),
+        SwitchTo(text=I18N("COMMON_BTN_BACK"), id="to_date", state=ChangeStates.date, on_click=handle_clear),
         BTN_BLANK,
     ),
     state=ChangeStates.time,
@@ -84,8 +82,7 @@ set_time_ww = Window(
 
 
 set_duration_ww = Window(
-    Format('Enter new Duration for "{title}"'),
-    Const('In format "hh:mm"'),
+    I18N("CHANGE_SET_DURATION_PROMPT"),
     Row(BTN_INIT, BTN_BLANK),
     MessageInput(get_meeting_duration),
     state=ChangeStates.duration,
@@ -94,8 +91,7 @@ set_duration_ww = Window(
 
 
 assign_tutor_ww = Window(
-    Format('Assign Tutor to "{title}"\n'),
-    Const("Here's the list of all tutors for reference"),
+    I18N("CHANGE_ASSIGN_TUTOR_TITLE"),
     TUTORS_ASSIGN_SCROLLING_GROUP,
     Row(BTN_INIT, BTN_BLANK),
     MessageInput(get_assigned_tutor),

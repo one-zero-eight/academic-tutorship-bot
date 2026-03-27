@@ -121,26 +121,38 @@ STUDENT_MEETING_BTN_TUTOR_PROFILE = Academic Tutor Profile
 STUDENT_MEETING_BTN_TO_YOUR_PROFILE = To Your Profile
 
 
+CHANGE_INFO_BTN_SET_TITLE = Title
+CHANGE_INFO_BTN_SET_DESCRIPTION = Description
+CHANGE_INFO_BTN_SET_ROOM = Room
+CHANGE_INFO_BTN_SET_DATE = Date
+CHANGE_INFO_BTN_SET_DURATION = Duration
+CHANGE_INFO_BTN_ASSIGN_TUTOR = Academic Tutor
+
+CHANGE_SET_TITLE_PROMPT = Enter new Title for "{$title}"
+CHANGE_SET_DESCRIPTION_PROMPT = Enter new Description for "{$title}"
+CHANGE_SET_ROOM_PROMPT = Enter new Room for "{$title}"
+CHANGE_SET_DATE_PROMPT = Enter new Date for "{$title}"
+CHANGE_SET_TIME_PROMPT =
+    Enter new Time for "{$title}"
+    Adhere to format 00:00, e.g. 20:32
+CHANGE_SET_DURATION_PROMPT =
+    Enter new Duration for "{$title}"
+    In format "hh:mm"
+CHANGE_ASSIGN_TUTOR_TITLE =
+    Assign Academic Tutor to "{$title}"
+    Here's the list of all Academic Tutors:
+
+
 TUTOR_LIST_TITLE_FOR_STUDENTS = 🧑‍🏫 Here are all Academic Tutors!
+
 TUTOR_PROFILE_HEADER_STUDENT_VIEW = 🧑‍🏫 Academic Tutor's Profile
 TUTOR_PROFILE_PROFILE_NAME_LINE = <b>{$profile_name}</b>
 TUTOR_PROFILE_USERNAME_LINE = @{$username}
 TUTOR_PROFILE_DISCIPLINES_HEADER = 📚 Disciplines:
 TUTOR_PROFILE_DISCIPLINE_ITEM = - <b>[{$discipline[language]} {$discipline[year]}y] {$discipline[name]}</b>
 TUTOR_PROFILE_ABOUT_BLOCK = <blockquote>{$about}</blockquote>
-CHANGE_INFO_BTN_SET_TITLE = Set Title
-CHANGE_INFO_BTN_SET_DESCRIPTION = Set Description
-CHANGE_INFO_BTN_SET_ROOM = Set Room
-CHANGE_INFO_BTN_SET_DATE = Set Date
-CHANGE_INFO_BTN_SET_DURATION = Set Duration
-CHANGE_SET_TITLE_PROMPT = Enter new Title for "{$title}"
-CHANGE_SET_DESCRIPTION_PROMPT = Enter new Description for "{$title}"
-CHANGE_SET_ROOM_PROMPT = Enter new Room for "{$title}"
-CHANGE_SET_DATE_PROMPT = Enter new Date for "{$title}"
-CHANGE_SET_TIME_PROMPT = Enter new Time for "{$title}"
-CHANGE_SET_TIME_FORMAT_HINT = Adhere to format 00:00, e.g. 20:32
-CHANGE_SET_DURATION_PROMPT = Enter new Duration for "{$title}"
-CHANGE_SET_DURATION_FORMAT_HINT = In format "hh:mm"
+
+
 ATTENDANCE_BTN_RESEND_FILE = Resend File
 ATTENDANCE_BTN_ADD_EMAIL = Add email
 ATTENDANCE_BTN_DOWNLOAD_FILE = Download File
@@ -194,9 +206,6 @@ NOTIF_MEETING_CLOSED_FOR_TUTOR =
     👥 Attendance count: {$attendance_count}
 
     🔗 <a href="{$link}">Click to see the details</a>
-CHANGE_INFO_BTN_ASSIGN_TUTOR = Assign Academic Tutor
-CHANGE_ASSIGN_TUTOR_TITLE = Assign Academic Tutor to "{$title}"
-CHANGE_ASSIGN_TUTOR_HINT = Here's the list of all Academic Tutors:
 TUTORS_ADMIN_LIST_TITLE = Academic Tutors List
 TUTORS_ADMIN_BTN_ADD_NEW = Add New
 TUTORS_ADMIN_INFO_TITLE = Academic Tutor [{$id}] Info

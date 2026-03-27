@@ -117,3 +117,35 @@ MEETING_CONFIRM_DELETE_BTN = Отменить встречу 🗑️
 STUDENT_MEETINGS_LIST_TITLE = Предстоящие встречи
 STUDENT_MEETING_BTN_TUTOR_PROFILE = Профиль Academic Tutor
 STUDENT_MEETING_BTN_TO_YOUR_PROFILE = К профилю
+
+
+CHANGE_INFO_BTN_SET_TITLE = Название
+CHANGE_INFO_BTN_SET_DESCRIPTION = Описание
+CHANGE_INFO_BTN_SET_ROOM = Аудитория
+CHANGE_INFO_BTN_SET_DATE = Дата
+CHANGE_INFO_BTN_SET_DURATION = Длительность
+CHANGE_INFO_BTN_ASSIGN_TUTOR = Academic Tutor
+
+CHANGE_SET_TITLE_PROMPT = Введи новое название для "{$title}"
+CHANGE_SET_DESCRIPTION_PROMPT = Введи новое описание для "{$title}"
+CHANGE_SET_ROOM_PROMPT = Введи новую аудиторию для "{$title}"
+CHANGE_SET_DATE_PROMPT = Выбери новую дату для "{$title}"
+CHANGE_SET_TIME_PROMPT =
+    Введи новое время для "{$title}"
+    Следуй формату 00:00, например 20:32
+CHANGE_SET_DURATION_PROMPT =
+    Введи новую длительность для "{$title}"
+    В формате "чч:мм", например 01:30
+CHANGE_ASSIGN_TUTOR_TITLE =
+    Назначение Academic Tutor для "{$title}"
+    Вот список Academic Tutors:
+
+
+TUTOR_LIST_TITLE_FOR_STUDENTS = 🧑‍🏫 Вот are all Academic Tutors!
+
+TUTOR_PROFILE_HEADER_STUDENT_VIEW = 🧑‍🏫 Academic Tutor's Profile
+TUTOR_PROFILE_PROFILE_NAME_LINE = <b>{$profile_name}</b>
+TUTOR_PROFILE_USERNAME_LINE = @{$username}
+TUTOR_PROFILE_DISCIPLINES_HEADER = 📚 Disciplines:
+TUTOR_PROFILE_DISCIPLINE_ITEM = - <b>[{$discipline[language]} {$discipline[year]}y] {$discipline[name]}</b>
+TUTOR_PROFILE_ABOUT_BLOCK = <blockquote>{$about}</blockquote>
