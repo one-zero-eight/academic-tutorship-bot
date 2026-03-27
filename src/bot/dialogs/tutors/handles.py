@@ -55,13 +55,23 @@ async def open_add_tutor(query: CallbackQuery, __, manager: DialogManager):
     manager = extend_dialog(manager)
     _ = manager.tr
     log_info("tutor.add.opened", user_id=query.from_user.id)
-    await manager.answer_and_track(text=_("Q_TUTOR_ADD_CHOOSE_USER"), reply_markup=CHOOSE_USER_KB)
+    choose_user_kb = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text=_("CHOOSE_FROM_CONTACTS_BTN"), request_users=REQUEST_USERS)]],
+        resize_keyboard=True,
+        one_time_keyboard=True,
+    )
+    await manager.answer_and_track(text=_("Q_TUTOR_ADD_CHOOSE_USER"), reply_markup=choose_user_kb)
 
 
 async def get_added_tutor(message: Message, __, manager: DialogManager):
     manager = extend_dialog(manager)
     _ = manager.tr
     await manager.clear_messages()
+    choose_user_kb = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text=_("CHOOSE_FROM_CONTACTS_BTN"), request_users=REQUEST_USERS)]],
+        resize_keyboard=True,
+        one_time_keyboard=True,
+    )
     try:
         shared_user = extract_shared_user(message)
         log_info("tutor.add.requested", user_id=message.chat.id, shared_user_id=shared_user.user_id)
@@ -73,13 +83,13 @@ async def get_added_tutor(message: Message, __, manager: DialogManager):
         await manager.switch_to(TutorsStates.info, show_mode=ShowMode.DELETE_AND_SEND)
     except NoMessageUsersShared:
         log_warning("tutor.add.invalid_input", user_id=message.chat.id, reason="no_shared_user")
-        return await manager.answer_and_retry(_("Q_TUTOR_ADD_NO_SHARED_USERS"), reply_markup=CHOOSE_USER_KB)
+        return await manager.answer_and_retry(_("Q_TUTOR_ADD_NO_SHARED_USERS"), reply_markup=choose_user_kb)
     except NoSharedUserUsername:
         log_warning("tutor.add.invalid_input", user_id=message.chat.id, reason="shared_user_no_username")
-        return await manager.answer_and_retry(text=_("Q_TUTOR_ADD_USERNAME_REQUIRED"), reply_markup=CHOOSE_USER_KB)
+        return await manager.answer_and_retry(text=_("Q_TUTOR_ADD_USERNAME_REQUIRED"), reply_markup=choose_user_kb)
     except UserAlreadyTutor:
         log_warning("tutor.add.invalid_input", user_id=message.chat.id, reason="already_tutor")
-        return await manager.answer_and_retry(text=_("Q_TUTOR_ADD_ALREADY_TUTOR"), reply_markup=CHOOSE_USER_KB)
+        return await manager.answer_and_retry(text=_("Q_TUTOR_ADD_ALREADY_TUTOR"), reply_markup=choose_user_kb)
     except Exception as e:
         log_error("tutor.add.failed", user_id=message.chat.id, reason=str(e))
-        return await manager.answer_and_retry(_("Q_TUTOR_ADD_UNKNOWN_ERROR", error=str(e)), reply_markup=CHOOSE_USER_KB)
+        return await manager.answer_and_retry(_("Q_TUTOR_ADD_UNKNOWN_ERROR", error=str(e)), reply_markup=choose_user_kb)

@@ -175,6 +175,19 @@ ATTENDANCE_CLOSE_TITLE = Отправь посещаемость для "{title}
 ATTENDANCE_ADD_EMAIL_PROMPT = Введи электронную почту для добавления 👤
 
 
+TUTORS_ADMIN_LIST_TITLE = Список Academic Tutors
+TUTORS_ADMIN_INFO =
+    Academic Tutor [{$id}] Информация
+    {$full_name}
+    @{$username}
+    Telegram ID: <code>{$telegram_id}</code>
+TUTORS_ADMIN_BTN_ADD_NEW = Добавить
+TUTORS_ADMIN_BTN_DISMISS = Удалить
+TUTORS_ADMIN_BTN_PROFILE = Профиль
+TUTORS_ADMIN_BTN_EDIT_PROFILE = Изменить профиль
+TUTORS_ADMIN_ADD_PROMPT = Поделись контактом нового Academic Tutor
+
+
 TUTOR_LIST_TITLE_FOR_STUDENTS = 🧑‍🏫 Вот все Academic Tutors!
 
 TUTOR_PROFILE_HEADER_STUDENT_VIEW = 🧑‍🏫 Профиль Academic Tutor
@@ -182,6 +195,7 @@ TUTOR_PROFILE_PROFILE_NAME_LINE = <b>{$profile_name}</b>
 TUTOR_PROFILE_USERNAME_LINE = @{$username}
 TUTOR_PROFILE_DISCIPLINES_HEADER = 📚 Дисциплины:
 TUTOR_PROFILE_ABOUT_BLOCK = <blockquote>{$about}</blockquote>
+
 
 TUTOR_PROFILE_LIST_TITLE = 🧑‍🏫 Все Academic Tutors!
 TUTOR_PROFILE_HEADER_TUTOR_VIEW = 🧑‍🏫 Твой профиль Academic Tutor

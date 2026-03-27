@@ -67,3 +67,5 @@ Q_TUTOR_PROFILE_NO_TEXT = В твоем сообщении нет текста
 Q_TUTOR_PROFILE_NAME_TOO_LONG = Имя профиля должно быть короче 128 символов
 Q_TUTOR_PROFILE_ABOUT_TOO_LONG = Текст «О себе» должен быть короче 256 символов
 Q_TUTOR_PROFILE_NOT_READY = Academic Tutor пока не настроил свой профиль
+
+CHOOSE_FROM_CONTACTS_BTN = Выбрать из контактов 👤

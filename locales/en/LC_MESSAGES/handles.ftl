@@ -68,3 +68,5 @@ Q_TUTOR_PROFILE_NO_TEXT = There is no text in your message
 Q_TUTOR_PROFILE_NAME_TOO_LONG = Profile name must be under 128 symbols
 Q_TUTOR_PROFILE_ABOUT_TOO_LONG = About text must be under 256 symbols
 Q_TUTOR_PROFILE_NOT_READY = Academic Tutor has not set up their profile yet
+
+CHOOSE_FROM_CONTACTS_BTN = Choose from contacts 👤

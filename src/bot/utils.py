@@ -54,7 +54,7 @@ async def handle_clear(query: CallbackQuery, button: Button, manager: DialogMana
     await manager.clear_messages()
 
 
-request_users = KeyboardButtonRequestUsers(
+REQUEST_USERS = KeyboardButtonRequestUsers(
     request_id=0,
     user_is_bot=False,
     request_username=True,
@@ -63,12 +63,10 @@ request_users = KeyboardButtonRequestUsers(
 )
 
 CHOOSE_USER_KB = ReplyKeyboardMarkup(
-    keyboard=[[KeyboardButton(text="Choose User 👤", request_users=request_users)]],
+    keyboard=[[KeyboardButton(text="Choose User 👤", request_users=REQUEST_USERS)]],
     resize_keyboard=True,
     one_time_keyboard=True,
 )
-
-del request_users
 
 
 async def user_status_getter(dialog_manager: DialogManager, **kwargs):
