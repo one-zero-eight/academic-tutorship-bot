@@ -30,7 +30,7 @@ class ExtendedDialogManager(DialogManagerWrapper):
             lambda text, data: text.format_map(data),
         )
         translated_text = format_text(key, kwargs)
-        return translated_text.format(**kwargs)
+        return translated_text
 
     async def track_message(self, message: Message):
         """Track messages to delete later ("to_delete_list" in state)"""
