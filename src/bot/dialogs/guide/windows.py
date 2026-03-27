@@ -1,11 +1,13 @@
 from aiogram_dialog import Window
 from aiogram_dialog.widgets.kbd import Back, Button, Cancel, Next, Row, Start
-from aiogram_dialog.widgets.text import Const, Format, List
+from aiogram_dialog.widgets.text import Const
 
+from src.bot.custom_widgets import UnpackedList
 from src.bot.dialogs.discipline_picker import DisciplinePickerStates
 from src.bot.dialogs.discipline_picker.getters import selected_disciplines_getter
 from src.bot.dialogs.root.handles import on_submit_disciplines
 from src.bot.filters import *
+from src.bot.i18n import I18NFormat as I18N
 from src.bot.utils import BLANK_BTN
 from src.domain.models import *
 
@@ -13,65 +15,40 @@ from .getters import *
 from .handles import *
 from .states import *
 
-INIT_TEXT = """
-Hello student!
-Me name is ArThur, I am the bot of Academic Tutorship (AT for short).
-
-The system helps to keep track of meetings (recaps, consultations) on various university disciplines of your choice.
-"""
-
-
-DISCIPLINES_TEXT = """
-You may choose the disciplines you're interested in.
-
-Or skip and do that later in ⚙️ <b>Settings</b>.
-"""
-
-
-NOTIFICATIONS_TEXT = """
-The big part of my value are notifications about upcoming meetings.
-
-We send notifications in different bot
-Please activate it 👇 to continue
-🔗 <a href="{link}"><i>Academic Notifications Bot</i></a>
-
-(you may block notifications in ⚙️ Settings)
-"""
-
 init_ww = Window(
-    Format(INIT_TEXT),
+    I18N("GUIDE_INIT_TEXT"),
     Row(
         BLANK_BTN,
-        Next(Const("Next ➡️")),
+        Next(I18N("GUIDE_BTN_NEXT")),
     ),
     state=GuideStates.init,
 )
 
 
 disciplines_ww = Window(
-    Format(DISCIPLINES_TEXT),
+    I18N("GUIDE_DISCIPLINES_TEXT"),
     Const(" "),
-    Const("📚 No disciplines selected yet", when="nothing_chosen"),
-    Const("📚 Selected Disciplines", when="something_chosen"),
-    List(Format("- [{item[language]} {item[year]}y] {item[name]}"), items="selected_disciplines"),
+    I18N("GUIDE_DISCIPLINES_NONE_SELECTED", when="nothing_chosen"),
+    I18N("GUIDE_DISCIPLINES_SELECTED_TITLE", when="something_chosen"),
+    UnpackedList(I18N("SETTINGS_DISCIPLINE_ITEM"), items="selected_disciplines"),
     Start(
-        Const("Choose"),
+        I18N("SETTINGS_DISCIPLINES_BTN_CHOOSE"),
         id="start_select_disciplines",
         state=DisciplinePickerStates.language,
         data={"multi": True},
         when="nothing_chosen",
     ),
     Start(
-        Const("Choose other"),
+        I18N("SETTINGS_DISCIPLINES_BTN_CHOOSE_OTHER"),
         id="start_select_disciplines",
         state=DisciplinePickerStates.language,
         data={"multi": True},
         when="something_chosen",
     ),
     Row(
-        Back(Const("⬅️ Back")),
-        Next(Const("Next ➡️"), on_click=on_submit_disciplines, when="something_chosen"),
-        Next(Const("Skip ➡️"), on_click=on_submit_disciplines, when="nothing_chosen"),
+        Back(I18N("GUIDE_BTN_BACK")),
+        Next(I18N("GUIDE_BTN_NEXT"), on_click=on_submit_disciplines, when="something_chosen"),
+        Next(I18N("GUIDE_BTN_SKIP"), on_click=on_submit_disciplines, when="nothing_chosen"),
     ),
     getter=selected_disciplines_getter,
     state=GuideStates.disciplines,
@@ -79,10 +56,10 @@ disciplines_ww = Window(
 
 
 notifications_ww = Window(
-    Format(NOTIFICATIONS_TEXT),
+    I18N("GUIDE_NOTIFICATIONS_TEXT"),
     Row(
-        Back(Const("⬅️ Back")),
-        Cancel(Const("Finish guide 🎉"), when="bot_activated", on_click=set_saw_guide_true),
+        Back(I18N("GUIDE_BTN_BACK")),
+        Cancel(I18N("GUIDE_BTN_FINISH"), when="bot_activated", on_click=set_saw_guide_true),
         Button(Const(" "), id="blank", when="not_bot_activated"),
     ),
     getter=notification_state_getter,
