@@ -23,7 +23,7 @@ SETTINGS_HEADING =
 
     📚 Актуальные дисциплины:
 
-SETTINGS_DISCIPLINE_ITEM = - [{$item[language]} {$item[year]}г] {$item[name]}
+SETTINGS_DISCIPLINE_ITEM =  - [{$language} {$year}г] {$name}
 SETTINGS_NOTIFICATIONS_LINK = 🔗 <i><a href='{$notification_bot_link}'>ссылка на Notifications Bot</a></i>
 SETTINGS_NOTIF_UNACTIVATED = Активируй бота ☝️ для получения уведомлений
 SETTINGS_NOTIF_BLOCKED = Разблокируй бота ☝️ для получения уведомлений
@@ -34,3 +34,9 @@ SETTINGS_BTN_CHANGE_DISCIPLINES = 📚 Поменять дисциплины
 SETTINGS_DISCIPLINES_TITLE = 📚 Выбранные дисциплины
 SETTINGS_DISCIPLINES_BTN_CHOOSE = Выбрать
 SETTINGS_DISCIPLINES_BTN_CHOOSE_OTHER = Выбрать другие
+
+
+DISCIPLINE_PICKER_LANGUAGE_TITLE = Выбери программу
+DISCIPLINE_PICKER_YEAR_TITLE = Выбери курс
+DISCIPLINE_PICKER_DISCIPLINE_TITLE = Выбери дисциплину
+DISCIPLINE_PICKER_DISCIPLINES_TITLE = Выбери дисциплины

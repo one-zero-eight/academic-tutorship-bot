@@ -1,6 +1,7 @@
 COMMON_BTN_BACK = Back
 COMMON_BTN_CANCEL = Cancel
 COMMON_BTN_SUBMIT = Submit
+COMMON_BTN_CLOSE = Close
 
 ROOT_START_STUDENT =
     Hello there, {$first_name}! 👋
@@ -24,7 +25,7 @@ SETTINGS_HEADING =
 
     📚 Relevant Disciplines:
 
-SETTINGS_DISCIPLINE_ITEM = - [{$item[language]} {$item[year]}y] {$item[name]}
+SETTINGS_DISCIPLINE_ITEM = - [{$language} {$year}y] {$name}
 SETTINGS_NOTIFICATIONS_LINK = 🔗 <i><a href='{$notification_bot_link}'>link to Notifications Bot</a></i>
 SETTINGS_NOTIF_UNACTIVATED = Activate bot ☝️ to receive notifications
 SETTINGS_NOTIF_BLOCKED = Unblock the bot ☝️ to receive notifications
@@ -37,6 +38,12 @@ SETTINGS_DISCIPLINES_BTN_CHOOSE = Choose
 SETTINGS_DISCIPLINES_BTN_CHOOSE_OTHER = Choose other
 
 
+DISCIPLINE_PICKER_LANGUAGE_TITLE = Choose Program
+DISCIPLINE_PICKER_YEAR_TITLE = Choose Academic Year
+DISCIPLINE_PICKER_DISCIPLINE_TITLE = Choose Discipline
+DISCIPLINE_PICKER_DISCIPLINES_TITLE = Choose Disciplines
+
+
 STUDENT_MEETINGS_LIST_TITLE = Upcoming Meetings
 STUDENT_MEETING_BTN_TUTOR_PROFILE = Academic Tutor Profile
 STUDENT_MEETING_BTN_TO_YOUR_PROFILE = To Your Profile
@@ -47,12 +54,6 @@ TUTOR_PROFILE_USERNAME_LINE = @{$username}
 TUTOR_PROFILE_DISCIPLINES_HEADER = 📚 Disciplines:
 TUTOR_PROFILE_DISCIPLINE_ITEM = - <b>[{$discipline[language]} {$discipline[year]}y] {$discipline[name]}</b>
 TUTOR_PROFILE_ABOUT_BLOCK = <blockquote>{$about}</blockquote>
-DISCIPLINE_PICKER_LANGUAGE_TITLE = Choose Program
-DISCIPLINE_PICKER_YEAR_TITLE = Choose Academic Year
-DISCIPLINE_PICKER_DISCIPLINE_TITLE = Choose Discipline
-DISCIPLINE_PICKER_DISCIPLINES_TITLE = Choose Disciplines
-DISCIPLINE_PICKER_BTN_CANCEL = Cancel
-DISCIPLINE_PICKER_BTN_CLOSE = Close
 AUTH_BIND_INSTRUCTION =
     To proceed, please, connect your Telegram with your InNoHassle Account by pressing the button "Connect Telegram 🔗"
 

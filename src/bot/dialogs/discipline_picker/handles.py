@@ -10,10 +10,11 @@ from .states import *
 
 async def on_language_select(query: CallbackQuery, widget, manager: DialogManager, item_id: str):
     manager = extend_dialog(manager)
+    _ = manager.tr
     languages = await discipline_repo.get_languages()
     if int(item_id) >= len(languages):
         log_warning("discipline_picker.language.invalid", user_id=query.from_user.id, index=item_id)
-        return await query.answer("Invalid language", show_alert=True)
+        return await query.answer(_("Q_DISCIPLINE_PICKER_INVALID_LANGUAGE"), show_alert=True)
     chosen_language = languages[int(item_id)]
     multiple_choise = isinstance(manager.start_data, dict) and manager.start_data.get("multi", False)
     log_info(
@@ -28,11 +29,12 @@ async def on_language_select(query: CallbackQuery, widget, manager: DialogManage
 
 async def on_year_select(query: CallbackQuery, widget, manager: DialogManager, item_id: str):
     manager = extend_dialog(manager)
+    _ = manager.tr
     assert (language := await manager.state.get_value("language"))
     years = await discipline_repo.get_years(language)
     if int(item_id) >= len(years):
         log_warning("discipline_picker.year.invalid", user_id=query.from_user.id, index=item_id)
-        return await query.answer("Invalid year", show_alert=True)
+        return await query.answer(_("Q_DISCIPLINE_PICKER_INVALID_YEAR"), show_alert=True)
     chosen_year = years[int(item_id)]
     multiple_choise = isinstance(manager.start_data, dict) and manager.start_data.get("multi", False)
     log_info(
@@ -50,12 +52,13 @@ async def on_year_select(query: CallbackQuery, widget, manager: DialogManager, i
 
 async def on_discipline_select(query: CallbackQuery, widget, manager: DialogManager, item_id: str):
     manager = extend_dialog(manager)
+    _ = manager.tr
     assert (language := await manager.state.get_value("language"))
     assert (year := await manager.state.get_value("year"))
     disciplines = await discipline_repo.get_list(language=language, year=year)
     if int(item_id) >= len(disciplines):
         log_warning("discipline_picker.discipline.invalid", user_id=query.from_user.id, index=item_id)
-        return await query.answer("Invalid discipline", show_alert=True)
+        return await query.answer(_("Q_DISCIPLINE_PICKER_INVALID_DISCIPLINE"), show_alert=True)
     chosen_discipline = disciplines[int(item_id)]
     log_info("discipline_picker.discipline.selected", user_id=query.from_user.id, discipline_id=chosen_discipline.id)
     await manager.state.update_data({"discipline": chosen_discipline.model_dump()})
@@ -65,12 +68,13 @@ async def on_discipline_select(query: CallbackQuery, widget, manager: DialogMana
 
 async def on_discipline_select_multi(query: CallbackQuery, widget, manager: DialogManager, item_id: str):
     manager = extend_dialog(manager)
+    _ = manager.tr
     assert (language := await manager.state.get_value("language"))
     assert (year := await manager.state.get_value("year"))
     disciplines = await discipline_repo.get_list(language=language, year=year)
     if int(item_id) >= len(disciplines):
         log_warning("discipline_picker.discipline.invalid", user_id=query.from_user.id, index=item_id)
-        return await query.answer("Invalid discipline", show_alert=True)
+        return await query.answer(_("Q_DISCIPLINE_PICKER_INVALID_DISCIPLINE"), show_alert=True)
     chosen_discipline = disciplines[int(item_id)]
     selected_disciplines: list = await manager.state.get_value("selected_disciplines", [])
     selected_ids = [disc["id"] for disc in selected_disciplines]

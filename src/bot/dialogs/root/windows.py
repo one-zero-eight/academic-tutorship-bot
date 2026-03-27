@@ -1,7 +1,8 @@
 from aiogram_dialog import Window
 from aiogram_dialog.widgets.kbd import Button, Row, Start, SwitchTo
-from aiogram_dialog.widgets.text import Const, List
+from aiogram_dialog.widgets.text import Const
 
+from src.bot.custom_widgets import UnpackedList
 from src.bot.dialogs.discipline_picker import DisciplinePickerStates
 from src.bot.dialogs.discipline_picker.getters import selected_disciplines_getter
 from src.bot.dialogs.meetings import MeetingStates
@@ -51,7 +52,7 @@ start_ww = Window(
 # TODO: move to separate settings dialog (issue #50)
 settings_ww = Window(
     I18N("SETTINGS_HEADING"),
-    List(I18N("SETTINGS_DISCIPLINE_ITEM"), items="relevant_disciplines"),
+    UnpackedList(I18N("SETTINGS_DISCIPLINE_ITEM"), items="relevant_disciplines"),
     Const(" "),
     I18N("SETTINGS_NOTIFICATIONS_LINK"),
     I18N("SETTINGS_NOTIF_UNACTIVATED", when="notification_bot_unactivated"),
@@ -65,7 +66,7 @@ settings_ww = Window(
 
 select_disciplines_ww = Window(
     I18N("SETTINGS_DISCIPLINES_TITLE"),
-    List(I18N("SETTINGS_DISCIPLINE_ITEM"), items="selected_disciplines"),
+    UnpackedList(I18N("SETTINGS_DISCIPLINE_ITEM"), items="selected_disciplines"),
     Start(
         I18N("SETTINGS_DISCIPLINES_BTN_CHOOSE_OTHER"),
         id="start_select_disciplines",
