@@ -1,6 +1,16 @@
 NOTIF_BOT_STARTED = Опять работать придется, тут <a href="{$link}">Academic Tutorship Bot</a> запустили 🚀
 NOTIF_BOT_SHUTDOWN = Чиллим, <a href="{$link}">Academic Tutorship Bot</a> был убит 💤
 
+NOTIF_RECEIVE_NOTIFICATION_ENABLED =
+    Спасибо за активацию уведомлений 🎉
+
+    <a href="{$link}">Вернуться к главному боту</a>
+
+NOTIF_RECEIVE_NOTIFICATION_DISABLED =
+    Уведомления отключены 💤
+
+    Чтобы получать их снова, <a href="{$link}">перейди в настройки бота</a>
+
 NOTIF_TUTOR_PROMOTED_FOR_TUTOR =
     Поздравляю с повышением, теперь ты Academic Tutor!
 
@@ -122,3 +132,9 @@ NOTIF_MEETING_STARTED =
     - Academic Tutor: @{$username}
 
     🔗 <a href="{$link}">Нажми сюда для просмотра деталей</a>
+
+NOTIF_BTN_APPROVE = Подтвердить ✅
+NOTIF_BTN_DISCARD = ❌ Отклонить
+NOTIF_BTN_CANCEL = Отмена
+NOTIF_BTN_CONFIRM_APPROVE = Точно подтвердить ✅
+NOTIF_BTN_CONFIRM_DISCARD = Точно отклонить ❌

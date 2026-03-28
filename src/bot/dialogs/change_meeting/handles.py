@@ -24,7 +24,7 @@ async def open_assign_tutor(query: CallbackQuery, __, manager: DialogManager):
     if not query.message:
         log_warning("meeting.change.assign_tutor.invalid", user_id=query.from_user.id, reason="no_query_message")
         raise ValueError("No query.message")
-    await manager.answer_and_track(_("ASSIGN_TUTOR_ADDITIONAL_PROMPT"), reply_markup=CHOOSE_USER_KB)
+    await manager.answer_and_track(_("ASSIGN_TUTOR_ADDITIONAL_PROMPT"), reply_markup=_choose_from_contacts_kb(_))
 
 
 async def get_assigned_tutor(message: Message, __, manager: DialogManager):
@@ -39,24 +39,26 @@ async def get_assigned_tutor(message: Message, __, manager: DialogManager):
             await assign_tutor_to_meeting_by_telegram_id(meeting, shared_user.user_id)
     except NoMessageUsersShared:
         log_warning("meeting.change.assign_tutor.invalid", user_id=message.chat.id, reason="no_shared_user")
-        return await manager.answer_and_retry(_("Q_CHANGE_PICK_USER_FROM_LIST"), reply_markup=CHOOSE_USER_KB)
+        return await manager.answer_and_retry(
+            _("Q_CHANGE_PICK_USER_FROM_LIST"), reply_markup=_choose_from_contacts_kb(_)
+        )
     except LookupError:
         log_warning("meeting.change.assign_tutor.invalid", user_id=message.chat.id, reason="not_tutor")
         return await manager.answer_and_retry(
             text=_("Q_CHANGE_USER_IS_NOT_TUTOR", user_id=shared_user.user_id, username=shared_user.username),
-            reply_markup=CHOOSE_USER_KB,
+            reply_markup=_choose_from_contacts_kb(_),
         )
     except MeetingIsApproving:
         log_warning("meeting.change.assign_tutor.blocked", user_id=message.chat.id, reason="approving")
         return await manager.answer_and_retry(
             text=_("Q_CHANGE_MEETING_APPROVING_CANNOT_CHANGE_TUTOR"),
-            reply_markup=CHOOSE_USER_KB,
+            reply_markup=_choose_from_contacts_kb(_),
         )
     except Exception as e:
         log_error("meeting.change.assign_tutor.failed", user_id=message.chat.id, reason=str(e))
         return await manager.answer_and_retry(
             text=_("Q_CHANGE_UNKNOWN_ERROR", error=str(e)),
-            reply_markup=CHOOSE_USER_KB,
+            reply_markup=_choose_from_contacts_kb(_),
         )
     log_info("meeting.change.assign_tutor.succeeded", user_id=message.chat.id)
     await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
@@ -80,7 +82,7 @@ async def get_meeting_title(message: Message, __, manager: DialogManager):
         log_warning("meeting.change.title.blocked", user_id=message.chat.id, reason="approving")
         return await manager.answer_and_retry(
             text=_("Q_CHANGE_MEETING_APPROVING_CANNOT_CHANGE_TITLE"),
-            reply_markup=CHOOSE_USER_KB,
+            reply_markup=_choose_from_contacts_kb(_),
         )
     log_info("meeting.change.title.succeeded", user_id=message.chat.id)
     await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
@@ -104,7 +106,7 @@ async def get_meeting_description(message: Message, __, manager: DialogManager):
         log_warning("meeting.change.description.blocked", user_id=message.chat.id, reason="approving")
         return await manager.answer_and_retry(
             text=_("Q_CHANGE_MEETING_APPROVING_CANNOT_CHANGE_DESCRIPTION"),
-            reply_markup=CHOOSE_USER_KB,
+            reply_markup=_choose_from_contacts_kb(_),
         )
     log_info("meeting.change.description.succeeded", user_id=message.chat.id)
     await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
@@ -170,7 +172,7 @@ async def get_meeting_duration(message: Message, __: MessageInput, manager: Dial
         log_warning("meeting.change.duration.blocked", user_id=message.chat.id, reason="approving")
         return await manager.answer_and_retry(
             text=_("Q_CHANGE_MEETING_APPROVING_CANNOT_CHANGE_DURATION"),
-            reply_markup=CHOOSE_USER_KB,
+            reply_markup=_choose_from_contacts_kb(_),
         )
     log_info("meeting.change.duration.succeeded", user_id=message.chat.id)
     await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
@@ -220,7 +222,7 @@ async def get_meeting_room(message: Message, __: MessageInput, manager: DialogMa
         log_warning("meeting.change.room.blocked", user_id=message.chat.id, reason="approving")
         return await manager.answer_and_retry(
             text=_("Q_CHANGE_MEETING_APPROVING_CANNOT_CHANGE_ROOM"),
-            reply_markup=CHOOSE_USER_KB,
+            reply_markup=_choose_from_contacts_kb(_),
         )
     log_info("meeting.change.room.succeeded", user_id=message.chat.id)
     await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
@@ -256,3 +258,18 @@ async def _warn_if_date_is_too_soon(
             text=tr("Q_CHANGE_MEETING_TOO_SOON_WARNING"),
             reply_markup=delete_warning_kb,
         )
+
+
+def _choose_from_contacts_kb(tr: Annotated[Any, "Translation function"]) -> ReplyKeyboardMarkup:
+    request_users = KeyboardButtonRequestUsers(
+        request_id=0,
+        user_is_bot=False,
+        request_username=True,
+        request_name=True,
+        max_quantity=1,
+    )
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text=tr("CHOOSE_FROM_CONTACTS_BTN"), request_users=request_users)]],
+        resize_keyboard=True,
+        one_time_keyboard=True,
+    )

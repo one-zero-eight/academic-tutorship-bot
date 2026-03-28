@@ -1,14 +1,24 @@
 import asyncio
+from collections.abc import Callable
 
 from aiogram import Bot, Dispatcher
 from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from src.bot.i18n import NOTIFICATION_L10NS
 from src.bot.logging_ import log_error, log_info
 from src.db.repositories import admin_repo, meeting_repo, student_repo, tutor_repo
 from src.domain.models import Meeting, MeetingStatus, Tutor
 
-from .texts import *
+type TextIDForm = tuple[str, dict]
+"Represents a text_id message (for fluent l10n) and its formatting arguments"
+type ReplyMarkupFactory = Callable[[str], InlineKeyboardMarkup]
+"Builds an inline keyboard for a specific language"
+type ReplyMarkup = InlineKeyboardMarkup | ReplyMarkupFactory | None
+
+
+def _txt(_text_id_: str, **kwargs) -> TextIDForm:
+    return _text_id_, kwargs
 
 
 class NotificationManager:
@@ -44,26 +54,26 @@ class NotificationManager:
             pass
 
     async def send_bot_started(self):
-        text = BOT_STARTED.format(link=self.gen_control_bot_link())
+        text = _txt("NOTIF_BOT_STARTED", link=self.gen_control_bot_link())
         await self._send_admins(text=text)
 
     async def send_bot_shutdown(self):
-        text = BOT_SHUTDOWN.format(link=self.gen_control_bot_link())
+        text = _txt("NOTIF_BOT_SHUTDOWN", link=self.gen_control_bot_link())
         await self._send_admins(text=text)
 
     async def send_receive_notification_toggled(self, student_id: int, enabled: bool):
         if enabled:
-            text = RECEIVE_NOTIFICATION_ENABLED.format(link=self.gen_control_bot_link())
+            text = _txt("NOTIF_RECEIVE_NOTIFICATION_ENABLED", link=self.gen_control_bot_link())
         else:
-            text = RECEIVE_NOTIFICATION_DISABLED.format(link=self.gen_control_bot_link("settings"))
+            text = _txt("NOTIF_RECEIVE_NOTIFICATION_DISABLED", link=self.gen_control_bot_link("settings"))
         await self._send_ids(student_id, text=text)
 
     async def send_meeting_tutor_assigned(self, meeting: Meeting, tutor: Tutor):
         tutor_data = tutor.model_dump()
         meeting_data = meeting.model_dump(by_alias=True)
         data = {**tutor_data, **meeting_data, "link": self.gen_meeting_link(meeting)}
-        admins_text = TUTOR_ASSIGNED_FOR_ADMINS.format_map(data)
-        tutor_text = TUTOR_ASSIGNED_FOR_TUTOR.format_map(data)
+        admins_text = _txt("NOTIF_TUTOR_ASSIGNED_FOR_ADMINS", **data)
+        tutor_text = _txt("NOTIF_TUTOR_ASSIGNED_FOR_TUTOR", **data)
         sent = await self._send_admins(text=admins_text)
         await self._send_telegram_ids(tutor.telegram_id, exclude=sent, text=tutor_text)
         # NOTE: don't notify students , they don't know the meeting yet, so they won't care
@@ -74,10 +84,10 @@ class NotificationManager:
         data["old_username"] = old_tutor.username
         data["new_username"] = new_tutor.username
         data["link"] = self.gen_meeting_link(meeting)
-        admins_text = TUTOR_CHANGED_FOR_ADMINS.format_map(data)
-        old_tutor_text = TUTOR_CHANGED_FOR_OLD_TUTOR.format_map(data)
-        new_tutor_text = TUTOR_CHANGED_FOR_NEW_TUTOR.format_map(data)
-        students_text = TUTOR_CHANGED_FOR_STUDENTS.format_map(data)
+        admins_text = _txt("NOTIF_TUTOR_CHANGED_FOR_ADMINS", **data)
+        old_tutor_text = _txt("NOTIF_TUTOR_CHANGED_FOR_OLD_TUTOR", **data)
+        new_tutor_text = _txt("NOTIF_TUTOR_CHANGED_FOR_NEW_TUTOR", **data)
+        students_text = _txt("NOTIF_MEETING_UPDATED_TUTOR", **data)
         sent = await self._send_admins(text=admins_text)
         await self._send_telegram_ids(old_tutor.telegram_id, exclude=sent, text=old_tutor_text)
         await self._send_telegram_ids(new_tutor.telegram_id, exclude=sent, text=new_tutor_text)
@@ -98,20 +108,26 @@ class NotificationManager:
     async def send_meeting_approve_request(self, meeting: Meeting, tutor: Tutor):
         """Sends approval request to the head of AT with approve/discard buttons"""
         meeting_data = meeting.model_dump(by_alias=True)
-        text = MEETING_APPROVE_REQUEST.format(
-            **meeting_data, username=tutor.username, link=self.gen_meeting_link(meeting)
+        text = _txt(
+            "NOTIF_MEETING_APPROVE_REQUEST",
+            **meeting_data,
+            username=tutor.username,
+            link=self.gen_meeting_link(meeting),
         )
-        reply_markup = self.gen_approve_discard_request_reply_markup(meeting.id)
+
+        def reply_markup(lang: str) -> InlineKeyboardMarkup:
+            return self.gen_approve_discard_request_reply_markup(meeting.id, lang)
+
         await self._send_admins(text=text, reply_markup=reply_markup)  # TODO: add approve/discard buttons
 
     async def send_meeting_approved(self, meeting: Meeting):
-        text = MEETING_APPROVED.format(title=meeting.title, link=self.gen_meeting_link(meeting))
+        text = _txt("NOTIF_MEETING_APPROVED", title=meeting.title, link=self.gen_meeting_link(meeting))
         sent = await self._send_admins(text=text)
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
 
     async def send_meeting_discarded(self, meeting: Meeting, reason: str):
-        text = MEETING_DISCARDED.format(title=meeting.title, reason=reason, link=self.gen_meeting_link(meeting))
+        text = _txt("NOTIF_MEETING_DISCARDED", title=meeting.title, reason=reason, link=self.gen_meeting_link(meeting))
         sent = await self._send_admins(text=text)
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
@@ -119,13 +135,13 @@ class NotificationManager:
     async def send_meeting_announced(self, meeting: Meeting, tutor: Tutor):
         meeting_data = meeting.model_dump(by_alias=True)
         data = {**meeting_data, "username": tutor.username, "link": self.gen_meeting_link(meeting)}
-        text = MEETING_ANNOUNCED.format_map(data)
+        text = _txt("NOTIF_MEETING_ANNOUNCED", **data)
         sent = await self._send_admins(text=text)
         sent.extend(await self._send_telegram_ids(tutor.telegram_id, exclude=sent, text=text))
         await self._send_students_who_interested(meeting, exclude=sent, text=text)
 
     async def send_meeting_cancelled(self, meeting: Meeting):
-        text = MEETING_CANCELLED.format(title=meeting.title)
+        text = _txt("NOTIF_MEETING_CANCELLED_FOR_USERS", title=meeting.title)
         sent = []
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
@@ -144,7 +160,7 @@ class NotificationManager:
             "link": self.gen_meeting_link(meeting),
             "username": tutor.username if tutor else None,
         }
-        text = MEETING_REMINDER.format_map(data)
+        text = _txt("NOTIF_MEETING_REMINDER", **data)
         sent = []
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
@@ -160,7 +176,7 @@ class NotificationManager:
             "link": self.gen_meeting_link(meeting),
             "username": tutor.username if tutor else None,
         }
-        text = MEETING_STARTED.format_map(data)
+        text = _txt("NOTIF_MEETING_STARTED", **data)
         sent = []
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
@@ -174,7 +190,7 @@ class NotificationManager:
             "link": self.gen_meeting_link(meeting),
             "username": tutor.username if tutor else None,
         }
-        text = MEETING_FINISHED.format_map(data)
+        text = _txt("NOTIF_MEETING_FINISHED", **data)
         sent = []
         sent.extend(await self._send_admins(text=text))
         if meeting.tutor_id:
@@ -193,9 +209,9 @@ class NotificationManager:
             "link": self.gen_meeting_link(meeting),
         }
         if by_admin:
-            text = MEETING_CLOSED_FOR_ADMINS.format_map(data)
+            text = _txt("NOTIF_MEETING_CLOSED_FOR_ADMINS", **data)
         else:
-            text = MEETING_CLOSED_FOR_TUTOR.format_map(data)
+            text = _txt("NOTIF_MEETING_CLOSED_FOR_TUTOR", **data)
         sent = []
         sent.extend(await self._send_admins(text=text))
         await self._send_ids(meeting.tutor_id, exclude=sent, text=text)
@@ -203,42 +219,47 @@ class NotificationManager:
     async def send_tutor_promoted(self, tutor: Tutor):
         tutor_data = tutor.model_dump()
         tutor_data.update({"link": self.gen_control_bot_link("promoted_tutor")})
-        admins_text = TUTOR_PROMOTED_FOR_ADMINS.format_map(tutor_data)
-        tutor_text = TUTOR_PROMOTED_FOR_TUTOR.format_map(tutor_data)
+        admins_text = _txt("NOTIF_TUTOR_PROMOTED_FOR_ADMINS", **tutor_data)
+        tutor_text = _txt("NOTIF_TUTOR_PROMOTED_FOR_TUTOR", **tutor_data)
         sent = []
         sent.extend(await self._send_admins(text=admins_text))
         await self._send_telegram_ids(tutor.telegram_id, exclude=sent, text=tutor_text)
 
     async def send_tutor_dismissed(self, tutor: Tutor):
         tutor_data = tutor.model_dump()
-        admins_text = TUTOR_DISMISSED_FOR_ADMINS.format_map(tutor_data)
-        tutor_text = TUTOR_DISMISSED_FOR_TUTOR.format_map(tutor_data)
+        admins_text = _txt("NOTIF_TUTOR_DISMISSED_FOR_ADMINS", **tutor_data)
+        tutor_text = _txt("NOTIF_TUTOR_DISMISSED_FOR_TUTOR", **tutor_data)
         sent = []
         sent.extend(await self._send_admins(text=admins_text))
         await self._send_telegram_ids(tutor.telegram_id, exclude=sent, text=tutor_text)
 
-    def _format_meeting_updated_text(self, meeting: Meeting, changed_key: str) -> str:
+    def _format_meeting_updated_text(self, meeting: Meeting, changed_key: str) -> TextIDForm:
         link = self.gen_meeting_link(meeting)
         if changed_key in ("datetime", "datetime_"):
-            return MEETING_UPDATED_DATETIME.format(title=meeting.title, datetime=meeting.datetime_, link=link)
+            return _txt("NOTIF_MEETING_UPDATED_DATETIME", title=meeting.title, datetime=meeting.datetime_, link=link)
         elif changed_key == "room":
-            return MEETING_UPDATED_ROOM.format(title=meeting.title, room=meeting.room, link=link)
+            return _txt("NOTIF_MEETING_UPDATED_ROOM", title=meeting.title, room=meeting.room, link=link)
         raise ValueError(f"Unknown changed_key: {changed_key}")
 
     async def _send_students_who_interested(
-        self, meeting: Meeting, *, exclude: list[int] = [], text: str, reply_markup=None
+        self, meeting: Meeting, *, exclude: list[int] = [], text: TextIDForm, reply_markup: ReplyMarkup = None
     ):
         """Sends a message to all students who are interested in the meeting, excluding the provided telegram ids."""
         telegram_ids = await meeting_repo.get_interested_student_ids(meeting.id)
         await self._send_ids(telegram_ids, exclude=exclude, text=text, reply_markup=reply_markup)
 
-    async def _send_admins(self, *, text: str, reply_markup=None) -> list[int]:
+    async def _send_admins(self, *, text: TextIDForm, reply_markup: ReplyMarkup = None) -> list[int]:
         """Sends a message to all admins, returns the list of telegram ids the message was sent to."""
         telegram_ids = await admin_repo.get_telegram_ids()
         return await self._send_telegram_ids(telegram_ids, text=text, reply_markup=reply_markup)
 
     async def _send_ids(
-        self, student_ids: list[int] | int, *, exclude: list[int] = [], text: str, reply_markup=None
+        self,
+        student_ids: list[int] | int,
+        *,
+        exclude: list[int] = [],
+        text: TextIDForm,
+        reply_markup: ReplyMarkup = None,
     ) -> list[int]:
         """Sends a message to a list of student ids, resolves their telegram ids.
         If a single student id is provided, it will be converted to a list.
@@ -250,7 +271,12 @@ class NotificationManager:
         return await self._send_telegram_ids(telegram_ids, exclude=exclude, text=text, reply_markup=reply_markup)
 
     async def _send_telegram_ids(
-        self, telegram_ids: list[int] | int, *, exclude: list[int] = [], text: str, reply_markup=None
+        self,
+        telegram_ids: list[int] | int,
+        *,
+        exclude: list[int] = [],
+        text: TextIDForm,
+        reply_markup: ReplyMarkup = None,
     ) -> list[int]:
         """Sends a message to a list of telegram ids, removing duplicates.
             If exclude list is provided, those telegram ids will be skipped.
@@ -261,10 +287,17 @@ class NotificationManager:
             telegram_ids = [telegram_ids]
         telegram_ids = list(set(telegram_ids))  # Remove duplicates
         telegram_ids = [tid for tid in telegram_ids if tid not in exclude]  # Remove excluded ids
+        id_lang_dict = await student_repo.get_language_by_telegram_ids(telegram_ids)
         sent = []
-        for chat_id in telegram_ids:
+        for chat_id, lang in id_lang_dict.items():
             try:
-                await self._bot.send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
+                localised_formatted_text = self._localize_format(text, lang)
+                localised_reply_markup = self._localize_reply_markup(reply_markup, lang)
+                await self._bot.send_message(
+                    chat_id=chat_id,
+                    text=localised_formatted_text,
+                    reply_markup=localised_reply_markup,
+                )
                 sent.append(chat_id)
             except TelegramForbiddenError as e:
                 await student_repo.set_notification_bot_blocked(telegram_id=chat_id)
@@ -285,17 +318,57 @@ class NotificationManager:
     def gen_meeting_link(self, meeting: Meeting) -> str:
         return self.gen_control_bot_link(payload=f"meeting_{meeting.id}")
 
-    def gen_approve_discard_request_reply_markup(self, meeting_id: int):
-        approve_button = InlineKeyboardButton(text="Approve ✅", callback_data=f"approve_{meeting_id}")
-        discard_button = InlineKeyboardButton(text="❌ Discard", callback_data=f"discard_{meeting_id}")
+    def gen_approve_discard_request_reply_markup(self, meeting_id: int, lang: str = "en"):
+        approve_button = InlineKeyboardButton(
+            text=self._localize_text_id("NOTIF_BTN_APPROVE", lang),
+            callback_data=f"approve_{meeting_id}",
+        )
+        discard_button = InlineKeyboardButton(
+            text=self._localize_text_id("NOTIF_BTN_DISCARD", lang),
+            callback_data=f"discard_{meeting_id}",
+        )
         return InlineKeyboardMarkup(inline_keyboard=[[approve_button, discard_button]])
 
-    def gen_confirm_approve_reply_markup(self, meeting_id: int):
-        cancel_approve = InlineKeyboardButton(text="Cancel", callback_data=f"cancel_approve_{meeting_id}")
-        confirm_approve = InlineKeyboardButton(text="Sure Approve ✅", callback_data=f"confirm_approve_{meeting_id}")
+    def gen_confirm_approve_reply_markup(self, meeting_id: int, lang: str = "en"):
+        cancel_approve = InlineKeyboardButton(
+            text=self._localize_text_id("NOTIF_BTN_CANCEL", lang),
+            callback_data=f"cancel_approve_{meeting_id}",
+        )
+        confirm_approve = InlineKeyboardButton(
+            text=self._localize_text_id("NOTIF_BTN_CONFIRM_APPROVE", lang),
+            callback_data=f"confirm_approve_{meeting_id}",
+        )
         return InlineKeyboardMarkup(inline_keyboard=[[cancel_approve, confirm_approve]])
 
-    def gen_confirm_discard_reply_markup(self, meeting_id: int):
-        confirm_discard = InlineKeyboardButton(text="Sure Discard ❌", callback_data=f"confirm_discard_{meeting_id}")
-        cancel_discard = InlineKeyboardButton(text="Cancel", callback_data=f"cancel_discard_{meeting_id}")
+    def gen_confirm_discard_reply_markup(self, meeting_id: int, lang: str = "en"):
+        confirm_discard = InlineKeyboardButton(
+            text=self._localize_text_id("NOTIF_BTN_CONFIRM_DISCARD", lang),
+            callback_data=f"confirm_discard_{meeting_id}",
+        )
+        cancel_discard = InlineKeyboardButton(
+            text=self._localize_text_id("NOTIF_BTN_CANCEL", lang),
+            callback_data=f"cancel_discard_{meeting_id}",
+        )
         return InlineKeyboardMarkup(inline_keyboard=[[confirm_discard, cancel_discard]])
+
+    def gen_cancel_discard_reply_markup(self, meeting_id: int, lang: str = "en"):
+        cancel_discard = InlineKeyboardButton(
+            text=self._localize_text_id("NOTIF_BTN_CANCEL", lang),
+            callback_data=f"cancel_discard_{meeting_id}",
+        )
+        return InlineKeyboardMarkup(inline_keyboard=[[cancel_discard]])
+
+    def _localize_reply_markup(self, reply_markup: ReplyMarkup, lang: str) -> InlineKeyboardMarkup | None:
+        if reply_markup is None:
+            return None
+        if callable(reply_markup):
+            return reply_markup(lang)
+        return reply_markup
+
+    def _localize_text_id(self, text_id: str, lang: str, **kwargs) -> str:
+        l10n = NOTIFICATION_L10NS.get(lang, NOTIFICATION_L10NS["en"])
+        return l10n.format_value(text_id, kwargs)
+
+    def _localize_format(self, text: TextIDForm, lang: str) -> str:
+        """Localizes and formats a TextIDForm message for a given language"""
+        return self._localize_text_id(text[0], lang, **text[1])

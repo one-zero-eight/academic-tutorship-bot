@@ -51,3 +51,23 @@ def make_i18n_middleware(locales: list[str], default_locale: str = "en"):
         for locale in locales
     }
     return DialogI18nMiddleware(l10ns, default_locale)
+
+
+LOCALES = ["en", "ru"]
+DEFAULT_LOCALE = "en"
+DEFAULT_LOADER = FluentResourceLoader(
+    os.path.join(
+        os.getcwd(),
+        "locales",
+        "{locale}",
+        "LC_MESSAGES",
+    )
+)
+NOTIFICATION_L10NS = {
+    locale: FluentLocalization(
+        [locale, DEFAULT_LOCALE],
+        ["notifications.ftl"],
+        DEFAULT_LOADER,
+    )
+    for locale in LOCALES
+}

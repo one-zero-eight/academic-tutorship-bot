@@ -1,6 +1,16 @@
 NOTIF_BOT_STARTED = <a href="{$link}">Academic Tutorship Bot</a> has been started 🚀
 NOTIF_BOT_SHUTDOWN = <a href="{$link}">Academic Tutorship Bot</a> has been shut down 💤
 
+NOTIF_RECEIVE_NOTIFICATION_ENABLED =
+    Thank you for enabling notifications 🎉
+
+    <a href="{$link}">Go back to the main bot</a>
+
+NOTIF_RECEIVE_NOTIFICATION_DISABLED =
+    Notifications disabled 💤
+
+    To receive them again, <a href="{$link}">go to bot settings</a>
+
 NOTIF_TUTOR_PROMOTED_FOR_TUTOR =
     You've been promoted to an Academic Tutor!
 
@@ -119,3 +129,9 @@ NOTIF_MEETING_STARTED =
     - Academic Tutor: @{$username}
 
     🔗 <a href="{$link}">Click to see the details</a>
+
+NOTIF_BTN_APPROVE = Approve ✅
+NOTIF_BTN_DISCARD = ❌ Discard
+NOTIF_BTN_CANCEL = Cancel
+NOTIF_BTN_CONFIRM_APPROVE = Sure Approve ✅
+NOTIF_BTN_CONFIRM_DISCARD = Sure Discard ❌

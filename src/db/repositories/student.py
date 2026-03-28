@@ -195,6 +195,15 @@ class StudentRepository(Repository):
         async with self._db.engine.begin() as conn:
             await conn.execute(stmt)
 
+    async def get_language_by_telegram_ids(self, telegram_ids: list[int]) -> dict[int, str]:
+        """Returns dict {telegram_id: language} for given telegram_ids
+        May contain less entries than provided telegram_ids list, if some students not found in db
+        """
+        stmt = select(student.c.telegram_id, student.c.language).where(student.c.telegram_id.in_(telegram_ids))
+        async with self._db.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            return {row.telegram_id: row.language for row in result.all()}
+
     def _row_to_student(self, row: Row) -> Student:
         return Student(
             id=row.id,

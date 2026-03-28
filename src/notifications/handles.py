@@ -4,7 +4,7 @@ from aiogram import Bot, F, Router, types
 from aiogram.filters import CommandStart, ExceptionTypeFilter, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import ErrorEvent, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import ErrorEvent
 from aiogram.utils.i18n import gettext as _
 
 from src.bot.filters import StatusFilter, UserStatus
@@ -64,6 +64,7 @@ async def start_command_handler(message: types.Message):
 async def handle_admin_approve_or_discard(query: types.CallbackQuery):
     assert query.data and isinstance(query.message, types.Message) and query.message.text
     action, meeting_id_text = query.data.split("_", maxsplit=1)
+    lang = _resolve_query_lang(query)
 
     assert meeting_id_text.isdigit()
     meeting_id = int(meeting_id_text)
@@ -79,11 +80,11 @@ async def handle_admin_approve_or_discard(query: types.CallbackQuery):
             case "approve":
                 if meeting.datetime_ <= datetime.now():
                     raise TimeoutError("Meeting date is in the past")
-                reply_markup = notification_manager.gen_confirm_approve_reply_markup(meeting_id)
+                reply_markup = notification_manager.gen_confirm_approve_reply_markup(meeting_id, lang=lang)
                 text = query.message.html_text + "\n\n" + MEETING_CONFIRM_APPROVE_APPENDIX
                 await query.message.edit_text(text=text, reply_markup=reply_markup)
             case "discard":
-                reply_markup = notification_manager.gen_confirm_discard_reply_markup(meeting_id)
+                reply_markup = notification_manager.gen_confirm_discard_reply_markup(meeting_id, lang=lang)
                 await query.message.edit_reply_markup(reply_markup=reply_markup)
     except TimeoutError as e:
         await query.answer(str(e), show_alert=True)
@@ -121,7 +122,12 @@ async def handle_admin_confirm_approve_or_confirm_discard(query: types.CallbackQ
                         "message_id": query.message.message_id,
                     }
                 )
-                await query.message.edit_reply_markup(reply_markup=_cancel_approval_discard_kbd(meeting_id))
+                await query.message.edit_reply_markup(
+                    reply_markup=notification_manager.gen_cancel_discard_reply_markup(
+                        meeting_id,
+                        lang=_resolve_query_lang(query),
+                    )
+                )
     except TimeoutError as e:
         await query.answer(str(e), show_alert=True)
 
@@ -165,7 +171,10 @@ async def handle_admin_cancel_approve_or_cancel_discard(query: types.CallbackQue
         return
     # Go step back
     text = await _text_meeting_approve_request(int(meeting_id_text))
-    reply_markup = notification_manager.gen_approve_discard_request_reply_markup(int(meeting_id_text))
+    reply_markup = notification_manager.gen_approve_discard_request_reply_markup(
+        int(meeting_id_text),
+        lang=_resolve_query_lang(query),
+    )
     await query.message.edit_text(text, reply_markup=reply_markup)
 
 
@@ -190,7 +199,8 @@ async def _text_meeting_approve_request(meeting_id: int):
     return MEETING_APPROVE_REQUEST.format(**meeting_data, username=tutor.username, link=link)
 
 
-def _cancel_approval_discard_kbd(meeting_id: int):
-    return InlineKeyboardMarkup(
-        inline_keyboard=[[InlineKeyboardButton(text="Cancel", callback_data=f"cancel_discard_{meeting_id}")]]
-    )
+def _resolve_query_lang(query: types.CallbackQuery) -> str:
+    if not query.from_user.language_code:
+        return "en"
+    lang = query.from_user.language_code.strip().lower().split("-", maxsplit=1)[0]
+    return lang or "en"
