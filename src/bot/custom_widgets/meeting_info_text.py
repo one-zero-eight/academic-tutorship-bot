@@ -12,9 +12,10 @@ def _default_format_text(text: str, data: dict) -> str:
 
 
 class MeetingInfoText(Text):
-    def __init__(self, *, admin_info: bool = False, when: WhenCondition = None):
+    def __init__(self, *, admin_info: bool = False, only_head: bool = False, when: WhenCondition = None):
         super().__init__(when=when)
         self.show_admin_info = admin_info
+        self.only_head = only_head
 
     async def _render_text(
         self,
@@ -44,10 +45,25 @@ class MeetingInfoText(Text):
                 "",
                 format_text("MEETING_INFO_TITLE_LINE", payload),
                 format_text("MEETING_INFO_DISCIPLINE_LINE", payload),
-                "",
+            ]
+        )
+
+        if self.only_head:
+            text = "\n".join(lines)
+            return text.format(**payload)
+
+        lines.extend([""])
+
+        lines.extend(
+            [
                 format_text("MEETING_INFO_DATE_LINE", payload),
-                format_text("MEETING_INFO_DURATION_LINE", payload),
                 format_text("MEETING_INFO_ROOM_LINE", payload),
+            ]
+        )
+
+        lines.extend(
+            [
+                format_text("MEETING_INFO_DURATION_LINE", payload),
                 format_text("MEETING_INFO_TUTOR_LINE", payload),
             ]
         )

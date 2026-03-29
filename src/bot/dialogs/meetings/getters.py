@@ -110,6 +110,7 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
     emails = None
     if await meeting_repo.has_attendance(meeting.id):
         emails = await meeting_repo.get_attendance(meeting.id)
+
     data.update(
         {
             "title": html.escape(meeting.title),

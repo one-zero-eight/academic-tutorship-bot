@@ -85,7 +85,7 @@ async def get_meeting_title(message: Message, __, manager: DialogManager):
             reply_markup=_choose_from_contacts_kb(_),
         )
     log_info("meeting.change.title.succeeded", user_id=message.chat.id)
-    await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
+    await manager.switch_to(state=ChangeStates.title_discipline, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def get_meeting_description(message: Message, __, manager: DialogManager):
@@ -135,10 +135,13 @@ async def get_meeting_time(message: Message, __, manager: DialogManager):
             raise ValueError("No date")
         selected_date = date.fromisoformat(selected_date_str)
         meeting_date = combine_meeting_date_time(selected_date, selected_time)
-        async with manager.state.sync_meeting() as meeting:
-            log_info("meeting.change.time.requested", user_id=message.chat.id, selected_time=str(selected_time))
-            await update_meeting_date(meeting, meeting_date)
-        await _warn_if_date_is_too_soon(meeting_date, message, _)
+        meeting_update = await manager.state.get_value("meeting_update", {})
+        meeting_update["datetime"] = meeting_date.isoformat()
+        await manager.state.update_data({"meeting_update": meeting_update})
+        # async with manager.state.sync_meeting() as meeting:
+        #     log_info("meeting.change.time.requested", user_id=message.chat.id, selected_time=str(selected_time))
+        #     await update_meeting_date(meeting, meeting_date)
+        # await _warn_if_date_is_too_soon(meeting_date, message, _)
     except NoMessageText:
         log_warning("meeting.change.time.invalid", user_id=message.chat.id, reason="no_text")
         return await manager.answer_and_retry(_("Q_MEETING_NO_TEXT_IN_MESSAGE"))
@@ -149,7 +152,7 @@ async def get_meeting_time(message: Message, __, manager: DialogManager):
         log_warning("meeting.change.time.invalid", user_id=message.chat.id, reason="bad_format")
         return await manager.answer_and_retry(_("Q_CHANGE_INVALID_TIME_FORMAT"))
     log_info("meeting.change.time.succeeded", user_id=message.chat.id, new_datetime=meeting_date.isoformat())
-    await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
+    await manager.switch_to(state=ChangeStates.date_room, show_mode=ShowMode.DELETE_AND_SEND)
 
 
 async def get_meeting_duration(message: Message, __: MessageInput, manager: DialogManager):
@@ -210,8 +213,9 @@ async def get_meeting_room(message: Message, __: MessageInput, manager: DialogMa
         if len(message.text) > MAX_ROOM_LEN:
             raise ValueError("Length must not be more than 64 simbols")
         log_info("meeting.change.room.requested", user_id=message.chat.id, room=message.text[:64])
-        async with manager.state.sync_meeting() as meeting:
-            await update_meeting_room(meeting, message.text)
+        meeting_update = await manager.state.get_value("meeting_update", {})
+        meeting_update["room"] = message.text[:64]
+        await manager.state.update_data({"meeting_update": meeting_update})
     except NoMessageText:
         log_warning("meeting.change.room.invalid", user_id=message.chat.id, reason="no_text")
         return await manager.answer_and_retry(_("Q_MEETING_NO_TEXT_IN_MESSAGE"))
@@ -225,7 +229,61 @@ async def get_meeting_room(message: Message, __: MessageInput, manager: DialogMa
             reply_markup=_choose_from_contacts_kb(_),
         )
     log_info("meeting.change.room.succeeded", user_id=message.chat.id)
-    await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
+    await manager.switch_to(state=ChangeStates.date_room, show_mode=ShowMode.DELETE_AND_SEND)
+
+
+async def on_title_discipline_btn(query: CallbackQuery, _, manager: DialogManager):
+    manager = extend_dialog(manager)
+    _ = manager.tr
+    meeting = await manager.state.get_meeting()
+    if meeting.status == MeetingStatus.APPROVING:
+        await query.answer(_("Q_CHANGE_ERROR_ON_APPROVAL"), show_alert=True)
+        return
+    if meeting.status != MeetingStatus.CREATED:
+        await query.answer(_("Q_CHANGE_TITLE_DISCIPLINE_ACCESSIBLE_ONLY_BEFORE_ANNOUNCE"), show_alert=True)
+        return
+    await manager.state.update_data({"title": None, "discipline": None})
+    await manager.switch_to(ChangeStates.title_discipline)
+
+
+async def on_date_room_btn(query: CallbackQuery, _, manager: DialogManager):
+    manager = extend_dialog(manager)
+    _ = manager.tr
+    meeting = await manager.state.get_meeting()
+    if meeting.status == MeetingStatus.APPROVING:
+        await query.answer(_("Q_CHANGE_ERROR_ON_APPROVAL"), show_alert=True)
+        return
+    elif meeting.status >= MeetingStatus.CONDUCTING:
+        await query.answer(_("Q_CHANGE_DATE_TIME_BEFORE_CONDUCTING"), show_alert=True)
+        return
+    await manager.state.update_data({"meeting_update": {}})
+    await manager.switch_to(ChangeStates.date_room)
+
+
+async def on_date_room_save_rightaway(query: CallbackQuery, _, manager: DialogManager):
+    manager = extend_dialog(manager)
+    async with manager.state.sync_meeting() as meeting:
+        meeting_update = await manager.state.get_value("meeting_update", {})
+        for key in meeting_update:
+            attr, value = (key, meeting_update[key])
+            if attr in ["datetime", "datetime_"]:
+                attr = "datetime_"
+                value = datetime.fromisoformat(value) if value else None
+            setattr(meeting, attr, value)
+        await meeting_repo.update(meeting, attrs=["datetime", "room"])
+        if meeting.status >= MeetingStatus.ANNOUNCED:
+            # TODO: Add notification to students about changes
+            ...
+    await manager.state.update_data({"meeting_update": None})
+
+
+async def on_back_from_title_discipline_btn(query: CallbackQuery, _, manager: DialogManager):
+    manager = extend_dialog(manager)
+    discipline = await manager.state.get_value("discipline", None)
+    if discipline:
+        async with manager.state.sync_meeting() as meeting:
+            meeting.discipline = Discipline.model_validate(discipline)
+            await meeting_repo.set_discipline(meeting.id, meeting.discipline.id)
 
 
 # region: helpers

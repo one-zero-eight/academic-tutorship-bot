@@ -24,6 +24,10 @@ Q_MEETING_SENT_FOR_APPROVAL =
 
 ASSIGN_TUTOR_ADDITIONAL_PROMPT = Или выбери пользователя из контактов по кнопке 👇
 
+Q_CHANGE_TITLE_DISCIPLINE_ACCESSIBLE_ONLY_BEFORE_ANNOUNCE = Название и Дисциплина могут быть изменены только до объявления встречи
+Q_CHANGE_ERROR_ON_APPROVAL = Встреча на согласовании, изменить её в данный момент нельзя
+Q_CHANGE_DATE_TIME_BEFORE_CONDUCTING = Дата и время могут быть изменены только до начала встречи
+
 Q_CHANGE_PICK_USER_FROM_LIST = Пожалуйста, выбери пользователя из списка
 Q_CHANGE_USER_IS_NOT_TUTOR = Пользователь [{$user_id}] @{$username} не Academic Tutor
 Q_CHANGE_MEETING_APPROVING_CANNOT_CHANGE_TUTOR = Эта встреча на согласовании, изменить Academic Tutors в данный момент нельзя

@@ -2,6 +2,7 @@ COMMON_BTN_BACK = Back
 COMMON_BTN_CANCEL = Cancel
 COMMON_BTN_SUBMIT = Submit
 COMMON_BTN_CLOSE = Close
+COMMON_BTN_DISCARD = Discard
 
 
 AUTH_BIND_INSTRUCTION =
@@ -147,9 +148,11 @@ STUDENT_MEETING_BTN_TO_YOUR_PROFILE = To Your Profile
 
 
 CHANGE_INFO_BTN_SET_TITLE = Title
+CHANGE_INFO_BTN_TITLE_DISCIPLINE = Title & Discipline
 CHANGE_INFO_BTN_SET_DESCRIPTION = Description
 CHANGE_INFO_BTN_SET_ROOM = Room
 CHANGE_INFO_BTN_SET_DATE = Date
+CHANGE_INFO_BTN_DATE_ROOM = Date & Room
 CHANGE_INFO_BTN_SET_DURATION = Duration
 CHANGE_INFO_BTN_ASSIGN_TUTOR = Academic Tutor
 
@@ -210,3 +213,16 @@ TUTOR_PROFILE_SET_ABOUT =
     Write something about yourself
     This will be available to students
 TUTOR_PROFILE_SELECT_DISCIPLINES_TITLE = Selected Disciplines
+
+
+MEETING_UPDATE_HEADER = Updates in meeting:
+MEETING_UPDATE_DATETIME_LINE = - Date: {$datetime}
+MEETING_UPDATE_ROOM_LINE = - Room: {$room}
+
+MEETING_UPDATE_BACK_HEADER =
+    You have some unsaved changes, discard them or go back?
+MEETING_UPDATE_SAVE_HEADER =
+    ☝️ The meetings was already announced so date & room update should be approved by head of AT.
+    Send the request?
+MEETING_UPDATE_BTN_SAVE = Save 💾
+MEETING_UPDATE_BTN_SEND = Send

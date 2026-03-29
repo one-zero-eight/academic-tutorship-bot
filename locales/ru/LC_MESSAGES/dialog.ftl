@@ -2,6 +2,7 @@ COMMON_BTN_BACK = Назад
 COMMON_BTN_CANCEL = Отмена
 COMMON_BTN_SUBMIT = Подтвердить
 COMMON_BTN_CLOSE = Закрыть
+COMMONB_TN_DISCARD = Отменить
 
 
 AUTH_BIND_INSTRUCTION =
@@ -147,8 +148,10 @@ STUDENT_MEETING_BTN_TO_YOUR_PROFILE = К профилю
 
 CHANGE_INFO_BTN_SET_TITLE = Название
 CHANGE_INFO_BTN_SET_DESCRIPTION = Описание
+CHANGE_INFO_BTN_TITLE_DISCIPLINE = Название и Дисциплина
 CHANGE_INFO_BTN_SET_ROOM = Аудитория
 CHANGE_INFO_BTN_SET_DATE = Дата
+CHANGE_INFO_BTN_DATE_ROOM = Дата и Аудитория
 CHANGE_INFO_BTN_SET_DURATION = Длительность
 CHANGE_INFO_BTN_ASSIGN_TUTOR = Academic Tutor
 
@@ -209,3 +212,16 @@ TUTOR_PROFILE_SET_ABOUT =
     Напиши что-то о себе
     Это будет доступно студентам
 TUTOR_PROFILE_SELECT_DISCIPLINES_TITLE = Выбранные дисциплины
+
+
+MEETING_UPDATE_HEADER = Изменения во встрече:
+MEETING_UPDATE_DATETIME_LINE = - Дата: {$datetime}
+MEETING_UPDATE_ROOM_LINE = - Аудитория: {$room}
+
+
+MEETING_UPDATE_BACK_HEADER =
+    У тебя остались несохраненные изменения, отменить их или вернуться?
+MEETING_UPDATE_SAVE_HEADER =
+    ☝️ Эта встреча уже объявлена, поэтому все изменения должны быть согласованы с главой
+MEETING_UPDATE_BTN_SAVE = Сохранить 💾
+MEETING_UPDATE_BTN_SEND = Отправить

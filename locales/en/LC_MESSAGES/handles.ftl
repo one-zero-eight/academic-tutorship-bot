@@ -22,6 +22,10 @@ Q_MEETING_SENT_FOR_APPROVAL =
     Meeting sent for approval 📩
 	Wait for notification
 
+Q_CHANGE_TITLE_DISCIPLINE_ACCESSIBLE_ONLY_BEFORE_ANNOUNCE = Title and Discipline can be changed only before meeting is announced
+Q_CHANGE_ERROR_ON_APPROVAL = Meeting cannot be changed while it's pending approval
+Q_CHANGE_DATE_TIME_BEFORE_CONDUCTING = Date & Time can be changed only before meeting conducted
+
 
 ASSIGN_TUTOR_ADDITIONAL_PROMPT = Or click the button to choose a User 👇
 

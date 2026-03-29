@@ -63,6 +63,11 @@ class MeetingRepository(Repository):
         async with self._db.engine.begin() as conn:
             await conn.execute(stmt)
 
+    async def set_discipline(self, meeting_id: int, discipline_id: int):
+        stmt = update(meeting).where(meeting.c.id == meeting_id).values(discipline_id=discipline_id)
+        async with self._db.engine.begin() as conn:
+            await conn.execute(stmt)
+
     async def get(self, id: int) -> Meeting:
         disc = discipline
         stmt = (
