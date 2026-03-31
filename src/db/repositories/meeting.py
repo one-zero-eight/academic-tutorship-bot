@@ -10,8 +10,19 @@ from sqlalchemy import (
     update,
 )
 
-from src.db.schema import admin, attendance, discipline, email, meeting, settings, student, student_discipline, tutor
-from src.domain.models import Discipline, Meeting, MeetingStatus, NotificationBotStatus
+from src.db.schema import (
+    admin,
+    attendance,
+    discipline,
+    email,
+    meeting,
+    meeting_update,
+    settings,
+    student,
+    student_discipline,
+    tutor,
+)
+from src.domain.models import Discipline, Meeting, MeetingStatus, MeetingUpdate, NotificationBotStatus
 
 from .sql import Repository
 
@@ -183,6 +194,30 @@ class MeetingRepository(Repository):
             result = await conn.execute(stmt)
             return [row.student_id for row in result.all()]
 
+    async def exists_update(self, id: int) -> bool:
+        stmt = select(meeting_update).where(meeting_update.c.id == id)
+        async with self._db.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            row = result.one_or_none()
+            return row is not None
+
+    async def get_update(self, id: int) -> MeetingUpdate:
+        stmt = select(meeting_update).where(meeting_update.c.id == id)
+        async with self._db.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            row = result.one()
+            return self._row_to_meeting_update(row)
+
+    async def save_update(self, update: MeetingUpdate):
+        stmt = insert(meeting_update).values(**update.model_dump(by_alias=True))
+        async with self._db.engine.begin() as conn:
+            await conn.execute(stmt)
+
+    async def del_update(self, id: int):
+        stmt = delete(meeting_update).where(meeting_update.c.id == id)
+        async with self._db.engine.begin() as conn:
+            await conn.execute(stmt)
+
     def _row_to_meeting(self, row: Row) -> Meeting:
         return Meeting(
             id=row.id,
@@ -197,6 +232,9 @@ class MeetingRepository(Repository):
             datetime=row.datetime,
             tutor_id=row.tutor_id,
         )
+
+    def _row_to_meeting_update(self, row: Row) -> MeetingUpdate:
+        return MeetingUpdate(id=row.id, room=row.room, datetime=row.datetime)
 
     def _rows_to_emails(self, rows: Sequence[Row]) -> list[str]:
         emails = []

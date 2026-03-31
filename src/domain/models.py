@@ -177,3 +177,9 @@ class Meeting(BaseModel):
 class Attendance(BaseModel):
     meeting_id: int
     emails: list[EmailStr] = []
+
+
+class MeetingUpdate(BaseModel):
+    id: int
+    room: str | None = None
+    datetime_: datetime | None = Field(None, alias="datetime")

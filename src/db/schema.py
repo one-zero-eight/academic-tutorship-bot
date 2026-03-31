@@ -123,3 +123,12 @@ attendance = Table(
     Column("email_id", Integer, ForeignKey("email.id", ondelete="CASCADE"), primary_key=True),
     Column("meeting_id", Integer, ForeignKey("meeting.id", ondelete="CASCADE"), primary_key=True),
 )
+
+
+meeting_update = Table(
+    "meeting_update",
+    metadata,
+    Column("id", Integer, ForeignKey("meeting.id", ondelete="CASCADE"), primary_key=True),
+    Column("room", String(32), nullable=True),
+    Column("datetime", DateTime, nullable=True),
+)
