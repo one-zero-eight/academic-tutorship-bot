@@ -130,6 +130,25 @@ NOTIF_MEETING_STARTED =
 
     🔗 <a href="{$link}">Click to see the details</a>
 
+NOTIF_MEETING_LINK = 🔗 <a href="{$link}">Click to see the details</a>
+NOTIF_MEETING_UPDATE_ROOM = - Room: <b>{$old_room}</b> > <b>{$room}</b>
+NOTIF_MEETING_UPDATE_DATETIME = - Date: <b>{$old_datetime}</b> > <b>{$datetime}</b>
+NOTIF_MEETING_UPDATE_REQUEST =
+    Meeting update requested!
+    "{$title}"
+NOTIF_MEETING_UPDATE_APPROVED =
+    Meeting update approved ✅
+    "{$title}"
+NOTIF_MEETING_UPDATE_DISCARDED =
+    Meeting update discarded ❌
+    "{$title}"
+NOTIF_MEETING_UPDATE_DISCARDED_REASON =
+    Reason:
+    <blockquote>{$reason}</blockquote>
+NOTIF_MEETING_UPDATE_INFO =
+    Meeting has some updates ‼️
+    "{$title}"
+
 NOTIF_BTN_APPROVE = Approve ✅
 NOTIF_BTN_DISCARD = ❌ Discard
 NOTIF_BTN_CANCEL = Cancel

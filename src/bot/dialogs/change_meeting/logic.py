@@ -24,35 +24,6 @@ async def update_meeting_title(meeting: Meeting, title: str):
     # NOTE: do not notify on changed title (that's irrelevant)
 
 
-async def update_meeting_date(meeting: Meeting, meeting_date: datetime):
-    if meeting.status == MeetingStatus.APPROVING:
-        log_warning("meeting.change.logic.date.blocked", meeting_id=meeting.id, reason="approving")
-        raise MeetingIsApproving("Cannot change meeting while in APPROVING status")
-    try:
-        meeting.datetime_ = meeting_date
-        await update_meeting_schedule(meeting)
-        await meeting_repo.update(meeting, ["datetime"])
-        await notification_manager.send_meeting_updated(meeting, "datetime")
-    except Exception as e:
-        log_error("meeting.change.logic.date.failed", meeting_id=meeting.id, reason=str(e))
-        raise
-    log_info("meeting.change.logic.date.persisted_scheduled_notified", meeting_id=meeting.id)
-
-
-async def update_meeting_room(meeting: Meeting, room: str):
-    if meeting.status == MeetingStatus.APPROVING:
-        log_warning("meeting.change.logic.room.blocked", meeting_id=meeting.id, reason="approving")
-        raise MeetingIsApproving("Cannot change meeting while in APPROVING status")
-    try:
-        meeting.room = room
-        await meeting_repo.update(meeting, ["room"])
-        await notification_manager.send_meeting_updated(meeting, "room")
-    except Exception as e:
-        log_error("meeting.change.logic.room.failed", meeting_id=meeting.id, reason=str(e))
-        raise
-    log_info("meeting.change.logic.room.persisted_notified", meeting_id=meeting.id)
-
-
 async def update_meeting_duration(meeting: Meeting, selected_time: time):
     if meeting.status == MeetingStatus.APPROVING:
         log_warning("meeting.change.logic.duration.blocked", meeting_id=meeting.id, reason="approving")

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from src.bot.logging_ import log_error, log_info
 from src.db.repositories import meeting_repo, tutor_repo
-from src.domain.models import Meeting, MeetingStatus
+from src.domain.models import Meeting, MeetingStatus, MeetingUpdate
 from src.notifications import notification_manager
 from src.scheduling.scheduling import update_meeting_schedule, wipe_meeting_schedule
 
@@ -65,6 +65,42 @@ async def approve_meeting(meeting: Meeting):
         log_error("meeting.logic.approve.failed", meeting_id=meeting.id, reason=str(e))
         raise
     log_info("meeting.logic.approve.persisted_scheduled_notified", meeting_id=meeting.id, tutor_id=meeting.tutor_id)
+
+
+async def approve_meeting_update(meeting: Meeting, meeting_update: MeetingUpdate):
+    """Apply pending meeting update, persist changes, and notify participants."""
+    log_info("meeting.logic.approve_meeting_update.started", meeting_id=meeting.id, update_id=meeting_update.id)
+
+    assert meeting.status >= MeetingStatus.ANNOUNCED
+    assert meeting.id == meeting_update.id
+
+    old_meeting = meeting.model_copy()  # NOTE: that's used for notifications further
+
+    updated_keys: list[str] = []
+
+    for key, value in meeting_update.model_dump(by_alias=True).items():
+        if key == "id":
+            continue
+        if value is not None:
+            if key == "datetime" and value < datetime.now():
+                raise ValueError("Meeting date is in the past")
+            meeting_attr = "datetime_" if key == "datetime" else key
+            setattr(meeting, meeting_attr, value)
+            updated_keys.append(key)
+
+    if not updated_keys:
+        raise ValueError("No meeting updates to apply")
+
+    log_info("meeting.logic.approve_meeting_update.updated", meeting_id=meeting.id, updated_keys=updated_keys)
+
+    await meeting_repo.update(meeting, updated_keys)
+    if "datetime" in updated_keys:
+        await update_meeting_schedule(meeting)
+    await meeting_repo.remove_update(meeting.id)
+
+    await notification_manager.send_meeting_update_approved(old_meeting, meeting_update)
+
+    log_info("meeting.logic.approve_meeting_update.persisted_notified", meeting_id=meeting.id)
 
 
 async def cancel_meeting(meeting: Meeting):

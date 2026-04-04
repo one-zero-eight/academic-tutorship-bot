@@ -213,7 +213,7 @@ class MeetingRepository(Repository):
         async with self._db.engine.begin() as conn:
             await conn.execute(stmt)
 
-    async def del_update(self, id: int):
+    async def remove_update(self, id: int):
         stmt = delete(meeting_update).where(meeting_update.c.id == id)
         async with self._db.engine.begin() as conn:
             await conn.execute(stmt)

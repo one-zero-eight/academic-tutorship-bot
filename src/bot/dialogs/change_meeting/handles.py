@@ -9,6 +9,7 @@ from src.bot.dialog_extension import extend_dialog
 from src.bot.logging_ import log_error, log_info, log_warning
 from src.bot.user_errors import *
 from src.bot.utils import *
+from src.domain.models import Discipline, MeetingStatus
 
 from .getters import *
 from .keyboards import *
@@ -255,6 +256,9 @@ async def on_date_room_btn(query: CallbackQuery, _, manager: DialogManager):
         return
     elif meeting.status >= MeetingStatus.CONDUCTING:
         await query.answer(_("Q_CHANGE_DATE_TIME_BEFORE_CONDUCTING"), show_alert=True)
+        return
+    elif await meeting_repo.exists_update(meeting.id):
+        await query.answer(_("Q_CHANGE_UPDATE_ALREADY_PENDING"), show_alert=True)
         return
     await manager.state.update_data({"meeting_update": {}})
     await manager.switch_to(ChangeStates.date_room)

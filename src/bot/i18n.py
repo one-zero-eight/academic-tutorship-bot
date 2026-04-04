@@ -66,7 +66,7 @@ DEFAULT_LOADER = FluentResourceLoader(
 NOTIFICATION_L10NS = {
     locale: FluentLocalization(
         [locale, DEFAULT_LOCALE],
-        ["notifications.ftl"],
+        ["notifications.ftl", "notification_handles.ftl"],
         DEFAULT_LOADER,
     )
     for locale in LOCALES

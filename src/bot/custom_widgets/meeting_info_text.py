@@ -50,7 +50,8 @@ class MeetingInfoText(Text):
 
         if self.only_head:
             text = "\n".join(lines)
-            return text.format(**payload)
+            rendered = text.format(**payload).strip()
+            return rendered if rendered else "Meeting"
 
         lines.extend([""])
 
@@ -87,7 +88,8 @@ class MeetingInfoText(Text):
             )
 
         text = "\n".join(lines)
-        return text.format(**payload)
+        rendered = text.format(**payload).strip()
+        return rendered if rendered else "Meeting"
 
     def __has_description(self, data) -> bool:
         description = data.get("description")

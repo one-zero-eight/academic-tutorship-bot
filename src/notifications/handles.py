@@ -5,9 +5,9 @@ from aiogram.filters import CommandStart, ExceptionTypeFilter, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ErrorEvent
-from aiogram.utils.i18n import gettext as _
 
 from src.bot.filters import StatusFilter, UserStatus
+from src.bot.i18n import NOTIFICATION_L10NS
 from src.db.repositories import meeting_repo, student_repo, tutor_repo
 from src.domain.models import MeetingStatus
 from src.notifications import notification_dp, notification_manager
@@ -18,11 +18,43 @@ router = Router(name="notification_bot_handles")
 notification_dp.include_router(router)
 
 
+# region states
+
+
 class ApprovalStates(StatesGroup):
     discard_reason = State()
 
 
-def _extract_start_payload(message: types.Message) -> str | None:
+class UpdateApprovalStates(StatesGroup):
+    discard_reason = State()
+
+
+# endregion states
+
+
+# region utils
+
+
+def resolve_lang(event: types.CallbackQuery | types.Message) -> str:
+    if isinstance(query := event, types.CallbackQuery):
+        if not query.from_user.language_code:
+            return "en"
+        lang = query.from_user.language_code.strip().lower().split("-", maxsplit=1)[0]
+        return lang or "en"
+    if isinstance(message := event, types.Message):
+        if not message.from_user or not message.from_user.language_code:
+            return "en"
+        lang = message.from_user.language_code.strip().lower().split("-", maxsplit=1)[0]
+        return lang or "en"
+    return "en"
+
+
+def translate(text_id: str, lang: str, **kwargs) -> str:
+    l10n = NOTIFICATION_L10NS.get(lang, NOTIFICATION_L10NS["en"])
+    return l10n.format_value(text_id, kwargs)
+
+
+def extract_start_payload(message: types.Message) -> str | None:
     if not message.text:
         return None
     parts = message.text.split(maxsplit=1)
@@ -32,10 +64,47 @@ def _extract_start_payload(message: types.Message) -> str | None:
     return payload or None
 
 
+async def text_meeting_approve_request(meeting_id: int):
+    meeting = await meeting_repo.get(meeting_id)
+    assert meeting.tutor_id
+    tutor = await tutor_repo.get(id=meeting.tutor_id)
+    meeting_data = meeting.model_dump(by_alias=True)
+    link = notification_manager.gen_meeting_link(meeting.id)
+    return MEETING_APPROVE_REQUEST.format(**meeting_data, username=tutor.username, link=link)
+
+
+async def text_update_approve_request(meeting_id: int):
+    meeting = await meeting_repo.get(meeting_id)
+    assert meeting.tutor_id
+    meeting_update = await meeting_repo.get_update(meeting_id)
+    link = notification_manager.gen_meeting_link(meeting.id)
+    data = {
+        "title": meeting.title,
+        "datetime_old": meeting.datetime_,
+        "datetime_new": meeting_update.datetime_ or meeting.datetime_,
+        "room_old": meeting.room,
+        "room_new": meeting_update.room or meeting.room,
+    }
+    lines = [MEETING_UPDATE_APPROVE_REQUEST.format(title=meeting.title)]
+    if meeting_update.datetime_:
+        lines.append(MEETING_UPDATE_APPROVE_REQUEST_DATE.format(**data))
+    if meeting_update.room:
+        lines.append(MEETING_UPDATE_APPROVE_REQUEST_ROOM.format(**data))
+    lines.append(" ")
+    lines.append(MEETING_LINK.format(link=link))
+    return "\n".join(lines)
+
+
+# endregion utils
+
+
+# region common
+
+
 @router.error(ExceptionTypeFilter(Exception))
 async def on_error(event: ErrorEvent):
     if event.update.callback_query:
-        error_txt = _("Error: {error}").format(error=event.exception)
+        error_txt = translate("NH_ERROR", resolve_lang(event.update.callback_query), error=str(event.exception))
         await event.update.callback_query.answer(error_txt, show_alert=True)
         if isinstance(event.update.callback_query.message, types.Message):
             await event.update.callback_query.message.edit_reply_markup(reply_markup=None)
@@ -47,7 +116,7 @@ async def start_command_handler(message: types.Message):
     assert message.from_user
     await student_repo.set_notification_bot_activated(telegram_id=message.from_user.id)
 
-    payload = _extract_start_payload(message)
+    payload = extract_start_payload(message)
     match payload:
         case "from_control_bot":
             link = notification_manager.gen_control_bot_link("settings")
@@ -60,18 +129,45 @@ async def start_command_handler(message: types.Message):
             await message.answer(START_DEFAULT.format(link=link))
 
 
+@router.callback_query(
+    ~StatusFilter(UserStatus.admin),
+    F.data.startswith(
+        (
+            "approve_",
+            "discard_",
+            "confirm_approve_",
+            "confirm_discard_",
+            "update_approve_",
+            "update_discard_",
+            "update_confirm_approve_",
+            "update_confirm_discard_",
+        )
+    ),
+)
+async def handle_non_admin_approve_discard(query: types.CallbackQuery):
+    await query.answer(translate("NH_NOT_AUTHORIZED", resolve_lang(query)), show_alert=True)
+    if isinstance(query.message, types.Message):
+        await query.message.edit_reply_markup(reply_markup=None)
+
+
+# endregion common
+
+
+# region appprove discard meeting
+
+
 @router.callback_query(StatusFilter(UserStatus.admin), F.data.startswith(("approve_", "discard_")))
 async def handle_admin_approve_or_discard(query: types.CallbackQuery):
     assert query.data and isinstance(query.message, types.Message) and query.message.text
     action, meeting_id_text = query.data.split("_", maxsplit=1)
-    lang = _resolve_query_lang(query)
+    lang = resolve_lang(query)
 
     assert meeting_id_text.isdigit()
     meeting_id = int(meeting_id_text)
     meeting = await meeting_repo.get(meeting_id)
     assert meeting.datetime_  # it should be set to be sent for approval
     if meeting.status != MeetingStatus.APPROVING:
-        await query.answer(_("This meeting is not pending approval anymore"), show_alert=True)
+        await query.answer(translate("NH_MEETING_NOT_PENDING", lang), show_alert=True)
         await query.message.edit_reply_markup(reply_markup=None)
         return
 
@@ -80,11 +176,11 @@ async def handle_admin_approve_or_discard(query: types.CallbackQuery):
             case "approve":
                 if meeting.datetime_ <= datetime.now():
                     raise TimeoutError("Meeting date is in the past")
-                reply_markup = notification_manager.gen_confirm_approve_reply_markup(meeting_id, lang=lang)
+                reply_markup = notification_manager.gen_confirm_approve_meeting_reply_markup(meeting_id, lang=lang)
                 text = query.message.html_text + "\n\n" + MEETING_CONFIRM_APPROVE_APPENDIX
                 await query.message.edit_text(text=text, reply_markup=reply_markup)
             case "discard":
-                reply_markup = notification_manager.gen_confirm_discard_reply_markup(meeting_id, lang=lang)
+                reply_markup = notification_manager.gen_confirm_discard_meeting_reply_markup(meeting_id, lang=lang)
                 await query.message.edit_reply_markup(reply_markup=reply_markup)
     except TimeoutError as e:
         await query.answer(str(e), show_alert=True)
@@ -101,7 +197,7 @@ async def handle_admin_confirm_approve_or_confirm_discard(query: types.CallbackQ
     meeting = await meeting_repo.get(meeting_id)
 
     if meeting.status != MeetingStatus.APPROVING:
-        await query.answer("This meeting is not pending approval anymore", show_alert=True)
+        await query.answer(translate("NH_MEETING_NOT_PENDING", resolve_lang(query)), show_alert=True)
         await query.message.edit_reply_markup(reply_markup=None)
         return
 
@@ -111,10 +207,10 @@ async def handle_admin_confirm_approve_or_confirm_discard(query: types.CallbackQ
                 from src.bot.dialogs.meetings.logic import approve_meeting
 
                 await approve_meeting(meeting)
-                await query.answer("Meeting approval confirmed ✅", show_alert=True)
+                await query.answer(translate("NH_MEETING_APPROVE_CONFIRMED", resolve_lang(query)), show_alert=True)
                 await query.message.edit_reply_markup(reply_markup=None)
             case "discard":
-                await query.answer("Enter reason to discard the meeting", show_alert=True)
+                await query.answer(translate("NH_MEETING_DISCARD_REASON_PROMPT", resolve_lang(query)), show_alert=True)
                 await state.set_state(ApprovalStates.discard_reason)
                 await state.update_data(
                     {
@@ -123,9 +219,9 @@ async def handle_admin_confirm_approve_or_confirm_discard(query: types.CallbackQ
                     }
                 )
                 await query.message.edit_reply_markup(
-                    reply_markup=notification_manager.gen_cancel_discard_reply_markup(
+                    reply_markup=notification_manager.gen_cancel_discard_meeting_reply_markup(
                         meeting_id,
-                        lang=_resolve_query_lang(query),
+                        lang=resolve_lang(query),
                     )
                 )
     except TimeoutError as e:
@@ -167,40 +263,142 @@ async def handle_admin_cancel_approve_or_cancel_discard(query: types.CallbackQue
     assert query.data and isinstance(query.message, types.Message) and query.message.text
     action, meeting_id_text = query.data.split("_", maxsplit=2)[1:]
     if not meeting_id_text.isdigit():
-        await query.answer("Invalid callback data", show_alert=True)
+        await query.answer(translate("NH_INVALID_CALLBACK_DATA", resolve_lang(query)), show_alert=True)
         return
     # Go step back
-    text = await _text_meeting_approve_request(int(meeting_id_text))
-    reply_markup = notification_manager.gen_approve_discard_request_reply_markup(
+    text = await text_meeting_approve_request(int(meeting_id_text))
+    reply_markup = notification_manager.gen_approve_discard_meeting_request_reply_markup(
         int(meeting_id_text),
-        lang=_resolve_query_lang(query),
+        lang=resolve_lang(query),
     )
     await query.message.edit_text(text, reply_markup=reply_markup)
 
 
-@router.callback_query(
-    ~StatusFilter(UserStatus.admin), F.data.startswith(("approve_", "discard_", "confirm_approve_", "confirm_discard_"))
-)
-async def handle_non_admin_approve_discard(query: types.CallbackQuery):
-    await query.answer("You are not authorized to perform this action", show_alert=True)
-    if isinstance(query.message, types.Message):
+# endregion approve discard meeting
+
+
+# region approve discard update
+
+
+@router.callback_query(StatusFilter(UserStatus.admin), F.data.startswith(("update_approve_", "update_discard_")))
+async def handle_admin_update_approve_or_discard(query: types.CallbackQuery):
+    assert query.data and isinstance(query.message, types.Message) and query.message.text
+    action, meeting_id_text = query.data.split("_", maxsplit=2)[1:]
+    lang = resolve_lang(query)
+
+    assert meeting_id_text.isdigit()
+    meeting_id = int(meeting_id_text)
+    try:
+        await meeting_repo.get_update(meeting_id)
+    except LookupError:
+        await query.answer(translate("NH_UPDATE_NOT_PENDING", lang), show_alert=True)
         await query.message.edit_reply_markup(reply_markup=None)
+        return
+
+    try:
+        match action:
+            case "approve":
+                reply_markup = notification_manager.gen_confirm_approve_update_reply_markup(meeting_id, lang=lang)
+                text = query.message.html_text + "\n\n" + translate("NH_UPDATE_CONFIRM_APPROVE_APPENDIX", lang)
+                await query.message.edit_text(text=text, reply_markup=reply_markup)
+            case "discard":
+                reply_markup = notification_manager.gen_confirm_discard_update_reply_markup(meeting_id, lang=lang)
+                await query.message.edit_reply_markup(reply_markup=reply_markup)
+    except TimeoutError as e:
+        await query.answer(str(e), show_alert=True)
 
 
-# == utils ==
+@router.callback_query(
+    StatusFilter(UserStatus.admin), F.data.startswith(("update_confirm_approve_", "update_confirm_discard_"))
+)
+async def handle_admin_update_confirm_approve_or_confirm_discard(query: types.CallbackQuery, state: FSMContext):
+    assert query.data and isinstance(query.message, types.Message)
+    action, meeting_id_text = query.data.split("_", maxsplit=3)[2:]
 
-
-async def _text_meeting_approve_request(meeting_id: int):
+    assert meeting_id_text.isdigit()
+    meeting_id = int(meeting_id_text)
     meeting = await meeting_repo.get(meeting_id)
-    assert meeting.tutor_id
-    tutor = await tutor_repo.get(id=meeting.tutor_id)
-    meeting_data = meeting.model_dump(by_alias=True)
-    link = notification_manager.gen_meeting_link(meeting)
-    return MEETING_APPROVE_REQUEST.format(**meeting_data, username=tutor.username, link=link)
+
+    try:
+        meeting_update = await meeting_repo.get_update(meeting_id)
+    except LookupError:
+        await query.answer(translate("NH_UPDATE_NOT_PENDING", resolve_lang(query)), show_alert=True)
+        await query.message.edit_reply_markup(reply_markup=None)
+        return
+
+    try:
+        match action:
+            case "approve":  # TODO: maybe move that to logic layer?
+                from src.bot.dialogs.meetings.logic import approve_meeting_update
+
+                await approve_meeting_update(meeting, meeting_update)
+                await query.answer(translate("NH_UPDATE_APPROVE_CONFIRMED", resolve_lang(query)), show_alert=True)
+                await query.message.edit_reply_markup(reply_markup=None)
+            case "discard":
+                await query.answer(translate("NH_UPDATE_DISCARD_REASON_PROMPT", resolve_lang(query)), show_alert=True)
+                await state.set_state(UpdateApprovalStates.discard_reason)
+                await state.update_data(
+                    {
+                        "approving_meeting_id": meeting_id,
+                        "message_id": query.message.message_id,
+                    }
+                )
+                await query.message.edit_reply_markup(
+                    reply_markup=notification_manager.gen_cancel_discard_update_reply_markup(
+                        meeting_id,
+                        lang=resolve_lang(query),
+                    )
+                )
+    except TimeoutError as e:
+        await query.answer(str(e), show_alert=True)
 
 
-def _resolve_query_lang(query: types.CallbackQuery) -> str:
-    if not query.from_user.language_code:
-        return "en"
-    lang = query.from_user.language_code.strip().lower().split("-", maxsplit=1)[0]
-    return lang or "en"
+@router.message(StatusFilter(UserStatus.admin), StateFilter(UpdateApprovalStates.discard_reason), F.text)
+async def handle_admin_update_discard_reason(message: types.Message, bot: Bot, state: FSMContext):
+    meeting_id = await state.get_value("approving_meeting_id")
+    message_id = await state.get_value("message_id")
+    assert meeting_id and message.html_text
+
+    meeting = await meeting_repo.get(meeting_id)
+    meeting_update = await meeting_repo.get_update(meeting_id)
+
+    await meeting_repo.remove_update(meeting_id)
+    await notification_manager.send_meeting_update_discarded(meeting, meeting_update, message.html_text)
+
+    await state.set_state(None)
+    await state.update_data(
+        {
+            "approving_meeting_id": None,
+            "message_id": None,
+        }
+    )
+    await bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=message_id, reply_markup=None)
+
+
+@router.callback_query(
+    StatusFilter(UserStatus.admin), F.data.startswith(("update_cancel_approve_", "update_cancel_discard_"))
+)
+async def handle_admin_update_cancel_approve_or_cancel_discard(query: types.CallbackQuery, state: FSMContext):
+    await state.set_state(None)
+    await state.update_data(
+        {
+            "approving_meeting_id": None,
+            "message_id": None,
+        }
+    )
+
+    assert query.data and isinstance(query.message, types.Message) and query.message.text
+    action, meeting_id_text = query.data.split("_", maxsplit=3)[2:]
+    if not meeting_id_text.isdigit():
+        await query.answer(translate("NH_INVALID_CALLBACK_DATA", resolve_lang(query)), show_alert=True)
+        return
+    # Go step back
+    text = await text_update_approve_request(int(meeting_id_text))
+    reply_markup = notification_manager.gen_approve_discard_update_request_reply_markup(
+        int(meeting_id_text),
+        lang=resolve_lang(query),
+    )
+    await query.message.edit_text(text, reply_markup=reply_markup)
+
+
+# endregion approve discard update

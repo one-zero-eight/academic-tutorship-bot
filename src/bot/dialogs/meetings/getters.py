@@ -37,6 +37,15 @@ async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
 
     STATUS_RANGE_ANNOUNCED_FINISHED = (MeetingStatus.ANNOUNCED, MeetingStatus.FINISHED)
 
+    meetings_status_type_map = {
+        MeetingStatus.CREATED: "created",
+        MeetingStatus.APPROVING: "approving",
+        MeetingStatus.ANNOUNCED: "announced",
+        MeetingStatus.CONDUCTING: "announced",
+        MeetingStatus.FINISHED: "announced",
+        MeetingStatus.CLOSED: "closed",
+    }
+
     match meetings_type:
         case "created":
             status_range = MeetingStatus.CREATED
@@ -49,12 +58,28 @@ async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
         case _:
             try:
                 meeting = await manager.state.get_meeting()
+                meetings_type = meetings_status_type_map.get(meeting.status, "created")
                 if meeting.status in STATUS_RANGE_ANNOUNCED_FINISHED:
                     status_range = STATUS_RANGE_ANNOUNCED_FINISHED
                 else:
                     status_range = meeting.status
             except ValueError:
                 raise ValueError("Unknown meeting type")
+
+    type_created = False
+    type_approving = False
+    type_announced = False
+    type_closed = False
+
+    match meetings_type:
+        case "created":
+            type_created = True
+        case "approving":
+            type_approving = True
+        case "announced":
+            type_announced = True
+        case "closed":
+            type_closed = True
 
     match user_status:
         case UserStatus.admin:
@@ -73,20 +98,6 @@ async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
         }
         for meeting in meetings
     ]
-
-    type_created = False
-    type_approving = False
-    type_announced = False
-    type_closed = False
-    match meetings_type:
-        case "created":
-            type_created = True
-        case "approving":
-            type_approving = True
-        case "announced":
-            type_announced = True
-        case "closed":
-            type_closed = True
 
     return {
         "meetings_type": meetings_type.capitalize(),

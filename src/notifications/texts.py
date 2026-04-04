@@ -219,3 +219,9 @@ Here you will receive all notifications from Academic Tutorship 💌
 
 To go back to the main bot <a href="{link}">click the link</a>
 """
+
+
+MEETING_UPDATE_APPROVE_REQUEST = 'Updates in "{title}" await approval.'
+MEETING_UPDATE_APPROVE_REQUEST_DATE = "- Date & time: {datetime_old} > {datetime_new}"
+MEETING_UPDATE_APPROVE_REQUEST_ROOM = "- Room: {room_old} > {room_new}"
+MEETING_LINK = '🔗 <a href="{link}">Click to see the details</a>'

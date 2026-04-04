@@ -40,6 +40,9 @@ Q_CHANGE_MEETING_APPROVING_CANNOT_CHANGE_DURATION = Эта встреча нах
 Q_CHANGE_TUTOR_NOT_FOUND = Преподаватель не найден (почему-то)
 Q_CHANGE_ROOM_INVALID_FORMAT = Неверный формат: {$error}
 Q_CHANGE_MEETING_APPROVING_CANNOT_CHANGE_ROOM = Эта встреча находится на согласовании, изменить комнату в данный момент нельзя
+Q_CHANGE_UPDATE_NO_UPDATES = Нет изменений для отправки
+Q_CHANGE_UPDATE_ALREADY_PENDING = Изменения по этой встрече уже ожидают подтверждения
+Q_CHANGE_UPDATE_SENT = Изменения отправлены администраторам, ожидай уведомления
 Q_CHANGE_MEETING_TOO_SOON_WARNING = Внимание ⚠️
     Эта встреча будет проведена <b>менее чем через 24 часа</b>
 DELETE_WARNING_BTN = Удалить предупреждение

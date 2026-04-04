@@ -133,6 +133,25 @@ NOTIF_MEETING_STARTED =
 
     🔗 <a href="{$link}">Нажми сюда для просмотра деталей</a>
 
+NOTIF_MEETING_LINK = 🔗 <a href="{$link}">Нажми сюда для просмотра деталей</a>
+NOTIF_MEETING_UPDATE_ROOM = - Аудитория: <b>{$old_room}</b> > <b>{$room}</b>
+NOTIF_MEETING_UPDATE_DATETIME = - Дата: <b>{$old_datetime}</b> > <b>{$datetime}</b>
+NOTIF_MEETING_UPDATE_REQUEST =
+    Запрошено изменение встречи!
+    "{$title}"
+NOTIF_MEETING_UPDATE_APPROVED =
+    Изменение встречи подтверждено ✅
+    "{$title}"
+NOTIF_MEETING_UPDATE_DISCARDED =
+    Изменение встречи отклонено ❌
+    "{$title}"
+NOTIF_MEETING_UPDATE_DISCARDED_REASON =
+    Причина:
+    <blockquote>{$reason}</blockquote>
+NOTIF_MEETING_UPDATE_INFO =
+    Встреча была обновлена ‼️
+    "{$title}"
+
 NOTIF_BTN_APPROVE = Подтвердить ✅
 NOTIF_BTN_DISCARD = ❌ Отклонить
 NOTIF_BTN_CANCEL = Отмена
