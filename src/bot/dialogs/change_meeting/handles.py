@@ -9,7 +9,7 @@ from src.bot.dialog_extension import extend_dialog
 from src.bot.logging_ import log_error, log_info, log_warning
 from src.bot.user_errors import *
 from src.bot.utils import *
-from src.domain.models import Discipline, MeetingStatus
+from src.domain.models import Discipline, MeetingStatus, MeetingUpdate
 
 from .getters import *
 from .keyboards import *
@@ -262,6 +262,31 @@ async def on_date_room_btn(query: CallbackQuery, _, manager: DialogManager):
         return
     await manager.state.update_data({"meeting_update": {}})
     await manager.switch_to(ChangeStates.date_room)
+
+
+async def on_date_room_request_approve(query: CallbackQuery, __, manager: DialogManager):
+    manager = extend_dialog(manager)
+    _ = manager.tr
+    meeting = await manager.state.get_meeting()
+    update = await manager.state.get_value("meeting_update", {})
+    log_info("meeting.change.on_date_room_request_approve.init", user_id=manager.chat.id)
+    if not update:
+        await query.answer(_("Q_CHANGE_UPDATE_NO_UPDATES"), show_alert=True)
+        log_warning(
+            "meeting.change.on_date_room_request_approve.no_updates", user_id=manager.chat.id, meeting_id=meeting.id
+        )
+        return
+    if await meeting_repo.exists_update(meeting.id):
+        await query.answer(_("Q_CHANGE_UPDATE_ALREADY_PENDING"), show_alert=True)
+        log_warning(
+            "meeting.change.on_date_room_request_approve.pending", user_id=manager.chat.id, meeting_id=meeting.id
+        )
+        return
+    meeting_update = MeetingUpdate(id=meeting.id, **update)
+    await meeting_repo.save_update(meeting_update)
+    await notification_manager.send_meeting_update_request(meeting_update)
+    await query.answer(_("Q_CHANGE_UPDATE_SENT"), show_alert=True)
+    log_info("meeting.change.on_date_room_request_approve.sent", user_id=manager.chat.id, meeting_update=meeting_update)
 
 
 async def on_date_room_save_rightaway(query: CallbackQuery, _, manager: DialogManager):
