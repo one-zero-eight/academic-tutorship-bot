@@ -110,8 +110,15 @@ NOTIF_MEETING_DISCARDED =
 NOTIF_MEETING_CANCELLED_FOR_USERS =
     К сожалению, встреча "{$title}" была отменена 😞
     Приносим извинения за доставленные неудобства. Ждем тебя на других наших встречах!
-NOTIF_MEETING_REMINDER =
-    Напоминание: Встреча "{$title}" уже скоро!
+NOTIF_MEETING_REMINDER_24H =
+    Напоминание: Встреча "{$title}" начнется через 24 часа!
+    - Дата и время: {$datetime}
+    - Аудитория: {$room}
+    - Academic Tutor: @{$username}
+
+    🔗 <a href="{$link}">Нажми сюда для просмотра деталей</a>
+NOTIF_MEETING_REMINDER_1H =
+    Напоминание: Встреча "{$title}" начнется через 1 час!
     - Дата и время: {$datetime}
     - Аудитория: {$room}
     - Academic Tutor: @{$username}

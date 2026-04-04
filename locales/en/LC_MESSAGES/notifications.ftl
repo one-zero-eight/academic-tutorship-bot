@@ -107,8 +107,15 @@ NOTIF_MEETING_DISCARDED =
 NOTIF_MEETING_CANCELLED_FOR_USERS =
     Meeting "{$title}" has been cancelled 😞
     Sorry for the inconvenience. We hope to see you in other meetings!
-NOTIF_MEETING_REMINDER =
-    Reminder: Meeting "{$title}" is upcoming!
+NOTIF_MEETING_REMINDER_24H =
+    Reminder: Meeting "{$title}" starts in 24 hours!
+    - Date & time: {$datetime}
+    - Room: {$room}
+    - Academic Tutor: @{$username}
+
+    🔗 <a href="{$link}">Click to see the details</a>
+NOTIF_MEETING_REMINDER_1H =
+    Reminder: Meeting "{$title}" starts in 1 hour!
     - Date & time: {$datetime}
     - Room: {$room}
     - Academic Tutor: @{$username}

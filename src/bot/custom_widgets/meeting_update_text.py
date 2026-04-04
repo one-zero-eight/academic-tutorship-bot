@@ -6,6 +6,7 @@ from aiogram_dialog.widgets.text.base import Text
 
 from src.bot.constants import I18N_FORMAT_KEY
 from src.bot.dialog_extension import extend_dialog
+from src.bot.i18n import normalize_l10n_value
 from src.bot.logging_ import log_error
 from src.domain.models import Meeting
 
@@ -38,7 +39,7 @@ class MeetingUpdateText(Text):
         lines.append(format_text("MEETING_UPDATE_HEADER"))
         for key, value in update_data.items():
             if key in ["datetime", "datetime_"]:
-                lines.append(format_text("MEETING_UPDATE_DATETIME_LINE", datetime=value))
+                lines.append(format_text("MEETING_UPDATE_DATETIME_LINE", datetime=normalize_l10n_value(value)))
             elif key in ["room"]:
                 lines.append(format_text("MEETING_UPDATE_ROOM_LINE", room=value))
             else:

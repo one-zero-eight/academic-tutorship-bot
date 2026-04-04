@@ -7,7 +7,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ErrorEvent
 
 from src.bot.filters import StatusFilter, UserStatus
-from src.bot.i18n import NOTIFICATION_L10NS
+from src.bot.i18n import NOTIFICATION_L10NS, normalize_l10n_kwargs
 from src.db.repositories import meeting_repo, student_repo, tutor_repo
 from src.domain.models import MeetingStatus
 from src.notifications import notification_dp, notification_manager
@@ -54,7 +54,7 @@ async def resolve_lang(event: types.CallbackQuery | types.Message) -> str:
 
 def translate(text_id: str, lang: str, **kwargs) -> str:
     l10n = NOTIFICATION_L10NS.get(lang, NOTIFICATION_L10NS["en"])
-    return l10n.format_value(text_id, kwargs)
+    return l10n.format_value(text_id, normalize_l10n_kwargs(kwargs))
 
 
 def extract_start_payload(message: types.Message) -> str | None:

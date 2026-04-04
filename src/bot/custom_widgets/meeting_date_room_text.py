@@ -3,6 +3,7 @@ from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.text.base import Text
 
 from src.bot.constants import I18N_FORMAT_KEY
+from src.bot.i18n import normalize_l10n_value
 
 
 def _default_format_text(text: str, data: dict) -> str:
@@ -24,7 +25,7 @@ class MeetingDateRoomText(Text):
         )
 
         payload = dict(data)
-        payload["date"] = str(payload["date"]) if payload.get("date") else "N/A"
+        payload["date"] = normalize_l10n_value(payload["date"]) if payload.get("date") else "N/A"
 
         lines = []
         lines.extend(

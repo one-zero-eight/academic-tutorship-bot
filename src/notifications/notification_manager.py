@@ -1,11 +1,12 @@
 import asyncio
 from collections.abc import Callable
+from typing import Literal
 
 from aiogram import Bot, Dispatcher
 from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from src.bot.i18n import NOTIFICATION_L10NS
+from src.bot.i18n import NOTIFICATION_L10NS, normalize_l10n_kwargs
 from src.bot.logging_ import log_error, log_info
 from src.db.repositories import admin_repo, meeting_repo, student_repo, tutor_repo
 from src.domain.models import Meeting, MeetingStatus, MeetingUpdate, Tutor
@@ -15,6 +16,7 @@ type TextIDForm = tuple[str, dict]
 type ReplyMarkupFactory = Callable[[str], InlineKeyboardMarkup]
 "Builds an inline keyboard for a specific language"
 type ReplyMarkup = InlineKeyboardMarkup | ReplyMarkupFactory | None
+type ReminderKind = Literal["24h", "1h"]
 
 
 def _txt(_text_id_: str, **kwargs) -> TextIDForm:
@@ -144,15 +146,18 @@ class NotificationManager:
             # NOTE: students would only care if meeting already announced and not finished
             await self._send_students_who_interested(meeting, exclude=sent, text=text)
 
-    # TODO: add this notification somewhere in scheduling logic
-    async def send_meeting_reminder(self, meeting: Meeting):
+    async def send_meeting_reminder(self, meeting: Meeting, reminder_kind: ReminderKind):
         tutor = await tutor_repo.get(id=meeting.tutor_id) if meeting.tutor_id else None
         data = {
             **meeting.model_dump(by_alias=True),
             "link": self.gen_meeting_link(meeting.id),
             "username": tutor.username if tutor else None,
         }
-        text = _txt("NOTIF_MEETING_REMINDER", **data)
+        reminder_text_id = {
+            "24h": "NOTIF_MEETING_REMINDER_24H",
+            "1h": "NOTIF_MEETING_REMINDER_1H",
+        }[reminder_kind]
+        text = _txt(reminder_text_id, **data)
         sent = []
         if meeting.tutor_id:
             sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
@@ -443,7 +448,7 @@ class NotificationManager:
 
     def _localize_text_id(self, text_id: str, lang: str, **kwargs) -> str:
         l10n = NOTIFICATION_L10NS.get(lang, NOTIFICATION_L10NS["en"])
-        return l10n.format_value(text_id, kwargs)
+        return l10n.format_value(text_id, normalize_l10n_kwargs(kwargs))
 
     def _localize_format(self, text: TextIDForm, lang: str) -> str:
         """Localizes and formats a TextIDForm message for a given language"""

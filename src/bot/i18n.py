@@ -1,4 +1,5 @@
 import os
+from datetime import date, datetime
 from typing import Any, Protocol
 
 from aiogram_dialog.api.protocols import DialogManager
@@ -25,12 +26,33 @@ class I18NFormat(Text):
             I18N_FORMAT_KEY,
             default_format_text,
         )
-        translated_text = format_text(self.text, data)
-        return translated_text.format(**data)
+        normalized_data = normalize_l10n_kwargs(data)
+        translated_text = format_text(self.text, normalized_data)
+        return translated_text.format(**normalized_data)
 
 
 def default_format_text(text: str, data: Values) -> str:
+    if isinstance(data, dict):
+        data = normalize_l10n_kwargs(data)
     return text.format_map(data)
+
+
+def normalize_l10n_value(value: Any) -> Any:
+    if isinstance(value, datetime):
+        return value.isoformat(sep=" ", timespec="minutes")
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {key: normalize_l10n_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [normalize_l10n_value(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(normalize_l10n_value(item) for item in value)
+    return value
+
+
+def normalize_l10n_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
+    return {key: normalize_l10n_value(value) for key, value in kwargs.items()}
 
 
 def make_i18n_middleware(locales: list[str], default_locale: str = "en"):

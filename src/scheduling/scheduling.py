@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from apscheduler.triggers.date import DateTrigger
 
@@ -16,6 +16,25 @@ async def update_meeting_schedule(meeting: Meeting):
         return  # schedule only when announced
     if meeting.datetime_ and meeting.status < MeetingStatus.CONDUCTING:
         conduct_date = meeting.datetime_
+        now = datetime.now(conduct_date.tzinfo)
+
+        reminders = {
+            "24h": conduct_date - timedelta(hours=24),
+            "1h": conduct_date - timedelta(hours=1),
+        }
+        for reminder_kind, reminder_date in reminders.items():
+            if reminder_date <= now:
+                continue
+            scheduler.add_job(
+                trigger=DateTrigger(reminder_date),
+                func=_job_meeting_reminder,
+                args=[meeting.id, reminder_kind],
+                id=f"remind_{reminder_kind}_meeting_{meeting.id}",
+                replace_existing=True,
+                misfire_grace_time=None,  # always finish the task after restart
+            )
+            logger.info(f"Scheduled Meeting [{meeting.id}] reminder ({reminder_kind}) at {reminder_date}")
+
         scheduler.add_job(
             trigger=DateTrigger(conduct_date),
             func=_job_meeting_conduct,
@@ -42,6 +61,8 @@ async def update_meeting_schedule(meeting: Meeting):
 
 async def wipe_meeting_schedule(meeting: Meeting):
     possible_job_ids = [
+        f"remind_24h_meeting_{meeting.id}",
+        f"remind_1h_meeting_{meeting.id}",
         f"conduct_meeting_{meeting.id}",
         f"finish_meeting_{meeting.id}",
     ]
@@ -65,6 +86,22 @@ async def _job_meeting_conduct(meeting_id: int):
 
     except Exception as e:
         logger.error(f"error in _job_meeting_conduct: {e}")
+        return  # TODO: proper error handeling
+
+
+async def _job_meeting_reminder(meeting_id: int, reminder_kind: str):
+    meeting = await meeting_repo.get(meeting_id)
+    if not meeting:
+        logger.warning("error in _job_meeting_reminder: no meeting")
+        return
+    if meeting.status != MeetingStatus.ANNOUNCED:
+        logger.info(f"Skipped reminder for Meeting [{meeting.id}] because status is {meeting.status.name}")
+        return
+    try:
+        await notification_manager.send_meeting_reminder(meeting, reminder_kind=reminder_kind)
+        logger.info(f"Meeting [{meeting.id}] reminder sent ({reminder_kind})")
+    except Exception as e:
+        logger.error(f"error in _job_meeting_reminder: {e}")
         return  # TODO: proper error handeling
 
 

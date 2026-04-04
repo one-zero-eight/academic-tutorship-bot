@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+import pytest_asyncio
 from aiogram import Bot, Dispatcher
 
 from src.domain.models import Discipline, Meeting, MeetingStatus, NotificationBotStatus, Settings, Student, Tutor
@@ -28,7 +29,7 @@ def mock_dispatcher():
     return MagicMock(spec=Dispatcher)
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def notification_manager(mock_bot, mock_dispatcher):
     """Create a NotificationManager instance with mocks."""
     manager = NotificationManager(mock_bot, mock_dispatcher)
@@ -308,6 +309,7 @@ async def test_send_meeting_approve_request(notification_manager, mock_bot, test
             assert mock_bot.send_message.called
             call_args = mock_bot.send_message.call_args
             assert call_args[1]["chat_id"] == TELEGRAM_ID
+            assert test_meeting.datetime_.isoformat(sep=" ", timespec="minutes") in call_args[1]["text"]
             # Verify that reply_markup is sent (buttons)
             assert call_args[1]["reply_markup"] is not None
 
@@ -390,7 +392,16 @@ async def test_send_meeting_cancelled(notification_manager, mock_bot, test_meeti
 
 
 @pytest.mark.asyncio
-async def test_send_meeting_reminder(notification_manager, mock_bot, test_meeting_announced, test_tutor):
+@pytest.mark.parametrize(
+    ("reminder_kind", "expected_phrase"),
+    [
+        ("24h", "starts in 24 hours"),
+        ("1h", "starts in 1 hour"),
+    ],
+)
+async def test_send_meeting_reminder(
+    notification_manager, mock_bot, test_meeting_announced, test_tutor, reminder_kind, expected_phrase
+):
     """Test meeting reminder notification."""
     test_meeting_announced.tutor_id = test_tutor.id
 
@@ -403,13 +414,19 @@ async def test_send_meeting_reminder(notification_manager, mock_bot, test_meetin
 
             with patch("src.notifications.notification_manager.meeting_repo") as mock_meeting_repo:
                 mock_meeting_repo.get_interested_student_ids = AsyncMock(return_value=[])
+                with patch("src.notifications.notification_manager.tutor_repo") as mock_tutor_repo:
+                    mock_tutor_repo.get = AsyncMock(return_value=test_tutor)
 
-            with patch("src.notifications.notification_manager.tutor_repo") as mock_tutor_repo:
-                mock_tutor_repo.get = AsyncMock(return_value=test_tutor)
+                    await notification_manager.send_meeting_reminder(
+                        test_meeting_announced, reminder_kind=reminder_kind
+                    )
 
-                await notification_manager.send_meeting_reminder(test_meeting_announced)
-
-                assert mock_bot.send_message.called
+                    assert mock_bot.send_message.called
+                    call_args = mock_bot.send_message.call_args
+                    assert expected_phrase in call_args[1]["text"].lower()
+                    assert (
+                        test_meeting_announced.datetime_.isoformat(sep=" ", timespec="minutes") in call_args[1]["text"]
+                    )
 
 
 @pytest.mark.asyncio

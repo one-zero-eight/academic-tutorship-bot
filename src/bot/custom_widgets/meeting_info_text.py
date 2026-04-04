@@ -5,6 +5,7 @@ from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.text.base import Text
 
 from src.bot.constants import I18N_FORMAT_KEY
+from src.bot.i18n import normalize_l10n_value
 
 
 def _default_format_text(text: str, data: dict) -> str:
@@ -33,7 +34,7 @@ class MeetingInfoText(Text):
         payload["d_year"] = getattr(discipline, "year", "")
         payload["d_name"] = html.escape(str(getattr(discipline, "name", "")))
         payload["status_name"] = getattr(payload.get("status"), "name", "")
-        payload["date"] = str(payload["date"]) if payload.get("date") else "N/A"
+        payload["date"] = normalize_l10n_value(payload["date"]) if payload.get("date") else "N/A"
         payload["attendance_count"] = (
             payload["attendance_count"] if payload.get("attendance_count") is not None else "N/A"
         )
