@@ -1,11 +1,51 @@
 from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager
 
+from src.bot.constants import I18N_FORMAT_KEY
 from src.bot.dialog_extension import extend_dialog
 from src.bot.logging_ import log_error, log_info, log_warning
 from src.db.repositories import student_repo
 from src.domain.models import NotificationBotStatus
 from src.notifications import notification_manager
+
+
+async def on_toggle_language(query: CallbackQuery, _, manager: DialogManager):
+    manager = extend_dialog(manager)
+    try:
+        self_student = await manager.state.get_self_student()
+        old_language = self_student.language if self_student.language in {"en", "ru"} else "en"
+        new_language = "ru" if old_language == "en" else "en"
+        log_info(
+            "student.language.toggle.requested",
+            user_id=query.from_user.id,
+            old_language=old_language,
+            new_language=new_language,
+        )
+
+        self_student.language = new_language
+        await student_repo.update(self_student, ["language"])
+        await manager.state.set_self_student(self_student)
+
+        # Rebind formatter in current callback context so the same render cycle uses the new language.
+        l10ns = manager.middleware_data.get("dialog_i18n_l10ns")
+        default_lang = manager.middleware_data.get("dialog_i18n_default_lang", "en")
+        if isinstance(l10ns, dict):
+            l10n = l10ns.get(new_language) or l10ns.get(default_lang)
+            if l10n is not None:
+                manager.middleware_data[I18N_FORMAT_KEY] = l10n.format_value
+
+        _ = manager.tr
+
+        await query.answer(_("Q_SETTINGS_LANGUAGE_CHANGED"))
+        log_info(
+            "student.language.toggle.succeeded",
+            user_id=query.from_user.id,
+            language=new_language,
+        )
+    except Exception as e:
+        log_error("student.language.toggle.failed", user_id=query.from_user.id, reason=str(e))
+        raise
+    await manager.switch_to_current()
 
 
 async def on_toggle_notifications(query: CallbackQuery, _, manager: DialogManager):

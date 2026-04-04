@@ -19,7 +19,9 @@ async def student_settings_getter(dialog_manager: DialogManager, **kwargs):
     student = await student_repo.get(manager.chat.id)
     relevant_disciplines = await student_repo.get_relevant_disciplines(manager.chat.id)
     notification_bot_link = notification_manager.gen_notification_bot_link("from_control_bot")
+    current_language = "🇷🇺" if student.language == "ru" else "🇬🇧"
     return {
+        "current_language": current_language,
         "receive_notifications": "✅" if student.settings.receive_notifications else "❌",
         "relevant_disciplines": [disc.model_dump() for disc in relevant_disciplines],
         "notification_bot_link": notification_bot_link,

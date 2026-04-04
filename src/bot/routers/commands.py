@@ -92,8 +92,8 @@ async def on_start(
             else:
                 student = await manager.state.get_self_student()
                 if not student.saw_guide:
-                    log_info("user.start.routed", user_id=message.chat.id, target_state=str(GuideStates.init))
-                    return await manager.start(GuideStates.init, show_mode=ShowMode.DELETE_AND_SEND)
+                    log_info("user.start.routed", user_id=message.chat.id, target_state=str(GuideStates.language))
+                    return await manager.start(GuideStates.language, show_mode=ShowMode.DELETE_AND_SEND)
         elif settings.mock_auth:
             pass
         else:

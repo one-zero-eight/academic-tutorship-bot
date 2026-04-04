@@ -12,6 +12,11 @@ AUTH_BIND_INSTRUCTION =
 AUTH_BTN_CONNECT_TELEGRAM = Connect Telegram 🔗
 AUTH_BTN_CHECK_CONNECTED = Check Connection ✅
 
+GUIDE_LANGUAGE_TEXT =
+    Before we start, choose your language:
+GUIDE_LANGUAGE_BTN_EN = English 🇬🇧
+GUIDE_LANGUAGE_BTN_RU = Русский 🇷🇺
+
 
 GUIDE_INIT_TEXT =
     Hello student!
@@ -66,6 +71,7 @@ SETTINGS_NOTIF_UNACTIVATED = Activate bot ☝️ to receive notifications
 SETTINGS_NOTIF_BLOCKED = Unblock the bot ☝️ to receive notifications
 
 SETTINGS_NOTIF_TOGGLE = Notifications: {$receive_notifications}
+SETTINGS_LANG_TOGGLE = Language: {$current_language}
 SETTINGS_BTN_CHANGE_DISCIPLINES = 📚 Change Disciplines
 
 SETTINGS_DISCIPLINES_TITLE = 📚 Selected Disciplines

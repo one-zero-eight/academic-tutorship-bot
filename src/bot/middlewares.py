@@ -252,6 +252,8 @@ class DialogI18nMiddleware(BaseMiddleware):
             elif event.from_user.language_code == "ru":
                 lang = "ru"
 
+        data["dialog_i18n_l10ns"] = self.l10ns
+        data["dialog_i18n_default_lang"] = self.default_lang
         l10n = self.l10ns.get(lang, self.l10ns[self.default_lang])
         data[I18N_FORMAT_KEY] = l10n.format_value
 

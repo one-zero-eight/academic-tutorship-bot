@@ -54,6 +54,7 @@ settings_ww = Window(
     I18N("SETTINGS_HEADING"),
     UnpackedList(I18N("SETTINGS_DISCIPLINE_ITEM"), items="relevant_disciplines"),
     Const(" "),
+    Button(I18N("SETTINGS_LANG_TOGGLE"), id="toggle_lang", on_click=on_toggle_language),
     I18N("SETTINGS_NOTIFICATIONS_LINK"),
     I18N("SETTINGS_NOTIF_UNACTIVATED", when="notification_bot_unactivated"),
     I18N("SETTINGS_NOTIF_BLOCKED", when="notification_bot_blocked"),

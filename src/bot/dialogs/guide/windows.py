@@ -15,6 +15,16 @@ from .getters import *
 from .handles import *
 from .states import *
 
+language_ww = Window(
+    I18N("GUIDE_LANGUAGE_TEXT"),
+    Row(
+        Button(I18N("GUIDE_LANGUAGE_BTN_EN"), id="guide_lang_en", on_click=on_choose_language_en),
+        Button(I18N("GUIDE_LANGUAGE_BTN_RU"), id="guide_lang_ru", on_click=on_choose_language_ru),
+    ),
+    state=GuideStates.language,
+)
+
+
 init_ww = Window(
     I18N("GUIDE_INIT_TEXT"),
     Row(
