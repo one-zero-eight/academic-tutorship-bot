@@ -2,14 +2,24 @@ import asyncio
 import inspect
 import logging
 import os
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Set
 from typing import Any
 
-from aiogram import BaseMiddleware
+from aiogram import BaseMiddleware, Bot, Router
 from aiogram.dispatcher.event.handler import HandlerObject
-from aiogram.types import CallbackQuery, Message, TelegramObject
+from aiogram.fsm.context import FSMContext
+from aiogram.types import CallbackQuery, Chat, Message, TelegramObject
+from email_validator import validate_email
+from email_validator.exceptions import EmailNotValidError
+from fluent.runtime import FluentLocalization
 
-from src.bot.logging_ import logger
+from src.accounts_sdk import inh_accounts
+from src.bot.constants import I18N_FORMAT_KEY
+from src.bot.dialog_extension.extended_fsm_context import extend_fsm_context
+from src.bot.exceptions import UnauthenticatedException
+from src.bot.filters import UserStatus
+from src.bot.logging_ import log_debug, logger
+from src.db.repositories import student_repo, tutor_repo
 
 
 # noinspection PyMethodMayBeStatic
@@ -84,3 +94,186 @@ class LogAllEventsMiddleware(BaseMiddleware):
         )
         record.relativePath = os.path.relpath(record.pathname)
         return record
+
+
+class AutoAuthMiddleware(LogAllEventsMiddleware):
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: dict[str, Any],
+    ) -> Any:
+        data["authenticated"] = await self._update_authenticated(event, data)
+        data["status"] = await self._update_status(event, data)
+        return await super().__call__(handler, event, data)
+
+    async def _update_authenticated(self, event: TelegramObject, data: dict[str, Any]) -> bool:
+        (was_auth, become_auth) = (False, False)  # for _log_authenticated()
+        state: FSMContext = extend_fsm_context(data["state"])
+        chat: Chat = data["event_chat"]
+        # authenticated = was_auth = await state.get_value("authenticated", False)
+        authenticated = False
+        if not authenticated:
+            user = await inh_accounts.get_user(telegram_id=chat.id)
+            if user is not None:
+                authenticated = become_auth = True
+                assert (tg := user.telegram_info)
+                assert (inno := user.innopolis_info)
+                if not await student_repo.exists(telegram_id=tg.id):
+                    self_student = await student_repo.create(
+                        telegram_id=tg.id,
+                        first_name=tg.first_name,
+                        last_name=tg.last_name,
+                        username=tg.username,
+                        email_=inno.email,
+                    )
+                else:
+                    self_student = await student_repo.get(telegram_id=tg.id)
+                await state.set_self_student(self_student)
+            await state.update_data({"authenticated": authenticated})
+        self._log_authenticated(chat, was_auth, become_auth)
+        return authenticated
+
+    def _log_authenticated(self, chat: Chat, was_auth: bool, become_auth: bool):
+        if was_auth:
+            return log_debug("auth.was_authenticated", user_id=chat.id)
+        elif become_auth:
+            return log_debug("auth.became_authenticated", user_id=chat.id)
+        else:
+            return log_debug("auth.failed_to_authenticate", user_id=chat.id)
+
+    async def _update_status(self, event: TelegramObject, data: dict[str, Any]) -> UserStatus:
+        state: FSMContext = data["state"]
+        chat: Chat = data["event_chat"]
+
+        if await tutor_repo.exists(chat.id):
+            status = UserStatus.tutor
+            self_tutor = await tutor_repo.get(telegram_id=chat.id)
+            await state.update_data({"self_tutor": self_tutor.model_dump()})
+        else:
+            status = UserStatus.student
+            # Keep tutor flag in FSM state synchronized with DB to avoid stale permissions.
+            await state.update_data({"self_tutor": None})
+        if await student_repo.is_admin(chat.id):
+            status = UserStatus.admin
+        await state.update_data({"status": status})
+        return status
+
+
+class AuthGuardMiddleware(BaseMiddleware):
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, dict[str, Any]], Awaitable[Any]],
+        event: TelegramObject,
+        data: dict[str, Any],
+    ) -> Any:
+        chat: Chat = data["event_chat"]
+        authenticated = data.get("authenticated", False)
+        if not authenticated:
+            log_debug("auth.unauthenticated", user_id=chat.id)
+            raise UnauthenticatedException
+        return await handler(event, data)
+
+
+class MockAutoAuthMiddleware(AutoAuthMiddleware):
+    async def _update_authenticated(self, event: TelegramObject, data: dict[str, Any]) -> bool:
+        (was_auth, become_auth) = (False, False)  # for _log_authenticated()
+        state: FSMContext = extend_fsm_context(data["state"])
+        chat: Chat = data["event_chat"]
+        bot: Bot = data["bot"]
+        # authenticated = was_auth = await state.get_value("authenticated", False)
+        authenticated = False
+        if not authenticated:
+            if await student_repo.exists(telegram_id=chat.id):
+                authenticated = was_auth = True
+                self_student = await student_repo.get(telegram_id=chat.id)
+                await state.set_self_student(self_student)
+            else:
+                if isinstance(event, Message) and self.__entered_innopolis_email(event):
+                    assert (email := event.text)
+                    if await student_repo.exists(email_=email):
+                        await bot.send_message(chat.id, "Student with this email already authenticated, enter another")
+                    else:
+                        self_student = await student_repo.create(
+                            telegram_id=chat.id,
+                            first_name=chat.first_name,
+                            last_name=chat.last_name,
+                            username=chat.username,
+                            email_=email,
+                        )
+                        authenticated = become_auth = True
+                        await state.set_self_student(self_student)
+                else:
+                    log_debug("mock_auth.ask_email", chat_id=chat.id)
+                    await bot.send_message(chat.id, "Enter your innopolis email to authenticate")
+            await state.update_data({"authenticated": authenticated})
+        self._log_authenticated(chat, was_auth, become_auth)
+        if become_auth:
+            log_debug("mock_auth.success", chat_id=chat.id)
+            await bot.send_message(chat.id, "Authenticated succescfully, now use /start again")
+        return authenticated
+
+    def __entered_innopolis_email(self, event: Message) -> bool:
+        VALID_DOMAINS = ["innopolis.university", "innopolis.ru"]
+        if event.text:
+            try:
+                email = validate_email(event.text)
+                if email.domain in VALID_DOMAINS:
+                    return True
+            except EmailNotValidError:
+                return False
+        return False
+
+
+# That middleware used specifically for aiogram_dialog,
+# since it does not support usual aiogram i18n
+class DialogI18nMiddleware(BaseMiddleware):
+    def __init__(
+        self,
+        l10ns: dict[str, FluentLocalization],
+        default_lang: str,
+    ):
+        super().__init__()
+        self.l10ns = l10ns
+        self.default_lang = default_lang
+
+    async def __call__(
+        self,
+        handler: Callable[
+            [Message | CallbackQuery, dict[str, Any]],
+            Awaitable[Any],
+        ],
+        event: Message | CallbackQuery,
+        data: dict[str, Any],
+    ) -> Any:
+        lang = self.default_lang
+        # TODO: add caching of student language in FSMContext to avoid DB query on each message
+        if hasattr(event, "from_user") and event.from_user:
+            if await student_repo.exists(telegram_id=event.from_user.id):
+                lang = await student_repo.get_language(telegram_id=event.from_user.id, default=self.default_lang)
+            elif event.from_user.language_code == "ru":
+                lang = "ru"
+
+        data["dialog_i18n_l10ns"] = self.l10ns
+        data["dialog_i18n_default_lang"] = self.default_lang
+        l10n = self.l10ns.get(lang, self.l10ns[self.default_lang])
+        data[I18N_FORMAT_KEY] = l10n.format_value
+
+        return await handler(event, data)
+
+    def setup(
+        self: BaseMiddleware,
+        router: Router,
+        exclude: Set[str] | None = None,
+    ) -> BaseMiddleware:
+        """
+        Register middleware for all events in the Router
+        """
+        if exclude is None:
+            exclude = set()
+        exclude_events = {"update", *exclude}
+        for event_name, observer in router.observers.items():
+            if event_name in exclude_events:
+                continue
+            observer.outer_middleware(self)
+        return self

@@ -1,5 +1,24 @@
 $schema: http://json-schema.org/draft-07/schema#
 $defs:
+  Accounts:
+    additionalProperties: false
+    description: InNoHassle Accounts integration settings
+    properties:
+      api_url:
+        default: https://api.innohassle.ru/accounts/v0
+        description: API URL for InNoHassle Accounts
+        title: Api Url
+        type: string
+      api_jwt_token:
+        description: JWT token for accessing the Accounts API as a service
+        format: password
+        title: Api Jwt Token
+        type: string
+        writeOnly: true
+    required:
+    - api_jwt_token
+    title: Accounts
+    type: object
   BotCommand:
     additionalProperties: true
     description: 'This object represents a bot command.
@@ -28,9 +47,11 @@ additionalProperties: false
 description: Settings for the application.
 properties:
   $schema:
+    anyOf:
+    - type: string
+    - type: 'null'
     default: null
     title: $Schema
-    type: string
   environment:
     $ref: '#/$defs/Environment'
     default: development
@@ -53,28 +74,53 @@ properties:
     title: Bot Token
     type: string
     writeOnly: true
+  notification_bot_token:
+    description: Telegram notification bot token from @BotFather
+    format: password
+    title: Notification Bot Token
+    type: string
+    writeOnly: true
+  proxy_url:
+    anyOf:
+    - format: password
+      type: string
+      writeOnly: true
+    - type: 'null'
+    default: null
+    description: Proxy URL for the bot session
+    examples:
+    - protocol://user:password@host:port
+    title: Proxy Url
   bot_name:
+    anyOf:
+    - type: string
+    - type: 'null'
     default: null
     description: Desired bot name
     title: Bot Name
-    type: string
   bot_description:
+    anyOf:
+    - type: string
+    - type: 'null'
     default: null
     description: Bot description
     title: Bot Description
-    type: string
   bot_short_description:
+    anyOf:
+    - type: string
+    - type: 'null'
     default: null
     description: Bot short description
     title: Bot Short Description
-    type: string
   bot_commands:
+    anyOf:
+    - items:
+        $ref: '#/$defs/BotCommand'
+      type: array
+    - type: 'null'
     default: null
     description: Bot commands (displayed in telegram menu)
-    items:
-      $ref: '#/$defs/BotCommand'
     title: Bot Commands
-    type: array
   admins:
     default: []
     description: Admin' telegram IDs
@@ -82,7 +128,38 @@ properties:
       type: integer
     title: Admins
     type: array
+  accounts:
+    anyOf:
+    - $ref: '#/$defs/Accounts'
+    - type: 'null'
+    default: null
+    description: Use production InNoHassle Accounts API for authentication in local
+      development
+  telegram_bind_url:
+    anyOf:
+    - type: string
+    - type: 'null'
+    default: null
+    description: URL for binding Telegram to InNoHassle Account
+    title: Telegram Bind Url
+  db_url:
+    description: Connection String for SQLAlchemy
+    examples:
+    - postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/postgres
+    - postgresql+asyncpg://postgres:postgres@db:5432/postgres
+    format: password
+    title: Db Url
+    type: string
+    writeOnly: true
+  mock_auth:
+    default: false
+    description: Use MockAutoAuthMiddleware to bypass Authentication via InNoHassle
+      Accounts (for testing)
+    title: Mock Auth
+    type: boolean
 required:
 - bot_token
+- notification_bot_token
+- db_url
 title: Settings
 type: object

@@ -1,24 +1,47 @@
 from time import perf_counter
 
 from aiogram import Bot, F, types
+from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.dispatcher.event.bases import SkipHandler
+from aiogram.enums import ParseMode
 from aiogram.filters import ExceptionTypeFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
+from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage  # type: ignore
 from aiogram.types import ErrorEvent
+from aiogram.utils.i18n import I18n
+from aiogram.utils.i18n.middleware import SimpleI18nMiddleware
 from aiogram_dialog import DialogManager, setup_dialogs
 from aiogram_dialog.api.exceptions import UnknownIntent, UnknownState
 
+from src.bot import bot_container
 from src.bot.dispatcher import CustomDispatcher
+from src.bot.i18n import make_i18n_middleware
 from src.bot.logging_ import logger
-from src.bot.middlewares import LogAllEventsMiddleware
+from src.bot.middlewares import AutoAuthMiddleware
 from src.bot.utils import check_commands_equality
 from src.config import settings
+from src.db.repositories import admin_repo, db
+from src.notifications import init_handlers, notification_manager
+from src.prepare import BASE_DIR
+from src.scheduling.scheduler import scheduler
 
 _time1 = perf_counter()
 
-bot = Bot(token=settings.bot_token.get_secret_value())
+if settings.proxy_url:
+    logger.info("Using proxy")
+    session = AiohttpSession(proxy=settings.proxy_url.get_secret_value())
+else:
+    session = None
+
+bot = Bot(
+    token=settings.bot_token.get_secret_value(),
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    session=session,
+)
+bot_container.set_bot(bot)  # NOTE: needed to use bot in lower layers
+
 if settings.redis_url:
     storage = RedisStorage.from_url(
         settings.redis_url.get_secret_value(), key_builder=DefaultKeyBuilder(with_destiny=True)
@@ -27,10 +50,19 @@ if settings.redis_url:
 else:
     storage = MemoryStorage()
     logger.info("Using Memory storage")
+
 dp = CustomDispatcher(storage=storage)
-log_all_events_middleware = LogAllEventsMiddleware()
-dp.message.middleware(log_all_events_middleware)
-dp.callback_query.middleware(log_all_events_middleware)
+
+auto_auth_middleware = AutoAuthMiddleware()
+if settings.mock_auth:
+    # Using mock authentication to bypass InNoHassle Accounts (for testing)
+    from src.bot.middlewares import MockAutoAuthMiddleware
+
+    auto_auth_middleware = MockAutoAuthMiddleware()
+
+dp.message.middleware(auto_auth_middleware)
+dp.callback_query.middleware(auto_auth_middleware)
+dp.error.middleware(auto_auth_middleware)
 
 
 @dp.error(ExceptionTypeFilter(UnknownIntent), F.update.callback_query.as_("callback_query"))
@@ -46,22 +78,49 @@ async def on_unknown_state(event: ErrorEvent, state: FSMContext, dialog_manager:
     raise SkipHandler()
 
 
-from src.bot.routers.admin import router as admin_router  # noqa: E402
+from src.bot.dialogs.attendance import dialog as attendance_dialog  # noqa: E402
+from src.bot.dialogs.authentication import dialog as authentication_dialog  # noqa: E402
+from src.bot.dialogs.change_meeting import dialog as change_meeting_dialog  # noqa: E402
+from src.bot.dialogs.discipline_picker import dialog as discipline_picker_dialog  # noqa: E402
+from src.bot.dialogs.guide import dialog as guide_dialog  # noqa: E402
+from src.bot.dialogs.meetings import dialog as meetings_dialog  # noqa: E402
+from src.bot.dialogs.root import dialog as root_dialog  # noqa: E402
+from src.bot.dialogs.student_meetings import dialog as student_meetings_dialog  # noqa: E402
+from src.bot.dialogs.tutors import dialog as tutors_dialog  # noqa: E402
+from src.bot.dialogs.tutors_profile import dialog as tutors_profile_dialog  # noqa: E402
 from src.bot.routers.commands import router as commands_router  # noqa: E402
-from src.bot.routers.registration import router as registration_router  # noqa: E402
-from src.bot.routers.user import router as user_router  # noqa: E402
+from src.bot.routers.queries import router as queries_router  # noqa: E402
 
+# non dialog handlers
 dp.include_router(commands_router)  # start, help, menu commands
-dp.include_router(registration_router)  # sink for not registered users
-dp.include_router(admin_router)  # admin mode
-dp.include_router(user_router)  # user model
+dp.include_router(queries_router)  # callback handles for notification messages
+
+# separate functional dialogs
+dp.include_router(root_dialog)
+dp.include_router(authentication_dialog)
+dp.include_router(meetings_dialog)
+dp.include_router(discipline_picker_dialog)
+dp.include_router(student_meetings_dialog)
+dp.include_router(change_meeting_dialog)
+dp.include_router(tutors_dialog)
+dp.include_router(tutors_profile_dialog)
+dp.include_router(attendance_dialog)
+dp.include_router(guide_dialog)
 
 setup_dialogs(dp)
+
+# Localisation setup
+i18n = I18n(path=str(BASE_DIR / "locales"), default_locale="en", domain="messages")
+dialog_i18n_middleware = make_i18n_middleware(locales=["ru", "en"], default_locale="en")
+i18n_middleware = SimpleI18nMiddleware(i18n)
+i18n_middleware.setup(dp)
+dialog_i18n_middleware.setup(dp)
 
 
 @dp.startup()
 async def on_startup():
     logger.info("Bot starting...")
+    init_handlers()
     # Set bot name, description and commands
     scope = types.BotCommandScopeAllPrivateChats()
     existing_bot = {
@@ -86,10 +145,48 @@ async def on_startup():
         logger.info(f"Bot commands updated. Success: {_}.")
     logger.info(f"Bot started https://t.me/{existing_bot['username']} in {perf_counter() - _time1:.2f} sec.")
 
+    # Set bots usernames in notification_manager
+    await notification_manager.load_notification_bot_username()
+    notification_manager.set_control_bot_username(existing_bot["username"])
+
+    logger.info("Starting Scheduler...")
+    scheduler.start()
+    logger.info("Starting Notification Bot Polling...")
+    await notification_manager.start_polling()
+    logger.info("Sending startup notification...")
+    await notification_manager.send_bot_started()
+    logger.info("Syncing admins with config...")
+    added, removed = await admin_repo.sync_with_config(settings.admins)
+    logger.info(f"Admins synced, added: {added}, removed: {removed}")
+
 
 @dp.shutdown()
 async def on_shutdown():
     logger.info("Bot shutting down...")
+    logger.info("Stopping Notification Bot Polling...")
+    try:
+        await notification_manager.stop_polling()
+    except Exception as e:
+        logger.warning(f"Failed to stop notification polling during shutdown: {e}")
+
+    logger.info("Sending shutdown notification...")
+    try:
+        await notification_manager.send_bot_shutdown()
+    except Exception as e:
+        # DB or network may already be unavailable during SIGINT/SIGTERM shutdown.
+        logger.warning(f"Failed to send shutdown notification: {e}")
+
+    logger.info("Shutting down Scheduler...")
+    try:
+        scheduler.shutdown()
+    except Exception as e:
+        logger.warning(f"Failed to shutdown scheduler: {e}")
+
+    logger.info("Disposing Repository...")
+    try:
+        await db.dispose()
+    except Exception as e:
+        logger.warning(f"Failed to dispose repository: {e}")
 
 
 async def main():
@@ -101,3 +198,4 @@ async def main():
     finally:
         await dp.storage.close()
         await bot.session.close()
+        await notification_manager._bot.session.close()

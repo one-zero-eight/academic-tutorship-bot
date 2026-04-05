@@ -9,3 +9,11 @@ __pycache__
 .env
 settings.yaml
 .python-version
+*.sqlite
+
+### Other ###
+.DS_Store
+try/
+*.drawio.bkp
+.logs/
+.VSCodeCounter
