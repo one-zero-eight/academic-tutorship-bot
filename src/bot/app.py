@@ -163,14 +163,30 @@ async def on_startup():
 @dp.shutdown()
 async def on_shutdown():
     logger.info("Bot shutting down...")
-    logger.info("Sending shutdown notification...")
-    await notification_manager.send_bot_shutdown()
     logger.info("Stopping Notification Bot Polling...")
-    await notification_manager.stop_polling()
+    try:
+        await notification_manager.stop_polling()
+    except Exception as e:
+        logger.warning(f"Failed to stop notification polling during shutdown: {e}")
+
+    logger.info("Sending shutdown notification...")
+    try:
+        await notification_manager.send_bot_shutdown()
+    except Exception as e:
+        # DB or network may already be unavailable during SIGINT/SIGTERM shutdown.
+        logger.warning(f"Failed to send shutdown notification: {e}")
+
     logger.info("Shutting down Scheduler...")
-    scheduler.shutdown()
+    try:
+        scheduler.shutdown()
+    except Exception as e:
+        logger.warning(f"Failed to shutdown scheduler: {e}")
+
     logger.info("Disposing Repository...")
-    await db.dispose()
+    try:
+        await db.dispose()
+    except Exception as e:
+        logger.warning(f"Failed to dispose repository: {e}")
 
 
 async def main():

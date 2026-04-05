@@ -10,6 +10,7 @@ services:
       dockerfile: Dockerfile
     restart: no
     depends_on:
+      - db
       - redis # Wait for the database to be ready before starting the application
     volumes:
       - "./settings.yaml:/app/settings.yaml:ro" # Read-only settings file
