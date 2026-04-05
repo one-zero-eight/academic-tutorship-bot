@@ -17,12 +17,24 @@ class RelativePathFilter(logging.Filter):
 with open("logging.yaml") as f:
     config = yaml.safe_load(f)
 
-for handler in config.get("handlers", {}).values():
+disabled_handlers: set[str] = set()
+for handler_name, handler in config.get("handlers", {}).items():
     filename = handler.get("filename")
     if filename:
-        os.makedirs(os.path.dirname(filename) or ".", exist_ok=True)
+        try:
+            os.makedirs(os.path.dirname(filename) or ".", exist_ok=True)
+        except PermissionError:
+            disabled_handlers.add(handler_name)
 
-    logging.config.dictConfig(config)
+if disabled_handlers:
+    config["handlers"] = {
+        name: handler for name, handler in config.get("handlers", {}).items() if name not in disabled_handlers
+    }
+    for logger_config in config.get("loggers", {}).values():
+        if "handlers" in logger_config:
+            logger_config["handlers"] = [h for h in logger_config["handlers"] if h not in disabled_handlers]
+
+logging.config.dictConfig(config)
 
 logger = logging.getLogger("src.bot")
 logger.addFilter(RelativePathFilter())

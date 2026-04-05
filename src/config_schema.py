@@ -38,6 +38,8 @@ class Settings(SettingBaseModel):
     "Telegram bot token from @BotFather"
     notification_bot_token: SecretStr
     "Telegram notification bot token from @BotFather"
+    proxy_url: SecretStr | None = Field(None, examples=["protocol://user:password@host:port"])
+    "Proxy URL for the bot session"
     bot_name: str | None = None
     "Desired bot name"
     bot_description: str | None = None

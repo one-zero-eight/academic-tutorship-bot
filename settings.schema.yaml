@@ -80,6 +80,17 @@ properties:
     title: Notification Bot Token
     type: string
     writeOnly: true
+  proxy_url:
+    anyOf:
+    - format: password
+      type: string
+      writeOnly: true
+    - type: 'null'
+    default: null
+    description: Proxy URL for the bot session
+    examples:
+    - protocol://user:password@host:port
+    title: Proxy Url
   bot_name:
     anyOf:
     - type: string

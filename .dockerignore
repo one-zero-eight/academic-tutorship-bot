@@ -4,6 +4,7 @@
 # Except code
 !/src/
 !/deploy/
+!/locales/
 !/pyproject.toml
 !/uv.lock
 !logging.yaml

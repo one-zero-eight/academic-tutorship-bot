@@ -2,6 +2,7 @@ from time import perf_counter
 
 from aiogram import Bot, F, types
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.dispatcher.event.bases import SkipHandler
 from aiogram.enums import ParseMode
 from aiogram.filters import ExceptionTypeFilter
@@ -23,11 +24,22 @@ from src.bot.utils import check_commands_equality
 from src.config import settings
 from src.db.repositories import admin_repo, db
 from src.notifications import init_handlers, notification_manager
+from src.prepare import BASE_DIR
 from src.scheduling.scheduler import scheduler
 
 _time1 = perf_counter()
 
-bot = Bot(token=settings.bot_token.get_secret_value(), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+if settings.proxy_url:
+    logger.info("Using proxy")
+    session = AiohttpSession(proxy=settings.proxy_url.get_secret_value())
+else:
+    session = None
+
+bot = Bot(
+    token=settings.bot_token.get_secret_value(),
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    session=session,
+)
 bot_container.set_bot(bot)  # NOTE: needed to use bot in lower layers
 
 if settings.redis_url:
@@ -98,7 +110,7 @@ dp.include_router(guide_dialog)
 setup_dialogs(dp)
 
 # Localisation setup
-i18n = I18n(path="locales", default_locale="en", domain="messages")
+i18n = I18n(path=str(BASE_DIR / "locales"), default_locale="en", domain="messages")
 dialog_i18n_middleware = make_i18n_middleware(locales=["ru", "en"], default_locale="en")
 i18n_middleware = SimpleI18nMiddleware(i18n)
 i18n_middleware.setup(dp)

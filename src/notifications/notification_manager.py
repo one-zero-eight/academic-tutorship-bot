@@ -43,17 +43,22 @@ class NotificationManager:
     async def start_polling(self):
         """Starts the unblocking polling task for the notification bot. Should be called once during startup."""
         await self._bot.delete_webhook(drop_pending_updates=True)
-        self._polling_task = asyncio.create_task(self._dispatcher.start_polling(self._bot))
+        # This is a secondary polling task; signal handling must stay in the main bot dispatcher.
+        self._polling_task = asyncio.create_task(
+            self._dispatcher.start_polling(self._bot, handle_signals=False, close_bot_session=False)
+        )
 
     async def stop_polling(self):
         """Stops the polling task for the notification bot. Should be called during shutdown."""
         if not self._polling_task:
-            raise RuntimeError("Polling task is not running")
+            return
         self._polling_task.cancel()
         try:
             await self._polling_task
         except asyncio.CancelledError:
             pass
+        finally:
+            self._polling_task = None
 
     async def send_bot_started(self):
         text = _txt("NOTIF_BOT_STARTED", link=self.gen_control_bot_link())

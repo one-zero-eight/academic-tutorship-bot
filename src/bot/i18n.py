@@ -9,6 +9,9 @@ from fluent.runtime import FluentLocalization, FluentResourceLoader
 
 from src.bot.constants import I18N_FORMAT_KEY
 from src.bot.middlewares import DialogI18nMiddleware
+from src.prepare import BASE_DIR
+
+LOCALES_DIR = BASE_DIR / "locales"
 
 
 class Values(Protocol):
@@ -58,8 +61,7 @@ def normalize_l10n_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
 def make_i18n_middleware(locales: list[str], default_locale: str = "en"):
     loader = FluentResourceLoader(
         os.path.join(
-            os.getcwd(),
-            "locales",
+            str(LOCALES_DIR),
             "{locale}",
             "LC_MESSAGES",
         )
@@ -79,8 +81,7 @@ LOCALES = ["en", "ru"]
 DEFAULT_LOCALE = "en"
 DEFAULT_LOADER = FluentResourceLoader(
     os.path.join(
-        os.getcwd(),
-        "locales",
+        str(LOCALES_DIR),
         "{locale}",
         "LC_MESSAGES",
     )

@@ -1,5 +1,5 @@
 [project]
-name = "aiogram-template"
+name = "academic-tutorship-bot"
 version = "0.1.0"
 description = ""
 authors = [{ name = "one-zero-eight" }]
@@ -26,12 +26,13 @@ dependencies = [
     "ruff>=0.8.2",
     "httpx>=0.28.1",
     "pytest>=9.0.0",
-    "beanie>=2.0.1",
     "authlib>=1.6.6",
     "aiosqlite>=0.22.0",
     "greenlet>=3.2.4",
     "apscheduler>=3.11.2",
     "pytest-asyncio>=1.3.0",
+    "aiohttp-socks>=0.11.0",
+    "beanie>=2.1.0",
 ]
 
 
