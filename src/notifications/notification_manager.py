@@ -102,6 +102,20 @@ class NotificationManager:
             # NOTE: students would only care if meeting already announced
             await self._send_students_who_interested(meeting, exclude=sent, text=students_text)
 
+    async def send_meeting_updated(self, meeting: Meeting, attr: Literal["datetime_", "room"]):
+        """Backward-compatible single-field meeting update notification."""
+        text_id = {
+            "datetime_": "NOTIF_MEETING_UPDATED_DATETIME",
+            "room": "NOTIF_MEETING_UPDATED_ROOM",
+        }[attr]
+        data = {**meeting.model_dump(by_alias=True), "link": self.gen_meeting_link(meeting.id)}
+        text = _txt(text_id, **data)
+        sent = await self._send_admins(text=text)
+        if meeting.tutor_id:
+            sent.extend(await self._send_ids(meeting.tutor_id, exclude=sent, text=text))
+        if meeting.status == MeetingStatus.ANNOUNCED:
+            await self._send_students_who_interested(meeting, exclude=sent, text=text)
+
     async def send_meeting_approve_request(self, meeting: Meeting, tutor: Tutor):
         """Sends approval request to the head of AT with approve/discard buttons"""
         meeting_data = meeting.model_dump(by_alias=True)
@@ -268,6 +282,15 @@ class NotificationManager:
         sent.extend(await self._send_ids(meeting.tutor_id, text=approved_text, exclude=sent))
         sent.extend(await self._send_students_who_interested(meeting, text=info_text))
 
+    async def send_meeting_update_rightaway(self, meeting: Meeting, meeting_update: MeetingUpdate):
+        """Sends meeting updateto tutor and update notification to students who are interested"""
+        info_text = self._format_meeting_update_text("NOTIF_MEETING_UPDATE_INFO", meeting, meeting_update)
+        assert meeting.tutor_id
+        sent = []
+        sent.extend(await self._send_admins(text=info_text))
+        sent.extend(await self._send_ids(meeting.tutor_id, text=info_text, exclude=sent))
+        sent.extend(await self._send_students_who_interested(meeting, text=info_text, exclude=sent))
+
     async def send_meeting_update_discarded(self, meeting: Meeting, meeting_update: MeetingUpdate, reason: str):
         """Sends meeting update discarded to tutor and admins"""
         text = self._format_meeting_update_text("NOTIF_MEETING_UPDATE_DISCARDED", meeting, meeting_update)
@@ -286,8 +309,16 @@ class NotificationManager:
         reply_markup: ReplyMarkup = None,
     ) -> list[int]:
         """Sends a message to all students who are interested in the meeting, excluding the provided telegram ids."""
-        telegram_ids = await meeting_repo.get_interested_student_ids(meeting.id)
-        return await self._send_ids(telegram_ids, exclude=exclude, text=text, reply_markup=reply_markup)
+        try:
+            student_ids = await meeting_repo.get_interested_student_ids(meeting.id)
+        except Exception as e:
+            log_error(
+                "notification_manager.send.interested_students_lookup_failed",
+                meeting_id=meeting.id,
+                reason=str(e),
+            )
+            return []
+        return await self._send_ids(student_ids, exclude=exclude, text=text, reply_markup=reply_markup)
 
     async def _send_admins(self, *, text: TextIDForm | list[TextIDForm], reply_markup: ReplyMarkup = None) -> list[int]:
         """Sends a message to all admins, returns the list of telegram ids the message was sent to."""
@@ -308,6 +339,8 @@ class NotificationManager:
         """
         if isinstance(student_ids, int):
             student_ids = [student_ids]
+        if not student_ids:
+            return []
         telegram_ids = await student_repo.get_telegram_ids(student_ids)
         return await self._send_telegram_ids(telegram_ids, exclude=exclude, text=text, reply_markup=reply_markup)
 
@@ -374,6 +407,10 @@ class NotificationManager:
             callback_data=f"discard_{meeting_id}",
         )
         return InlineKeyboardMarkup(inline_keyboard=[[approve_button, discard_button]])
+
+    def gen_approve_discard_request_reply_markup(self, meeting_id: int, lang: str = "en"):
+        """Backward-compatible alias kept for older call sites and tests."""
+        return self.gen_approve_discard_meeting_request_reply_markup(meeting_id, lang)
 
     def gen_confirm_approve_meeting_reply_markup(self, meeting_id: int, lang: str = "en"):
         cancel_approve = InlineKeyboardButton(

@@ -19,7 +19,7 @@ GUIDE_LANGUAGE_BTN_RU = Русский 🇷🇺
 
 
 GUIDE_INIT_TEXT =
-    Hello student!
+    Hello, student!
     My name is ArThur, I am the bot of Academic Tutorship (AT for short).
 
     The system helps to keep track of meetings (recaps, consultations) on various university disciplines of your choice.
@@ -36,7 +36,7 @@ GUIDE_NOTIFICATIONS_TEXT =
     Please, activate it 👇 to continue:
     🔗 <a href="{$link}"><i>Academic Notifications Bot</i></a>
 
-    (you may later block notifications in ⚙️ Settings)
+    (you may later block notifications in ⚙️ <b>Settings</b>)
 GUIDE_BTN_NEXT = Next ➡️
 GUIDE_BTN_BACK = ⬅️ Back
 GUIDE_BTN_SKIP = Skip ➡️

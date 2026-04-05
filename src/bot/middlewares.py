@@ -152,6 +152,8 @@ class AutoAuthMiddleware(LogAllEventsMiddleware):
             await state.update_data({"self_tutor": self_tutor.model_dump()})
         else:
             status = UserStatus.student
+            # Keep tutor flag in FSM state synchronized with DB to avoid stale permissions.
+            await state.update_data({"self_tutor": None})
         if await student_repo.is_admin(chat.id):
             status = UserStatus.admin
         await state.update_data({"status": status})

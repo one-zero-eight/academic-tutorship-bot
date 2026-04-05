@@ -86,7 +86,7 @@ class Meeting(BaseModel):
     id: int
     title: str
     discipline: Discipline
-    creator_id: int
+    creator_id: int | None
     created_at: datetime = Field(default_factory=datetime.now)
     status: MeetingStatus = MeetingStatus.CREATED
     duration: int = 5400

@@ -301,8 +301,10 @@ async def on_date_room_save_rightaway(query: CallbackQuery, _, manager: DialogMa
             setattr(meeting, attr, value)
         await meeting_repo.update(meeting, attrs=["datetime", "room"])
         if meeting.status >= MeetingStatus.ANNOUNCED:
-            # TODO: Add notification to students about changes
-            ...
+            meeting_update["datetime"] = meeting_update.get("datetime_") or meeting_update.get("datetime")
+            del meeting_update["datetime_"]
+            meeting_update_obj = MeetingUpdate(id=meeting.id, **meeting_update)
+            await notification_manager.send_meeting_update_rightaway(meeting, meeting_update_obj)
     await manager.state.update_data({"meeting_update": None})
 
 

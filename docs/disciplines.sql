@@ -13,7 +13,7 @@ INSERT INTO discipline (language, year, name) VALUES
 ('EN', 2, 'Human-AI Interaction Design'),
 ('EN', 2, 'Data Wrangling and Visualization'),
 ('EN', 2, 'Introduction to Machine Learning'),
-('EN', 2, 'Networks ='),
+('EN', 2, 'Networks'),
 ('EN', 2, 'Introduction to Game Development'),
 ('EN', 2, 'Fundamental of Robotics'),
 ('EN', 2, 'Databases'),

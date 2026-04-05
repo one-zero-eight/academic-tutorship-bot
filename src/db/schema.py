@@ -108,12 +108,12 @@ meeting = Table(
     Column("title", String(256), nullable=False),
     Column("discipline_id", ForeignKey("discipline.id", ondelete="SET NULL"), nullable=False),
     Column("created_datetime", DateTime, nullable=False, default=datetime.datetime.now),
-    Column("creator_id", Integer, ForeignKey("student.id", ondelete="SET NULL"), nullable=False),
+    Column("creator_id", Integer, ForeignKey("student.id", ondelete="SET NULL"), nullable=True),
     Column("duration", Integer, nullable=False, default=5400),
     Column("description", Text, nullable=True),
     Column("room", String(32), nullable=True),
     Column("datetime", DateTime, nullable=True),
-    Column("tutor_id", Integer, ForeignKey("tutor.id"), nullable=True),
+    Column("tutor_id", Integer, ForeignKey("tutor.id", ondelete="SET NULL"), nullable=True),
 )
 
 

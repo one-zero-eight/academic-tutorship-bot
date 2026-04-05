@@ -21,10 +21,6 @@ omlot = open_meetings_list_of_type
 
 type_ww: Window = Window(
     I18N("MEETINGS_TYPE_TITLE"),
-    Row(
-        Cancel(I18N("COMMON_BTN_BACK")),
-        SwitchTo(I18N("MEETINGS_BTN_CREATE_NEW"), id="create_meeting", state=MeetingStates.create),
-    ),
     Button(
         I18N("MEETINGS_BTN_SEE_CREATED"), id="a_meetings_created", on_click=omlot("created"), when="can_see_created"
     ),
@@ -41,6 +37,10 @@ type_ww: Window = Window(
         when="can_see_announced",
     ),
     Button(I18N("MEETINGS_BTN_SEE_CLOSED"), id="a_meetings_closed", on_click=omlot("closed"), when="can_see_closed"),
+    Row(
+        Cancel(I18N("COMMON_BTN_BACK")),
+        SwitchTo(I18N("MEETINGS_BTN_CREATE_NEW"), id="create_meeting", state=MeetingStates.create),
+    ),
     state=MeetingStates.type,
     getter=meetings_type_getter,
 )

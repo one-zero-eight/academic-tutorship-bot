@@ -1,5 +1,7 @@
 import asyncio
 from logging.config import fileConfig
+from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
@@ -18,14 +20,40 @@ if config.config_file_name is not None:
 
 # Read settings YAML file
 import os  # noqa: E402
-from pathlib import Path  # noqa: E402
 
 from yaml import safe_load  # noqa: E402
 
-app_settings_path = os.getenv("SETTINGS_PATH", "settings.yaml")
-app_settings = safe_load(Path(app_settings_path).read_text())
-# get database uri from settings.yaml
-config.set_main_option("sqlalchemy.url", app_settings["db_url"])
+
+def _is_inside_docker() -> bool:
+    return Path("/.dockerenv").exists()
+
+
+def _replace_hostname_with_localhost(url: str) -> str:
+    parts = urlsplit(url)
+    if not parts.netloc:
+        return url
+    userinfo = ""
+    host_port = parts.netloc
+    if "@" in parts.netloc:
+        userinfo, host_port = parts.netloc.rsplit("@", 1)
+    if host_port == "db" or host_port.startswith("db:"):
+        host_port = host_port.replace("db", "localhost", 1)
+        netloc = f"{userinfo}@{host_port}" if userinfo else host_port
+        return urlunsplit((parts.scheme, netloc, parts.path, parts.query, parts.fragment))
+    return url
+
+
+app_settings_path = Path(os.getenv("SETTINGS_PATH", "settings.yaml"))
+app_settings = safe_load(app_settings_path.read_text())
+
+# Prefer explicit env override for migrations, then fallback to app settings.
+db_url = os.getenv("ALEMBIC_DB_URL") or os.getenv("DATABASE_URL") or app_settings["db_url"]
+
+# Allow local migrations when settings use docker-compose hostname "db".
+if not _is_inside_docker():
+    db_url = _replace_hostname_with_localhost(db_url)
+
+config.set_main_option("sqlalchemy.url", db_url)
 
 # add your model's MetaData object here
 # for 'autogenerate' support

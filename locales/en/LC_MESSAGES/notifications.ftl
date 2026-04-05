@@ -2,7 +2,7 @@ NOTIF_BOT_STARTED = <a href="{$link}">Academic Tutorship Bot</a> has been starte
 NOTIF_BOT_SHUTDOWN = <a href="{$link}">Academic Tutorship Bot</a> has been shut down 💤
 
 NOTIF_RECEIVE_NOTIFICATION_ENABLED =
-    Thank you for enabling notifications 🎉
+    Notifications enabled 🎉
 
     <a href="{$link}">Go back to the main bot</a>
 

@@ -6,11 +6,14 @@ from src.notifications import notification_manager
 
 
 async def remove_tutor(tutor: Tutor):
-    meetings = await meeting_repo.get_list((MeetingStatus.CREATED, MeetingStatus.CONDUCTING), tutor_id=tutor.id)
+    meetings = await meeting_repo.get_list((MeetingStatus.ANNOUNCED, MeetingStatus.CONDUCTING), tutor_id=tutor.id)
     if len(meetings) > 0:
         log_warning("tutor.logic.remove.blocked_assigned", tutor_id=tutor.id, meetings_count=len(meetings))
         raise TutorStillAssigned()
     try:
+        created_meetings = await meeting_repo.get_list(MeetingStatus.CREATED, tutor_id=tutor.id)
+        for m in created_meetings:
+            await meeting_repo.remove(m.id)
         await tutor_repo.remove(tutor)
         await notification_manager.send_tutor_dismissed(tutor)
     except Exception as e:
