@@ -36,6 +36,7 @@ def _extract_start_payload(message: types.Message) -> str | None:
 async def on_start(
     message: types.Message, state: FSMContext, dialog_manager: DialogManager, authenticated: bool, status: US
 ):
+    await message.delete()
     payload = _extract_start_payload(message)
     log_info(
         "user.start.requested",
