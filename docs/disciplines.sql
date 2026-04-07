@@ -9,6 +9,7 @@ INSERT INTO discipline (language, year, name) VALUES
 ('EN', 1, 'Software Engineering Toolkit'),
 
 ('EN', 2, 'System and Network Administration'),
+('EN', 2, 'Distributed and Network Programming'),
 ('EN', 2, 'Theoretical Mechanics'),
 ('EN', 2, 'Human-AI Interaction Design'),
 ('EN', 2, 'Data Wrangling and Visualization'),
@@ -49,7 +50,7 @@ INSERT INTO discipline (language, year, name) VALUES
 ('RU', 1, 'Дискретная математика'),
 
 ('RU', 2, 'Теоретическая механика'),
-('RU', 2, 'Теория случайный процессор'),
+('RU', 2, 'Теория случайных процессов'),
 ('RU', 2, 'Вычислительная математика'),
 ('RU', 2, 'Программирование на C++'),
 ('RU', 2, 'Современные численные методы оптимизации в обучении'),
