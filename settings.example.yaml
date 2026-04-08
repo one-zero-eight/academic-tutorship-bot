@@ -1,15 +1,25 @@
 # yaml-language-server: $schema=settings.schema.yaml
 $schema: "./settings.schema.yaml"
 # ---------- Application settings ----- #
-bot_token: null # Telegram bot token from @BotFather
-notification_bot_token: null # Telegram notification bot token from @BotFather
-bot_name: "My Telegram Bot"
+bot_name: "Academic Tutorship Bot"
 bot_commands:
   - command: "start"
     description: "Start the bot"
-  - command: "help"
-    description: "Get help"
-  - command: "menu"
-    description: "Show the menu"
-redis_url: null # Redis URL, "redis://redis:6379/0" inside the docker network
+
+bot_token: null  # Telegram bot token from @BotFather
+notification_bot_token: null  # Telegram notification bot token from @BotFather
+
+redis_url: null  # Redis URL, "redis://redis:6379/0" inside the docker network
 db_url: postgresql+asyncpg://postgres:postgres@db:5432/postgres
+
+mock_auth: false  # By settings this `true` you bypass InNoHassle Authentication for simpler debugging
+accounts:
+  api_url: "https://api.innohassle.ru/accounts/v0"
+  api_jwt_token: null  # JWT token for accounts API (if no mock_auth)
+telegram_bind_url: "https://innohassle.ru/account/connect-telegram"
+
+proxy_url: null  # Optional proxy URL for the bot session, e.g. "socks5://user:password@host:port"
+
+admins: [
+  000000000, # Telegram user ID
+]

@@ -1,4 +1,4 @@
-# Aiogram Template
+# Academic Tutorship Bot
 
 ## Table of contents
 
@@ -7,7 +7,7 @@ contents [by default](https://github.blog/changelog/2021-04-13-table-of-contents
 
 ## About
 
-This is the Telegram Bot.
+This is the Telegram Bot for Academic Tutorship of Innopolis University.
 
 ### Technologies
 
@@ -26,14 +26,18 @@ This is the Telegram Bot.
    ```bash
    uv sync
    ```
-3. Start development server:
+3. Copy the `settings.example.yaml` to `settings.yaml`, edit as you need
+   ```bash
+   cp settings.example.yaml settings.yaml
+   ```
+4. Start development server:
    ```bash
    uv run -m src.bot
    ```
    > Follow provided instructions if needed
 
 > [!TIP]
-> Edit `settings.yaml` according to your needs, you can view schema in
+> You can view `settings.yaml` schema in
 > [config_schema.py](src/config_schema.py) and in [settings.schema.yaml](settings.schema.yaml)
 
 **Set up PyCharm integrations**
