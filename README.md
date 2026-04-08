@@ -73,6 +73,6 @@ We use Docker with Docker Compose plugin to run the service on servers.
 
 ## Pre-commit hooks
 
-1. Run `uv run pre-commit autoupdate`
+1. Run `uv run prek auto-update`
 
 Also, Dependabot will help you to keep your dependencies up-to-date, see [dependabot.yml](.github/dependabot.yml).
