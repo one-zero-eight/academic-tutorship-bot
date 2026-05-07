@@ -1,3 +1,4 @@
+from contextlib import AbstractAsyncContextManager
 from typing import Any
 
 from aiogram.fsm.state import State
@@ -28,7 +29,7 @@ class DialogManagerWrapper(DialogManager):
     async def switch_to(self, state: State, show_mode: ShowMode | None = None) -> None:
         return await self.original.switch_to(state, show_mode)
 
-    async def update(self, data: dict, show_mode: ShowMode | None = None) -> None:
+    async def update(self, data: dict | None = None, show_mode: ShowMode | None = None) -> None:
         return await self.original.update(data, show_mode)
 
     def bg(
@@ -41,6 +42,9 @@ class DialogManagerWrapper(DialogManager):
         load: bool = False,
     ) -> BaseDialogManager:
         return self.original.bg(user_id, chat_id, stack_id, thread_id, business_connection_id, load)
+
+    def fg(self) -> AbstractAsyncContextManager["DialogManager"]:
+        return self.original.fg()
 
     @property
     def event(self) -> ChatEvent:
