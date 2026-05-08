@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import IntEnum, StrEnum
+from typing import Any
 
 from pydantic import BaseModel, EmailStr, Field, computed_field
 
@@ -95,6 +96,18 @@ class Meeting(BaseModel):
     datetime_: datetime | None = Field(None, alias="datetime")
     tutor_id: int | None = None
 
+    def update_from_dict(self, meeting_update: dict[str, Any]):
+        """Update Meeting using meeting_update dictionary
+
+        Handle "datetime", "datetime_" key mismatch
+        """
+        for orig_key, orig_value in meeting_update.items():
+            key, value = (orig_key, orig_value)
+            if key in ["datetime", "datetime_"]:
+                key = "datetime_"
+                value = datetime.fromisoformat(value) if value else None
+            setattr(self, key, value)
+
     def assign_tutor(self, tutor: "Tutor"):
         self.tutor_id = tutor.id
 
@@ -183,3 +196,14 @@ class MeetingUpdate(BaseModel):
     id: int
     room: str | None = None
     datetime_: datetime | None = Field(None, alias="datetime")
+
+    @staticmethod
+    def from_dict(meeting_id: int, meeting_update: dict[str, Any]) -> "MeetingUpdate":
+        """Construct MeetingUpdate object from meeting_id and meeting_update dict
+
+        Handle "datetime", "datetime_" key mismatch
+        """
+        meeting_update["datetime"] = meeting_update.get("datetime_") or meeting_update.get("datetime")
+        if "datetime_" in meeting_update:
+            del meeting_update["datetime_"]
+        return MeetingUpdate(id=meeting_id, **meeting_update)

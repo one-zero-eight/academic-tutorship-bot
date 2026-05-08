@@ -293,17 +293,10 @@ async def on_date_room_save_rightaway(query: CallbackQuery, _, manager: DialogMa
     manager = extend_dialog(manager)
     async with manager.state.sync_meeting() as meeting:
         meeting_update = await manager.state.get_value("meeting_update", {})
-        for key in meeting_update:
-            attr, value = (key, meeting_update[key])
-            if attr in ["datetime", "datetime_"]:
-                attr = "datetime_"
-                value = datetime.fromisoformat(value) if value else None
-            setattr(meeting, attr, value)
+        meeting.update_from_dict(meeting_update)
         await meeting_repo.update(meeting, attrs=["datetime", "room"])
         if meeting.status >= MeetingStatus.ANNOUNCED:
-            meeting_update["datetime"] = meeting_update.get("datetime_") or meeting_update.get("datetime")
-            del meeting_update["datetime_"]
-            meeting_update_obj = MeetingUpdate(id=meeting.id, **meeting_update)
+            meeting_update_obj = MeetingUpdate.from_dict(meeting.id, meeting_update)
             await notification_manager.send_meeting_update_rightaway(meeting, meeting_update_obj)
     await manager.state.update_data({"meeting_update": None})
 
