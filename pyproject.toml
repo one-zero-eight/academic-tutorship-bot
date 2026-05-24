@@ -33,6 +33,8 @@ dependencies = [
     "aiohttp-socks>=0.11.0",
     "beanie>=2.1.0",
     "prek>=0.3.13",
+    "pandas>=3.0.3",
+    "xlsxwriter>=3.2.9",
 ]
 
 

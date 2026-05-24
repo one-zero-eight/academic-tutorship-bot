@@ -16,7 +16,9 @@ from src.bot.filters import EMAIL_ENTERED_FILTER, USER_AUTHENTICATED_FILTER, Sta
 from src.bot.logging_ import log_error, log_info, log_warning
 from src.config import settings
 from src.db.repositories import meeting_repo, tutor_repo
+from src.domain.models import MeetingStatus as MS
 from src.domain.models import UserStatus as US
+from src.utils import excel
 
 router = Router(name="commands")
 
@@ -145,3 +147,15 @@ async def test_accounts_api(message: types.Message, dialog_manager: DialogManage
         await message.answer("You're not found :(")
     else:
         await message.answer(f"Your inh id: {inh_user.id}")
+
+
+@router.message(Command("excel"), StatusFilter(US.admin))
+async def get_excell_data(message: types.Message, dialog_manager: DialogManager):
+    await message.delete()  # declutter the dialog
+    log_info("command.excel.request", user_id=message.chat.id)
+    all_tutors = await tutor_repo.get_list()
+    all_meetings = await meeting_repo.get_list(status_range=(MS.FINISHED, MS.CLOSED))
+    spreadsheet = excel.create_minimal_spreadsheet(all_tutors, all_meetings)
+    input_file = types.BufferedInputFile(spreadsheet.getvalue(), "minimal_data.xlsx")
+    await message.answer_document(input_file)
+    log_info("command.excel.success", user_id=message.chat.id)
