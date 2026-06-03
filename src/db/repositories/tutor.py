@@ -1,7 +1,7 @@
 from sqlalchemy import Row, delete, exists, insert, or_, select, update
 
-from src.db.schema import discipline, photo, student, tutor, tutor_discipline
-from src.domain.models import Discipline, Photo, Tutor
+from src.db.schema import discipline, email, photo, student, tutor, tutor_discipline
+from src.domain.models import Discipline, Photo, Tutor, TutorWithEmail
 
 from .sql import Repository
 
@@ -102,6 +102,21 @@ class TutorRepository(Repository):
             tutors = [self._row_to_tutor(r) for r in result.all()]
         return tutors
 
+    async def get_list_with_emails(self, *, with_profiles_only: bool = False) -> list[TutorWithEmail]:
+        stmt = select(
+            student, tutor, photo.c.telegram_file_id, photo.c.file_path, email.c.value.label("email")
+        ).select_from(
+            student.join(tutor, tutor.c.id == student.c.id)
+            .join(photo, tutor.c.photo_id == photo.c.id, isouter=True)
+            .join(email, tutor.c.id == email.c.id)
+        )
+        if with_profiles_only:
+            stmt = stmt.where(tutor.c.profile_name.is_not(None))
+        async with self._db.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            tutors = [self._row_to_tutor_with_email(r) for r in result.all()]
+        return tutors
+
     async def remove(self, tutor_: Tutor):
         stmt = delete(tutor).where(tutor.c.id == tutor_.id)
         async with self._db.engine.begin() as conn:
@@ -110,6 +125,23 @@ class TutorRepository(Repository):
     def _row_to_tutor(self, row: Row) -> Tutor:
         return Tutor(
             id=row.id,
+            telegram_id=row.telegram_id,
+            first_name=row.first_name,
+            last_name=row.last_name,
+            username=row.username,
+            profile_name=row.profile_name,
+            about=row.about,
+            photo=(
+                Photo(id=row.photo_id, telegram_file_id=row.telegram_file_id, file_path=row.file_path)
+                if row.photo_id
+                else None
+            ),
+        )
+
+    def _row_to_tutor_with_email(self, row: Row) -> TutorWithEmail:
+        return TutorWithEmail(
+            id=row.id,
+            email=row.email,
             telegram_id=row.telegram_id,
             first_name=row.first_name,
             last_name=row.last_name,

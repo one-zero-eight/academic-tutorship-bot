@@ -83,6 +83,24 @@ class Tutor(BaseModel):
         return " ".join(part for part in name_parts if part)
 
 
+class TutorWithEmail(BaseModel):
+    id: int
+    telegram_id: int
+    email: str
+    username: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    profile_name: str | None = None
+    about: str | None = None
+    photo: Photo | None = None
+
+    @computed_field
+    @property
+    def full_name(self) -> str:
+        name_parts = [self.first_name, self.last_name]
+        return " ".join(part for part in name_parts if part)
+
+
 class Meeting(BaseModel):
     id: int
     title: str

@@ -1,3 +1,5 @@
+import datetime
+
 from aiogram import Router, types
 from aiogram.filters import Command, CommandStart, ExceptionTypeFilter
 from aiogram.fsm.context import FSMContext
@@ -149,13 +151,48 @@ async def test_accounts_api(message: types.Message, dialog_manager: DialogManage
         await message.answer(f"Your inh id: {inh_user.id}")
 
 
-@router.message(Command("excel"), StatusFilter(US.admin))
-async def get_excell_data(message: types.Message, dialog_manager: DialogManager):
-    await message.delete()  # declutter the dialog
-    log_info("command.excel.request", user_id=message.chat.id)
+@router.message(Command("excel_old"), StatusFilter(US.admin))
+async def get_excel_data(message: types.Message, dialog_manager: DialogManager):
+    log_info("command.excel_old.request", user_id=message.chat.id)
+    # await message.delete()  # declutter the dialog
     all_tutors = await tutor_repo.get_list()
-    all_meetings = await meeting_repo.get_list(status_range=(MS.FINISHED, MS.CLOSED))
+    all_meetings = await meeting_repo.get_list(status_range=MS.CLOSED)
     spreadsheet = excel.create_minimal_spreadsheet(all_tutors, all_meetings)
     input_file = types.BufferedInputFile(spreadsheet.getvalue(), "minimal_data.xlsx")
+    await message.answer_document(input_file)
+    log_info("command.excel_old.success", user_id=message.chat.id)
+
+
+@router.message(Command("excel"), StatusFilter(US.admin))
+async def get_full_excel_data(message: types.Message, dialog_manager: DialogManager):
+    log_info("command.excel.request", user_id=message.chat.id)
+    assert message.text
+
+    command, *args = message.text.split()
+
+    if len(args) != 2:
+        await message.answer(
+            "Usage:\n```\n/excel <MAX_IPTS> <MAX_PTS>```\nUse integer arguments", parse_mode="MarkdownV2"
+        )
+        return
+
+    max_ipts, max_pts = args
+    try:
+        max_ipts = int(max_ipts)
+        max_pts = int(max_pts)
+    except ValueError:
+        await message.answer(
+            "Usage:\n```\n/excel <MAX_IPTS> <MAX_PTS>```\nUse integer arguments", parse_mode="MarkdownV2"
+        )
+        return
+
+    all_tutors_with_emails = await tutor_repo.get_list_with_emails()
+    all_meetings = await meeting_repo.get_list(status_range=MS.CLOSED)
+    all_attendance = [await meeting_repo.get_attendance(m.id) for m in all_meetings]
+    spreadsheet = excel.create_full_spreadsheet(
+        all_tutors_with_emails, all_meetings, all_attendance, max_ipts=max_ipts, max_pts=max_pts
+    )
+    file_date = datetime.date.today().strftime("%d_%m_%Y")
+    input_file = types.BufferedInputFile(spreadsheet.getvalue(), f"ATB_Dump_{file_date}.xlsx")
     await message.answer_document(input_file)
     log_info("command.excel.success", user_id=message.chat.id)

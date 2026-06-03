@@ -14,6 +14,21 @@
         "PYTHONUNBUFFERED": "1",
         "DEBUGPY_LOG_DIR": "${workspaceFolder}/.logs/debugpy"
       }
+    },
+    {
+      "name": "Excel test",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "try/run_excel.py",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": true,
+      "logToFile": true,
+      "console": "internalConsole",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}",
+        "PYTHONUNBUFFERED": "1",
+        "DEBUGPY_LOG_DIR": "${workspaceFolder}/.logs/debugpy"
+      }
     }
   ]
 }
