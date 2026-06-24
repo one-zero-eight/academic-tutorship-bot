@@ -4,11 +4,14 @@ from collections.abc import Callable
 
 import pandas as pd
 import xlsxwriter
+from xlsxwriter.color import Color
 from xlsxwriter.worksheet import Worksheet
 
 from src.domain.models import Meeting, MeetingStatus, Tutor, TutorWithEmail
 
 ORDINAL = {1: "st", 2: "nd", 3: "rd", 4: "th"}
+
+MONTH_COLORS = []
 
 
 class FullSpreadsheetData:
@@ -132,6 +135,46 @@ class FullSpreadsheetData:
             self.scaled_points_per_tutor.append(round(ipts / ratio))
 
 
+class CellFormats:
+    def __init__(self, workbook: xlsxwriter.Workbook):
+        gray_bg = {"bg_color": Color("#BEBEBE")}
+        self.red_bg_borders = workbook.add_format({"border": 1, "bg_color": Color("#fc4e4e")})
+        self.yellow_bg_borders = workbook.add_format({"border": 1, "bg_color": Color("#f9fc4e")})
+        self.gray_bg = workbook.add_format(gray_bg)
+        self.darker_gray_bg_borders = workbook.add_format({"bg_color": Color("#9F9F9F"), "border": 1})
+        self.green_bg = workbook.add_format({"bg_color": Color("#a0fc99")})
+        self.borders = workbook.add_format({"border": 1})
+        self.gray_bg_borders = workbook.add_format({**gray_bg, "border": 1})
+        self.month_bg = [
+            workbook.add_format({"border": 1, "bg_color": Color("#35a85b")}),  # Jan
+            workbook.add_format({"border": 1, "bg_color": Color("#4f9ded")}),  # Feb
+            workbook.add_format({"border": 1, "bg_color": Color("#f2b84b")}),  # Mar
+            workbook.add_format({"border": 1, "bg_color": Color("#d96ad9")}),  # Apr
+            workbook.add_format({"border": 1, "bg_color": Color("#4fc3b3")}),  # May
+            workbook.add_format({"border": 1, "bg_color": Color("#f07a6a")}),  # Jun
+            workbook.add_format({"border": 1, "bg_color": Color("#8e7df2")}),  # Jul
+            workbook.add_format({"border": 1, "bg_color": Color("#c4d94f")}),  # Aug
+            workbook.add_format({"border": 1, "bg_color": Color("#f29c4b")}),  # Sep
+            workbook.add_format({"border": 1, "bg_color": Color("#6ab0f0")}),  # Oct
+            workbook.add_format({"border": 1, "bg_color": Color("#e06a8d")}),  # Nov
+            workbook.add_format({"border": 1, "bg_color": Color("#7cc96f")}),  # Dec
+        ]
+        self.month_darker_bg = [
+            workbook.add_format({"border": 1, "bg_color": Color("#2a8448")}),  # Jan
+            workbook.add_format({"border": 1, "bg_color": Color("#3f7dc0")}),  # Feb
+            workbook.add_format({"border": 1, "bg_color": Color("#c8923c")}),  # Mar
+            workbook.add_format({"border": 1, "bg_color": Color("#af55af")}),  # Apr
+            workbook.add_format({"border": 1, "bg_color": Color("#3d9a8e")}),  # May
+            workbook.add_format({"border": 1, "bg_color": Color("#c06054")}),  # Jun
+            workbook.add_format({"border": 1, "bg_color": Color("#7163c2")}),  # Jul
+            workbook.add_format({"border": 1, "bg_color": Color("#9cad3f")}),  # Aug
+            workbook.add_format({"border": 1, "bg_color": Color("#c67d3c")}),  # Sep
+            workbook.add_format({"border": 1, "bg_color": Color("#558cc0")}),  # Oct
+            workbook.add_format({"border": 1, "bg_color": Color("#b05570")}),  # Nov
+            workbook.add_format({"border": 1, "bg_color": Color("#629f58")}),  # Dec
+        ]
+
+
 def create_full_spreadsheet(
     tutors: list[TutorWithEmail],
     meetings: list[Meeting],
@@ -150,37 +193,42 @@ def create_full_spreadsheet(
 
     buffer = io.BytesIO()
     workbook = xlsxwriter.Workbook(buffer)
-    _create_tracking_sheet(workbook, data)
-    _create_attendance_sheet(workbook, data)
-    _create_exporting_sheet(workbook, data)
+    formats = CellFormats(workbook)
+
+    _create_tracking_sheet(workbook, data, formats)
+    _create_attendance_sheet(workbook, data, formats)
+    _create_exporting_sheet(workbook, data, formats)
 
     workbook.close()
     return buffer
 
 
-def _create_tracking_sheet(workbook: xlsxwriter.Workbook, data: FullSpreadsheetData):
+def _create_tracking_sheet(workbook: xlsxwriter.Workbook, data: FullSpreadsheetData, formats: CellFormats):
     worksheet = workbook.add_worksheet("Tracking Sheet")
-    after_tutors_i = __fill_tracking_sheet_tutors(worksheet, data)
-    __fill_tracking_sheet_meetings(worksheet, data, after_tutors_i)
+    after_tutors_i = __fill_tracking_sheet_tutors(worksheet, data, formats)
+    __fill_tracking_sheet_meetings(worksheet, data, formats, after_tutors_i)
     worksheet.autofit()
 
 
-def _create_attendance_sheet(workbook: xlsxwriter.Workbook, data: FullSpreadsheetData):
+def _create_attendance_sheet(workbook: xlsxwriter.Workbook, data: FullSpreadsheetData, formats: CellFormats):
     worksheet = workbook.add_worksheet("Attendance Sheet")
-    __fill_attendance_sheet_meetings(worksheet, data)
+    __fill_attendance_sheet_meetings(worksheet, data, formats)
     worksheet.autofit()
 
 
-def _create_exporting_sheet(workbook: xlsxwriter.Workbook, data: FullSpreadsheetData):
+def _create_exporting_sheet(workbook: xlsxwriter.Workbook, data: FullSpreadsheetData, formats: CellFormats):
     worksheet = workbook.add_worksheet("Exporting Sheet")
-    after_tutors_i = __fill_exporting_sheet_tutors(worksheet, data)
-    __fill_exporting_sheet_constants(worksheet, data, after_tutors_i + 1)
-    __fill_exporting_sheet_sus_list(worksheet, data, after_tutors_i + 1)
-    __fill_exporting_sheet_statistics(worksheet, data, after_tutors_i + 5)
+    after_tutors_i = __fill_exporting_sheet_tutors(worksheet, data, formats)
+    __fill_exporting_sheet_constants(worksheet, data, formats, after_tutors_i + 1)
+    __fill_exporting_sheet_sus_list(worksheet, data, formats, after_tutors_i + 1)
+    __fill_exporting_sheet_statistics(worksheet, data, formats, after_tutors_i + 5)
     worksheet.autofit()
+    worksheet.set_column_pixels(1, after_tutors_i + 1, 64)
 
 
-def __fill_exporting_sheet_constants(worksheet: Worksheet, data: FullSpreadsheetData, initial_col: int):
+def __fill_exporting_sheet_constants(
+    worksheet: Worksheet, data: FullSpreadsheetData, formats: CellFormats, initial_col: int
+):
     CONSTANTS = [
         ("Mean value", round(data.mean_meetings_count, 3)),
         ("MAX_PTS", data.max_pts),
@@ -188,17 +236,21 @@ def __fill_exporting_sheet_constants(worksheet: Worksheet, data: FullSpreadsheet
     ]
 
     for col, (title, value) in enumerate(CONSTANTS, start=initial_col):
-        worksheet.write(1, col, title)
-        worksheet.write(2, col, value)
+        worksheet.write(1, col, title, formats.gray_bg_borders)
+        worksheet.write(2, col, value, formats.borders)
 
 
-def __fill_exporting_sheet_sus_list(worksheet: Worksheet, data: FullSpreadsheetData, initial_col: int):
-    worksheet.write(5, initial_col + 1, "Sus List")
+def __fill_exporting_sheet_sus_list(
+    worksheet: Worksheet, data: FullSpreadsheetData, formats: CellFormats, initial_col: int
+):
+    worksheet.write(5, initial_col + 1, "Sus List", formats.gray_bg_borders)
     for row, tutor in enumerate(data.sus_list, start=6):
-        worksheet.merge_range(row, initial_col, row, initial_col + 2, tutor.email)
+        worksheet.merge_range(row, initial_col, row, initial_col + 2, tutor.email, formats.borders)
 
 
-def __fill_exporting_sheet_statistics(worksheet: Worksheet, data: FullSpreadsheetData, initial_col: int):
+def __fill_exporting_sheet_statistics(
+    worksheet: Worksheet, data: FullSpreadsheetData, formats: CellFormats, initial_col: int
+):
     STATISTICS = [
         ("Total # of recaps", len(data.meetings)),
         ("Average Attendance", data.avg_attendance),
@@ -208,18 +260,20 @@ def __fill_exporting_sheet_statistics(worksheet: Worksheet, data: FullSpreadshee
         ("Maximal Attendance", data.maximal_attendance),
     ]
 
-    worksheet.merge_range(4, initial_col, 4, initial_col + 1, "Statistics")
+    worksheet.merge_range(4, initial_col, 4, initial_col + 1, "Statistics", formats.darker_gray_bg_borders)
     for row, (name, value) in enumerate(STATISTICS, start=5):
-        worksheet.write(row, initial_col, name)
-        worksheet.write(row, initial_col + 1, value)
+        worksheet.write(row, initial_col, name, formats.gray_bg_borders)
+        worksheet.write(row, initial_col + 1, value, formats.borders)
 
-    worksheet.merge_range(row + 1, initial_col, row + 1, initial_col + 1, "Top 3 Students (Attendance)")
+    worksheet.merge_range(
+        row + 1, initial_col, row + 1, initial_col + 1, "Top 3 Students (Attendance)", formats.darker_gray_bg_borders
+    )
     for row, (email, attendance) in enumerate(data.top_students_by_attendance[:3], start=row + 2):
-        worksheet.write(row, initial_col, email)
-        worksheet.write(row, initial_col + 1, attendance)
+        worksheet.write(row, initial_col, email, formats.borders)
+        worksheet.write(row, initial_col + 1, attendance, formats.borders)
 
 
-def __fill_tracking_sheet_tutors(worksheet: Worksheet, data: FullSpreadsheetData) -> int:
+def __fill_tracking_sheet_tutors(worksheet: Worksheet, data: FullSpreadsheetData, formats: CellFormats) -> int:
     """Fill data table with tutors info, return index of next column after the table"""
 
     ADDITIONAL_COLUMNS = [
@@ -228,11 +282,16 @@ def __fill_tracking_sheet_tutors(worksheet: Worksheet, data: FullSpreadsheetData
         ("Compensation", [0 for _ in range(len(data.tutors))]),
     ]
 
-    return __add_tutors_list(worksheet, data, ADDITIONAL_COLUMNS, freeze=True)
+    return __add_tutors_list(worksheet, data, formats, ADDITIONAL_COLUMNS, freeze=True)
 
 
 def __add_tutors_list(
-    worksheet: Worksheet, data: FullSpreadsheetData, additional_columns: list[tuple[str, list]], *, freeze: bool = False
+    worksheet: Worksheet,
+    data: FullSpreadsheetData,
+    formats: CellFormats,
+    additional_columns: list[tuple[str, list]],
+    *,
+    freeze: bool = False,
 ) -> int:
     DEFAULT_COLUMNS = [
         "ID",
@@ -242,10 +301,10 @@ def __add_tutors_list(
         "Innopolis e-mail",
     ]
     for i, title in enumerate(DEFAULT_COLUMNS):
-        worksheet.merge_range(0, i, 2, i, title)
+        worksheet.merge_range(0, i, 2, i, title, formats.gray_bg_borders)
 
     for i, (title, _data) in enumerate(additional_columns, start=i + 1):
-        worksheet.merge_range(0, i, 2, i, title)
+        worksheet.merge_range(0, i, 2, i, title, formats.gray_bg_borders)
 
     width = len(DEFAULT_COLUMNS) + len(additional_columns)
     if freeze:
@@ -253,37 +312,50 @@ def __add_tutors_list(
 
     for i, tutor in enumerate(data.tutors):
         row_i = i + 3
-        worksheet.write(row_i, 0, tutor.id)
-        worksheet.write(row_i, 1, tutor.full_name)
-        worksheet.write(row_i, 2, tutor.profile_name)
-        worksheet.write(row_i, 3, f"@{tutor.username}")
-        worksheet.write(row_i, 4, tutor.email)
+        if data.recap_points_per_tutor[i] == 0:
+            if data.tentative_points_per_tutor[i] > 0:
+                tutor_format = formats.yellow_bg_borders
+            else:
+                tutor_format = formats.red_bg_borders
+        else:
+            tutor_format = formats.borders
+
+        worksheet.write(
+            row_i, 0, tutor.id, tutor_format if tutor_format != formats.borders else formats.gray_bg_borders
+        )
+        worksheet.write(row_i, 1, tutor.full_name, tutor_format)
+        worksheet.write(row_i, 2, tutor.profile_name, tutor_format)
+        worksheet.write(row_i, 3, f"@{tutor.username}", tutor_format)
+        worksheet.write(row_i, 4, tutor.email, tutor_format)
         for j, (title, _data) in enumerate(additional_columns):
-            worksheet.write(row_i, 5 + j, _data[i])
+            worksheet.write(row_i, 5 + j, _data[i], tutor_format)
 
     return width
 
 
-def __fill_tracking_sheet_meetings(worksheet: Worksheet, data: FullSpreadsheetData, initial_col: int):
-    worksheet.merge_range(0, initial_col, 2, initial_col, "AT Bot Recaps")
+def __fill_tracking_sheet_meetings(
+    worksheet: Worksheet, data: FullSpreadsheetData, formats: CellFormats, initial_col: int
+):
+    worksheet.merge_range(0, initial_col, 2, initial_col, "AT Bot Recaps", formats.gray_bg_borders)
 
     for i, count in enumerate(data.meetings_count_per_tutor, start=3):
-        worksheet.write(i, initial_col, count)
+        worksheet.write(i, initial_col, count, formats.borders)
 
     def func(worksheet: Worksheet, data: FullSpreadsheetData, col: int, m: Meeting):
         try:
             if m.tutor_id is not None:
                 tutor_i = data.id_per_tutor.index(m.tutor_id)
-                worksheet.write(tutor_i + 3, col, "TRUE")
+                worksheet.write(tutor_i + 3, col, "TRUE", formats.green_bg)
         except ValueError:
             pass
 
-    __add_horizontal_meeting_list(worksheet, data, initial_col + 1, func)
+    __add_horizontal_meeting_list(worksheet, data, formats, initial_col + 1, func)
 
 
 def __add_horizontal_meeting_list(
     worksheet: Worksheet,
     data: FullSpreadsheetData,
+    formats: CellFormats,
     initial_col: int,
     func: Callable[[Worksheet, FullSpreadsheetData, int, Meeting], None],
 ):
@@ -318,12 +390,12 @@ def __add_horizontal_meeting_list(
 
         if (month, year, acad_year) != (m_month, m_year, m_acad_year):
             __write_meeting_month_year_heading(
-                worksheet, month, year, acad_year, start_col=prev_month_year_col, end_col=col - 1
+                worksheet, formats, month, year, acad_year, start_col=prev_month_year_col, end_col=col - 1
             )
             prev_month_year_col = col
 
-        worksheet.write(1, col, m.title)
-        worksheet.write(2, col, m.datetime_.strftime("%d.%m.%Y"))
+        worksheet.write(1, col, m.title, formats.month_bg[m_month - 1])
+        worksheet.write(2, col, m.datetime_.strftime("%d.%m.%Y"), formats.month_bg[m_month - 1])
 
         # YOUR CODE HERE
         func(worksheet, data, col, m)
@@ -331,17 +403,17 @@ def __add_horizontal_meeting_list(
 
         (month, year, acad_year) = (m_month, m_year, m_acad_year)
 
-    __write_meeting_month_year_heading(worksheet, month, year, acad_year, prev_month_year_col, col)
+    __write_meeting_month_year_heading(worksheet, formats, month, year, acad_year, prev_month_year_col, col)
 
 
 def __write_meeting_month_year_heading(
-    worksheet: Worksheet, month: int, year: int, acad_year: int, start_col: int, end_col: int
+    worksheet: Worksheet, formats: CellFormats, month: int, year: int, acad_year: int, start_col: int, end_col: int
 ):
     month_year_title = __get_month_year_title(month, acad_year, year)
     if start_col == end_col:
-        worksheet.write(0, start_col, month_year_title)
+        worksheet.write(0, start_col, month_year_title, formats.month_darker_bg[month - 1])
     else:
-        worksheet.merge_range(0, start_col, 0, end_col, month_year_title)
+        worksheet.merge_range(0, start_col, 0, end_col, month_year_title, formats.month_darker_bg[month - 1])
 
 
 def __get_month_year_title(month: int, acad_year: int, current_year: int) -> str:
@@ -350,24 +422,30 @@ def __get_month_year_title(month: int, acad_year: int, current_year: int) -> str
     return f"{month_name}, {current_year} ({acad_year}{suffix} Year)"
 
 
-def __fill_attendance_sheet_meetings(worksheet: Worksheet, data: FullSpreadsheetData):
+def __fill_attendance_sheet_meetings(worksheet: Worksheet, data: FullSpreadsheetData, formats: CellFormats):
 
     def func(worksheet: Worksheet, data: FullSpreadsheetData, col: int, m: Meeting):
         mi = data.meetings.index(m)
         m_attendance = data.attendance[mi]
-        worksheet.write(3, col, len(m_attendance))
-        for row, attendee_email in enumerate(m_attendance, start=4):
-            worksheet.write(row, col, attendee_email)
+        month = m.datetime_.month if m.datetime_ else 1
+        worksheet.write(3, col, len(m_attendance), formats.month_darker_bg[month - 1])
+        START_FROM = 4
+        for row, attendee_email in enumerate(m_attendance, start=START_FROM):
+            if row - START_FROM in [0, len(m_attendance) - 1]:
+                row_format = formats.month_darker_bg[month - 1]
+            else:
+                row_format = None
+            worksheet.write(row, col, attendee_email, row_format)
 
-    __add_horizontal_meeting_list(worksheet, data, 0, func)
+    __add_horizontal_meeting_list(worksheet, data, formats, 0, func)
 
 
-def __fill_exporting_sheet_tutors(worksheet: Worksheet, data: FullSpreadsheetData) -> int:
+def __fill_exporting_sheet_tutors(worksheet: Worksheet, data: FullSpreadsheetData, formats: CellFormats) -> int:
     ADDITIONAL_COLUMNS = [
         ("Scaled Points", data.scaled_points_per_tutor),
         ("IPTS", data.ipts_per_tutor),
     ]
-    return __add_tutors_list(worksheet, data, ADDITIONAL_COLUMNS)
+    return __add_tutors_list(worksheet, data, formats, ADDITIONAL_COLUMNS)
 
 
 def create_minimal_spreadsheet(tutors: list[Tutor], meetings: list[Meeting]) -> io.BytesIO:
