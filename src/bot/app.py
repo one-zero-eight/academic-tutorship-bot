@@ -82,6 +82,7 @@ from src.bot.dialogs.attendance import dialog as attendance_dialog  # noqa: E402
 from src.bot.dialogs.authentication import dialog as authentication_dialog  # noqa: E402
 from src.bot.dialogs.change_meeting import dialog as change_meeting_dialog  # noqa: E402
 from src.bot.dialogs.discipline_picker import dialog as discipline_picker_dialog  # noqa: E402
+from src.bot.dialogs.disciplines_control import dialog as disciplines_control_dialog  # noqa: E402
 from src.bot.dialogs.guide import dialog as guide_dialog  # noqa: E402
 from src.bot.dialogs.meetings import dialog as meetings_dialog  # noqa: E402
 from src.bot.dialogs.root import dialog as root_dialog  # noqa: E402
@@ -98,6 +99,7 @@ dp.include_router(queries_router)  # callback handles for notification messages
 # separate functional dialogs
 dp.include_router(root_dialog)
 dp.include_router(authentication_dialog)
+dp.include_router(disciplines_control_dialog)
 dp.include_router(meetings_dialog)
 dp.include_router(discipline_picker_dialog)
 dp.include_router(student_meetings_dialog)

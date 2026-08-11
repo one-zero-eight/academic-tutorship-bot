@@ -55,7 +55,7 @@ async def on_semester_select(query: CallbackQuery, widget, manager: DialogManage
     semesters = await discipline_repo.get_semesters(language=language, year=year)
     if int(item_id) >= len(semesters):
         log_warning("discipline_picker.semester.invalid", user_id=query.from_user.id, index=item_id)
-        return await query.answer(_("Q_DISCIPLINE_PICKER_INVALID_SEMESTER"), show_alert=True)  # TODO: i18n
+        return await query.answer(_("Q_DISCIPLINE_PICKER_INVALID_SEMESTER"), show_alert=True)
     chosen_semester = semesters[int(item_id)]
     multiple_choise = isinstance(manager.start_data, dict) and manager.start_data.get("multi", False)
     log_info(

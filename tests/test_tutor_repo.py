@@ -193,10 +193,10 @@ async def test_set_disciplines(
 
     # Get some disciplines
     disciplines = [
-        await discipline_repo.create("EN", 1, "First Dist"),
-        await discipline_repo.create("EN", 2, "Second Dist"),
-        await discipline_repo.create("EN", 2, "Third Dist"),
-        await discipline_repo.create("RU", 3, "Четвёртая Дисц"),
+        await discipline_repo.create("EN", 1, 2, "First Dist"),
+        await discipline_repo.create("EN", 2, 2, "Second Dist"),
+        await discipline_repo.create("EN", 2, 1, "Third Dist"),
+        await discipline_repo.create("RU", 3, 1, "Четвёртая Дисц"),
     ]
 
     # Set first two disciplines for tutor

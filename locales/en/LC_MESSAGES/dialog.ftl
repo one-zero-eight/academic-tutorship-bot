@@ -3,6 +3,8 @@ COMMON_BTN_CANCEL = Cancel
 COMMON_BTN_SUBMIT = Submit
 COMMON_BTN_CLOSE = Close
 COMMON_BTN_DISCARD = Discard
+COMMON_BTN_RELOAD = Reload
+COMMON_BTN_CLEAR = Clear
 
 
 AUTH_BIND_INSTRUCTION =
@@ -58,6 +60,7 @@ ROOT_BTN_YOUR_PROFILE = 🧑‍🏫 Your Profile
 
 ROOT_BTN_MEETINGS_CONTROL = ⚙️ Meetings Control
 ROOT_BTN_TUTORS_CONTROL = ⚙️ Academic Tutors
+ROOT_BTN_DISCIPLINES_CONTROL = ⚙️ Disciplines Control
 
 
 SETTINGS_HEADING =
@@ -233,3 +236,31 @@ MEETING_UPDATE_SAVE_HEADER =
     Send the request?
 MEETING_UPDATE_BTN_SAVE = Save 💾
 MEETING_UPDATE_BTN_SEND = Send
+
+
+DISCIPLINES_CONTROL_INIT = Disciplines Control
+DISCIPLINES_CONTROL_LIST_ENTRY = {$d_id}. [{$d_lang} {$d_year}y {$d_semester}s] {$d_name}
+DISCIPLINES_CONTROL_INIT_INSTRUCTIONS =
+    You can <u>add</u> and <u>delete</u> disciplines.
+    To achieve this, send me:
+    <code>/add-discipline &lt;LANG&gt; &lt;YEAR&gt; &lt;SEM&gt; &lt;NAME&gt;</code>
+    <code>/del-discipline &lt;ID&gt; or &lt;NAME&gt;</code>
+
+    Or do this in batch:
+    <code>/add-discipline
+    &lt;LANG&gt; &lt;YEAR&gt; &lt;SEM&gt; &lt;NAME&gt;
+    &lt;LANG&gt; &lt;YEAR&gt; &lt;SEM&gt; &lt;NAME&gt;
+    {"..."}</code>
+
+    Example usage:
+    <code>/add-discipline en 2 1 Mathematical Analysis 2</code>
+
+    (delete case insensitive)
+    <code>/del-discipline mathematical analysis 2</code>
+
+DISCIPLINES_ADDED_TITLE = Disciplines Added:
+DISCIPLINES_ADDED_ERROR = Disciplines not added: {$err}
+DISCIPLINES_DELETED_TITLE = Disciplines Deleted:
+DISCIPLINES_DELETED_ERROR = Disciplines not deleted: {$err}
+
+DISCIPLINES_SUBMIT_ERROR = Error, try to clear

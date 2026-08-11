@@ -3,6 +3,8 @@ COMMON_BTN_CANCEL = Отмена
 COMMON_BTN_SUBMIT = Подтвердить
 COMMON_BTN_CLOSE = Закрыть
 COMMONB_TN_DISCARD = Отменить
+COMMON_BTN_RELOAD = Обновить
+COMMON_BTN_CLEAR = Очистить
 
 
 AUTH_BIND_INSTRUCTION =
@@ -58,6 +60,7 @@ ROOT_BTN_YOUR_PROFILE = 🧑‍🏫 Твой профиль
 
 ROOT_BTN_MEETINGS_CONTROL = ⚙️ Управление встречами
 ROOT_BTN_TUTORS_CONTROL = ⚙️ Academic Tutors
+ROOT_BTN_DISCIPLINES_CONTROL = ⚙️ Дисциплины
 
 SETTINGS_HEADING =
     ⚙️ Настройки
@@ -232,3 +235,32 @@ MEETING_UPDATE_SAVE_HEADER =
     ☝️ Эта встреча уже объявлена, поэтому все изменения должны быть согласованы с главой
 MEETING_UPDATE_BTN_SAVE = Сохранить 💾
 MEETING_UPDATE_BTN_SEND = Отправить
+
+
+
+DISCIPLINES_CONTROL_INIT = Настройка дисциплин
+DISCIPLINES_CONTROL_LIST_ENTRY = {$d_id}. [{$d_lang} {$d_year}г {$d_semester}с] {$d_name}
+DISCIPLINES_CONTROL_INIT_INSTRUCTIONS =
+    Вы можете <u>добавить</u> или <u>удалить</u> дисциплины.
+    Чтобы это сделать, существуют команды:
+    <code>/add-discipline &lt;LANG&gt; &lt;YEAR&gt; &lt;SEM&gt; &lt;NAME&gt;</code>
+    <code>/del-discipline &lt;ID&gt; or &lt;NAME&gt;</code>
+
+    Также вариант для массового добавления/удаления:
+    <code>/add-discipline
+    &lt;LANG&gt; &lt;YEAR&gt; &lt;SEM&gt; &lt;NAME&gt;
+    &lt;LANG&gt; &lt;YEAR&gt; &lt;SEM&gt; &lt;NAME&gt;
+    {"..."}</code>
+
+    Пример использования:
+    <code>/add-discipline ru 2 1 Математический Анализ 2</code>
+
+    (удаление не чуствительно к регистру)
+    <code>/del-discipline математический анализ 2</code>
+
+DISCIPLINES_ADDED_TITLE = Добавлены дисциплины:
+DISCIPLINES_ADDED_ERROR = Дисциплины не добавлены: {$err}
+DISCIPLINES_DELETED_TITLE = Удалены дисциплины:
+DISCIPLINES_DELETED_ERROR = Дисциплины не удалены: {$err}
+
+DISCIPLINES_SUBMIT_ERROR = Ошибка, попробуйте очистить

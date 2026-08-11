@@ -15,12 +15,13 @@ from src.bot.dialogs.student_meetings import StudentMeetingStates
 from src.bot.dialogs.tutors_profile import TutorProfileStates
 from src.bot.exceptions import UnauthenticatedException
 from src.bot.filters import EMAIL_ENTERED_FILTER, USER_AUTHENTICATED_FILTER, StatusFilter
+from src.bot.i18n import get_i18n_translate_func
 from src.bot.logging_ import log_error, log_info, log_warning
 from src.config import settings
 from src.db.repositories import meeting_repo, tutor_repo
 from src.domain.models import MeetingStatus as MS
 from src.domain.models import UserStatus as US
-from src.utils import excel
+from src.utils import disciplines, excel
 
 router = Router(name="commands")
 
@@ -196,3 +197,37 @@ async def get_full_excel_data(message: types.Message, dialog_manager: DialogMana
     input_file = types.BufferedInputFile(spreadsheet.getvalue(), f"ATB_Dump_{file_date}.xlsx")
     await message.answer_document(input_file)
     log_info("command.excel.success", user_id=message.chat.id)
+
+
+@router.message(Command("add-discipline"), StatusFilter(US.admin))
+async def on_add_discipline(message: types.Message, dialog_manager: DialogManager):
+    log_info("command.add-discipline.request", user_id=message.chat.id)
+    assert message.text
+
+    i18n_func = get_i18n_translate_func(dialog_manager)
+    try:
+        to_add = disciplines.parse_add_discipline_command(message.text)
+        added = await disciplines.add_disciplines(to_add)
+
+        await message.answer(disciplines.build_disciplines_added_message(added, i18n_func))
+    except Exception as e:
+        await message.answer(i18n_func("DISCIPLINES_ADDED_ERROR", {"err": str(e)}))
+
+    log_info("command.add-discipline.success", user_id=message.chat.id)
+
+
+@router.message(Command("del-discipline"), StatusFilter(US.admin))
+async def on_del_discipline(message: types.Message, dialog_manager: DialogManager):
+    log_info("command.del-discipline.request", user_id=message.chat.id)
+    assert message.text
+
+    i18n_func = get_i18n_translate_func(dialog_manager)
+    try:
+        to_delete = disciplines.parse_del_discipline_command(message.text)
+        deleted = await disciplines.delete_disciplines(to_delete)
+
+        await message.answer(disciplines.build_disciplines_deleted_message(deleted, i18n_func))
+    except Exception as e:
+        await message.answer(i18n_func("DISCIPLINES_DELETED_ERROR", {"err": str(e)}))
+
+    log_info("command.del-discipline.success", user_id=message.chat.id)

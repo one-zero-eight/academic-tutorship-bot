@@ -1,4 +1,5 @@
 import os
+from collections.abc import Callable
 from datetime import date, datetime
 from typing import Any, Protocol
 
@@ -12,6 +13,20 @@ from src.bot.middlewares import DialogI18nMiddleware
 from src.prepare import BASE_DIR
 
 LOCALES_DIR = BASE_DIR / "locales"
+
+
+def get_i18n_translate_func(manager: DialogManager) -> Callable[[str, dict], str]:
+    format_text = manager.middleware_data.get(
+        I18N_FORMAT_KEY,
+        default_format_text,
+    )
+
+    def translate_func(ftl_key: str, data: dict) -> str:
+        normalized_data = normalize_l10n_kwargs(data)
+        translated_text = format_text(ftl_key, normalized_data)
+        return translated_text.format(**normalized_data)
+
+    return translate_func
 
 
 class Values(Protocol):

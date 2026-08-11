@@ -3,6 +3,7 @@ from aiogram_dialog import DialogManager
 
 from src.bot.constants import I18N_FORMAT_KEY
 from src.bot.dialog_extension import extend_dialog
+from src.bot.i18n import get_i18n_translate_func
 from src.bot.logging_ import log_error, log_info, log_warning
 from src.db.repositories import student_repo
 from src.domain.models import NotificationBotStatus
@@ -110,6 +111,7 @@ async def on_open_disciplines(query: CallbackQuery, widget, manager: DialogManag
 
 async def on_submit_disciplines(query: CallbackQuery, widget, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = get_i18n_translate_func(manager)
     try:
         assert (self_student := await manager.state.get_self_student())
         selected_disciplines = await manager.state.get_value("selected_disciplines", [])
@@ -119,4 +121,14 @@ async def on_submit_disciplines(query: CallbackQuery, widget, manager: DialogMan
         log_info("student.disciplines.submit.succeeded", user_id=query.from_user.id, selected_count=len(discipline_ids))
     except Exception as e:
         log_error("student.disciplines.submit.failed", user_id=query.from_user.id, reason=str(e))
+        await manager.switch_to_current()
+        await query.answer(_("DISCIPLINES_SUBMIT_ERROR", {}), show_alert=True)
         raise
+
+
+async def on_clear_disciplines(query: CallbackQuery, widget, manager: DialogManager):
+    log_info("student.disciplines.clear.requested", user_id=query.from_user.id)
+    manager = extend_dialog(manager)
+    await manager.state.update_data({"selected_disciplines": []})
+    await manager.switch_to_current()
+    log_info("student.disciplines.clear.done", user_id=query.from_user.id)

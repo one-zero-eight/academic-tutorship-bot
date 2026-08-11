@@ -5,6 +5,7 @@ from aiogram_dialog.widgets.text import Const
 from src.bot.custom_widgets import UnpackedList
 from src.bot.dialogs.discipline_picker import DisciplinePickerStates
 from src.bot.dialogs.discipline_picker.getters import selected_disciplines_getter
+from src.bot.dialogs.disciplines_control import DisciplineControlStates
 from src.bot.dialogs.meetings import MeetingStates
 from src.bot.dialogs.student_meetings import StudentMeetingStates
 from src.bot.dialogs.tutors import TutorsStates
@@ -44,6 +45,14 @@ start_ww = Window(
         Start(I18N("ROOT_BTN_MEETINGS_CONTROL"), id="start_all_meetings", state=MeetingStates.type, when="is_admin"),
         Start(I18N("ROOT_BTN_TUTORS_CONTROL"), id="start_tutors_control", state=TutorsStates.list, when="is_admin"),
     ),
+    Row(
+        Start(
+            I18N("ROOT_BTN_DISCIPLINES_CONTROL"),
+            id="start_disciplines_control",
+            state=DisciplineControlStates.init,
+            when="is_admin",
+        )
+    ),
     getter=start_getter,
     state=RootStates.start,
 )
@@ -77,6 +86,7 @@ select_disciplines_ww = Window(
     SwitchTo(
         I18N("COMMON_BTN_SUBMIT"), id="back_to_profile", state=RootStates.settings, on_click=on_submit_disciplines
     ),
+    Button(I18N("COMMON_BTN_CLEAR"), id="clear", on_click=on_clear_disciplines),
     getter=selected_disciplines_getter,
     state=RootStates.settings_disciplines,
 )

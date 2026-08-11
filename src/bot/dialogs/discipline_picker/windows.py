@@ -28,7 +28,7 @@ year_ww = Window(
 )
 
 semester_ww = Window(
-    I18N("DISCIPLINE_PICKER_SEMESTER_TITLE"),  # TODO: i18n
+    I18N("DISCIPLINE_PICKER_SEMESTER_TITLE"),
     DISCIPLINE_SEMESTER_SCROLL,
     Row(Back(I18N("COMMON_BTN_BACK")), Cancel(I18N("COMMON_BTN_CANCEL")), when="not_multi"),
     Row(Back(I18N("COMMON_BTN_BACK")), Cancel(I18N("COMMON_BTN_CLOSE")), when="multi"),
