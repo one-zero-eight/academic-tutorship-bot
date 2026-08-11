@@ -88,6 +88,7 @@ class MeetingRepository(Repository):
                 disc.c.name.label("d_name"),
                 disc.c.year.label("d_year"),
                 disc.c.language.label("d_language"),
+                disc.c.semester.label("d_semester"),
             )
             .select_from(meeting.join(discipline, meeting.c.discipline_id == discipline.c.id))
             .where(meeting.c.id == id)
@@ -108,6 +109,7 @@ class MeetingRepository(Repository):
             disc.c.name.label("d_name"),
             disc.c.year.label("d_year"),
             disc.c.language.label("d_language"),
+            disc.c.semester.label("d_semester"),
         ).select_from(meeting.join(discipline, meeting.c.discipline_id == discipline.c.id))
         if isinstance(status_range, MeetingStatus):
             status = status_range
@@ -222,7 +224,9 @@ class MeetingRepository(Repository):
         return Meeting(
             id=row.id,
             title=row.title,
-            discipline=Discipline(id=row.d_id, name=row.d_name, year=row.d_year, language=row.d_language),
+            discipline=Discipline(
+                id=row.d_id, name=row.d_name, year=row.d_year, language=row.d_language, semester=row.d_semester
+            ),
             creator_id=row.creator_id,
             created_at=row.created_datetime,
             status=MeetingStatus(row.status),

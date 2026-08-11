@@ -80,6 +80,7 @@ discipline = Table(
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("name", String(256), nullable=False),
     Column("year", SmallInteger, nullable=False),
+    Column("semester", SmallInteger, nullable=False),
     Column("language", String(2), nullable=False),
 )
 

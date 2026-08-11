@@ -31,11 +31,26 @@ async def years_getter(dialog_manager: DialogManager, **kwargs):
     }
 
 
+async def semesters_getter(dialog_manager: DialogManager, **kwargs):
+    manager = extend_dialog(dialog_manager)
+    assert (language := await manager.state.get_value("language"))
+    assert (year := await manager.state.get_value("year"))
+    semesters = await discipline_repo.get_semesters(language=language, year=year)
+    multiple_choise = isinstance(dialog_manager.start_data, dict) and dialog_manager.start_data.get("multi", False)
+    semester_items = [(index, html.escape(str(semester))) for index, semester in enumerate(semesters)]
+    return {
+        "semesters": semester_items,
+        "multi": multiple_choise,
+        "not_multi": not multiple_choise,
+    }
+
+
 async def disciplines_getter(dialog_manager: DialogManager, **kwargs):
     manager = extend_dialog(dialog_manager)
     assert (language := await manager.state.get_value("language"))
     assert (year := await manager.state.get_value("year"))
-    disciplines = await discipline_repo.get_list(language=language, year=year)
+    assert (semester := await manager.state.get_value("semester"))
+    disciplines = await discipline_repo.get_list(language=language, year=year, semester=semester)
     discipline_items = [
         (
             index,
@@ -53,9 +68,10 @@ async def disciplines_multi_getter(dialog_manager: DialogManager, **kwargs):
     manager = extend_dialog(dialog_manager)
     assert (language := await manager.state.get_value("language"))
     assert (year := await manager.state.get_value("year"))
+    assert (semester := await manager.state.get_value("semester"))
     selected_disciplines = await manager.state.get_value("selected_disciplines", [])
     selected_ids = [disc["id"] for disc in selected_disciplines]
-    disciplines = await discipline_repo.get_list(language=language, year=year)
+    disciplines = await discipline_repo.get_list(language=language, year=year, semester=semester)
     disciplines_multi = []
     for id, disc in enumerate(disciplines):
         status = "✅" if disc.id in selected_ids else "⏺️"

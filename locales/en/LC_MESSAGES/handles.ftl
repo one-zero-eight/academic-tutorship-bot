@@ -11,6 +11,7 @@ Q_SETTINGS_LANGUAGE_CHANGED = Language updated ✅
 
 Q_DISCIPLINE_PICKER_INVALID_LANGUAGE = Error: Invalid language
 Q_DISCIPLINE_PICKER_INVALID_YEAR = Error: Invalid academic year
+Q_DISCIPLINE_PICKER_INVALID_SEMESTER = Error: Invalid semester
 Q_DISCIPLINE_PICKER_INVALID_DISCIPLINE = Error: Invalid discipline
 
 Q_MEETING_NOT_FOUND = Meeting not found

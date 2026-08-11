@@ -27,6 +27,15 @@ year_ww = Window(
     state=DisciplinePickerStates.year,
 )
 
+semester_ww = Window(
+    I18N("DISCIPLINE_PICKER_SEMESTER_TITLE"),  # TODO: i18n
+    DISCIPLINE_SEMESTER_SCROLL,
+    Row(Back(I18N("COMMON_BTN_BACK")), Cancel(I18N("COMMON_BTN_CANCEL")), when="not_multi"),
+    Row(Back(I18N("COMMON_BTN_BACK")), Cancel(I18N("COMMON_BTN_CLOSE")), when="multi"),
+    getter=semesters_getter,
+    state=DisciplinePickerStates.semester,
+)
+
 discipline_ww = Window(
     I18N("DISCIPLINE_PICKER_DISCIPLINE_TITLE"),
     DISCIPLINE_SCROLL,
@@ -39,7 +48,7 @@ discipline_multi_ww = Window(
     I18N("DISCIPLINE_PICKER_DISCIPLINES_TITLE"),
     DISCIPLINE_MULTI_SCROLL,
     Row(
-        SwitchTo(I18N("COMMON_BTN_BACK"), id="to_year", state=DisciplinePickerStates.year),
+        SwitchTo(I18N("COMMON_BTN_BACK"), id="to_semester", state=DisciplinePickerStates.semester),
         Cancel(I18N("COMMON_BTN_CLOSE")),
     ),
     getter=disciplines_multi_getter,

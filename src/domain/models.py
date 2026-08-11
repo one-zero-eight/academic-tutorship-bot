@@ -63,6 +63,7 @@ class Discipline(BaseModel):
     id: int
     name: str
     year: int
+    semester: int
     language: str
 
 

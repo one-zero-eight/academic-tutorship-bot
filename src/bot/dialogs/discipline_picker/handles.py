@@ -44,6 +44,27 @@ async def on_year_select(query: CallbackQuery, widget, manager: DialogManager, i
         multi_mode=multiple_choise,
     )
     await manager.state.update_data({"year": chosen_year})
+    await manager.next()
+
+
+async def on_semester_select(query: CallbackQuery, widget, manager: DialogManager, item_id: str):
+    manager = extend_dialog(manager)
+    _ = manager.tr
+    assert (language := await manager.state.get_value("language"))
+    assert (year := await manager.state.get_value("year"))
+    semesters = await discipline_repo.get_semesters(language=language, year=year)
+    if int(item_id) >= len(semesters):
+        log_warning("discipline_picker.semester.invalid", user_id=query.from_user.id, index=item_id)
+        return await query.answer(_("Q_DISCIPLINE_PICKER_INVALID_SEMESTER"), show_alert=True)  # TODO: i18n
+    chosen_semester = semesters[int(item_id)]
+    multiple_choise = isinstance(manager.start_data, dict) and manager.start_data.get("multi", False)
+    log_info(
+        "discipline_picker.semester.selected",
+        user_id=query.from_user.id,
+        semester=chosen_semester,
+        multi_mode=multiple_choise,
+    )
+    await manager.state.update_data({"semester": chosen_semester})
     if multiple_choise:
         await manager.switch_to(DisciplinePickerStates.discipline_multi)
     else:
@@ -55,7 +76,8 @@ async def on_discipline_select(query: CallbackQuery, widget, manager: DialogMana
     _ = manager.tr
     assert (language := await manager.state.get_value("language"))
     assert (year := await manager.state.get_value("year"))
-    disciplines = await discipline_repo.get_list(language=language, year=year)
+    assert (semester := await manager.state.get_value("semester"))
+    disciplines = await discipline_repo.get_list(language=language, year=year, semester=semester)
     if int(item_id) >= len(disciplines):
         log_warning("discipline_picker.discipline.invalid", user_id=query.from_user.id, index=item_id)
         return await query.answer(_("Q_DISCIPLINE_PICKER_INVALID_DISCIPLINE"), show_alert=True)
@@ -71,7 +93,8 @@ async def on_discipline_select_multi(query: CallbackQuery, widget, manager: Dial
     _ = manager.tr
     assert (language := await manager.state.get_value("language"))
     assert (year := await manager.state.get_value("year"))
-    disciplines = await discipline_repo.get_list(language=language, year=year)
+    assert (semester := await manager.state.get_value("semester"))
+    disciplines = await discipline_repo.get_list(language=language, year=year, semester=semester)
     if int(item_id) >= len(disciplines):
         log_warning("discipline_picker.discipline.invalid", user_id=query.from_user.id, index=item_id)
         return await query.answer(_("Q_DISCIPLINE_PICKER_INVALID_DISCIPLINE"), show_alert=True)

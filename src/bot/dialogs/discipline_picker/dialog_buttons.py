@@ -38,6 +38,21 @@ DISCIPLINE_YEAR_SCROLL = ScrollingGroup(
 )
 
 
+DISCIPLINE_SEMESTER_SCROLL = ScrollingGroup(
+    Select(
+        Format("{item[1]}"),
+        id="select_semester",
+        item_id_getter=(lambda item: item[0]),
+        items="semesters",
+        on_click=on_semester_select,
+    ),
+    id="scroll_semester",
+    width=1,
+    height=15,
+    hide_pager=True,
+)
+
+
 DISCIPLINE_SCROLL = ScrollingGroup(
     Select(
         Format("{item[1][display]}"),

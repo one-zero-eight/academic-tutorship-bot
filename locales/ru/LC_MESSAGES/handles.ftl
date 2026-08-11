@@ -11,6 +11,7 @@ Q_SETTINGS_LANGUAGE_CHANGED = Язык обновлён ✅
 
 Q_DISCIPLINE_PICKER_INVALID_LANGUAGE = Ошибка: Неправильный язык
 Q_DISCIPLINE_PICKER_INVALID_YEAR = Ошибка: Неправильный курс
+Q_DISCIPLINE_PICKER_INVALID_SEMESTER = Ошибка: Неправильный семестр
 Q_DISCIPLINE_PICKER_INVALID_DISCIPLINE = Ошибка: Неправильная дисциплина
 
 Q_MEETING_NOT_FOUND = Встреча не найдена

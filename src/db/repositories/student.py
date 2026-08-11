@@ -220,7 +220,7 @@ class StudentRepository(Repository):
         )
 
     def _row_to_discipline(self, row: Row) -> Discipline:
-        return Discipline(id=row.id, name=row.name, year=row.year, language=row.language)
+        return Discipline(id=row.id, name=row.name, year=row.year, language=row.language, semester=row.semester)
 
     def __get_what_changed(self, student_: Student, attrs: list[str] | None = None) -> tuple[dict, dict]:
         student_columns = set(student.c.keys()) - {"id", "email_id"}

@@ -19,10 +19,28 @@ class DisciplineRepository(Repository):
             result = await conn.execute(stmt)
             return [row.year for row in result.all()]
 
-    async def get_list(self, language: str, year: int) -> list[Discipline]:
+    async def get_semesters(self, language: str, year: int) -> list[int]:
+        stmt = (
+            select(discipline.c.semester)
+            .distinct()
+            .where(
+                discipline.c.language == language,
+                discipline.c.year == year,
+            )
+            .order_by(discipline.c.semester)
+        )
+        async with self._db.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            return [row.semester for row in result.all()]
+
+    async def get_list(self, language: str, year: int, semester: int) -> list[Discipline]:
         stmt = (
             select(discipline)
-            .where(discipline.c.language == language, discipline.c.year == year)
+            .where(
+                discipline.c.language == language,
+                discipline.c.year == year,
+                discipline.c.semester == semester,
+            )
             .order_by(discipline.c.name)
         )
         async with self._db.engine.connect() as conn:
@@ -38,4 +56,4 @@ class DisciplineRepository(Repository):
             return self._row_to_discipline(row)
 
     def _row_to_discipline(self, row: Row) -> Discipline:
-        return Discipline(id=row.id, name=row.name, year=row.year, language=row.language)
+        return Discipline(id=row.id, name=row.name, year=row.year, semester=row.semester, language=row.language)
