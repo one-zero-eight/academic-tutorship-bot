@@ -1,4 +1,4 @@
-from aiogram_dialog import Window
+from aiogram_dialog import ShowMode, Window
 from aiogram_dialog.widgets.kbd import Button, Row, Start, SwitchTo
 from aiogram_dialog.widgets.text import Const
 
@@ -6,6 +6,7 @@ from src.bot.custom_widgets import UnpackedList
 from src.bot.dialogs.discipline_picker import DisciplinePickerStates
 from src.bot.dialogs.discipline_picker.getters import selected_disciplines_getter
 from src.bot.dialogs.disciplines_control import DisciplineControlStates
+from src.bot.dialogs.disciplines_control.handles import send_multimessage_disciplines_list
 from src.bot.dialogs.meetings import MeetingStates
 from src.bot.dialogs.student_meetings import StudentMeetingStates
 from src.bot.dialogs.tutors import TutorsStates
@@ -49,7 +50,9 @@ start_ww = Window(
         Start(
             I18N("ROOT_BTN_DISCIPLINES_CONTROL"),
             id="start_disciplines_control",
+            on_click=send_multimessage_disciplines_list,
             state=DisciplineControlStates.init,
+            show_mode=ShowMode.DELETE_AND_SEND,
             when="is_admin",
         )
     ),

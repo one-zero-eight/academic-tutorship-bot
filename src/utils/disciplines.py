@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from src.bot.logging_ import log_debug
+from src.bot.logging_ import log_debug, log_info
 from src.db.repositories import discipline_repo
 from src.domain.models import Discipline
 
@@ -109,7 +109,7 @@ async def delete_disciplines(to_del: list[int | str]) -> list[Discipline]:
             if deleted_d:
                 deleted.append(deleted_d)
         except Exception as e:
-            log_debug("del-disciplines.error", err=str(e))
+            log_info("del-disciplines.error", err=str(e))
     return deleted
 
 
