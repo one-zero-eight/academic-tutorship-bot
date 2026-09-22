@@ -4,7 +4,7 @@
 # docker compose up --build --wait
 
 services:
-  bot:
+  academic-tutorship-bot:
     build:
       context: .
       dockerfile: Dockerfile
