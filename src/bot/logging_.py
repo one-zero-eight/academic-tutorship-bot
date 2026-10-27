@@ -60,16 +60,16 @@ def _format_context(context: Mapping[str, Any]) -> str:
 
 
 def log_info(event: str, **context: Any):
-    logger.info(f"{event}{_format_context(context)}")
+    logger.info(f"{event}{_format_context(context)}", stacklevel=2)
 
 
 def log_warning(event: str, **context: Any):
-    logger.warning(f"{event}{_format_context(context)}")
+    logger.warning(f"{event}{_format_context(context)}", stacklevel=2)
 
 
 def log_error(event: str, *, exc_info: bool = True, **context: Any):
-    logger.error(f"{event}{_format_context(context)}", exc_info=exc_info)
+    logger.error(f"{event}{_format_context(context)}", exc_info=exc_info, stacklevel=2)
 
 
 def log_debug(event: str, **context: Any):
-    logger.debug(f"{event}{_format_context(context)}")
+    logger.debug(f"{event}{_format_context(context)}", stacklevel=2)
