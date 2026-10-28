@@ -56,7 +56,7 @@ async def disciplines_getter(dialog_manager: DialogManager, **kwargs):
             index,
             {
                 "id": discipline.id,
-                "display": html.escape(discipline.name),
+                "display": discipline.name,
             },
         )
         for index, discipline in enumerate(disciplines)
@@ -75,7 +75,7 @@ async def disciplines_multi_getter(dialog_manager: DialogManager, **kwargs):
     disciplines_multi = []
     for id, disc in enumerate(disciplines):
         status = "✅" if disc.id in selected_ids else "⏺️"
-        disciplines_multi.append((id, {"id": disc.id, "display": html.escape(disc.name)}, status))
+        disciplines_multi.append((id, {"id": disc.id, "display": disc.name}, status))
     return {"disciplines_multi": disciplines_multi}
 
 

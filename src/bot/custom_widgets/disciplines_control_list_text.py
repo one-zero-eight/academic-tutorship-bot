@@ -1,3 +1,5 @@
+import html
+
 from aiogram_dialog.api.protocols import DialogManager
 from aiogram_dialog.widgets.common import WhenCondition
 from aiogram_dialog.widgets.text.base import Text
@@ -41,7 +43,7 @@ class DisciplinesControlListText(Text):
                 "d_lang": d.language,
                 "d_year": d.year,
                 "d_semester": d.semester,
-                "d_name": d.name,
+                "d_name": html.escape(d.name, quote=False),
             }
 
             lines.append(format_text("DISCIPLINES_CONTROL_LIST_ENTRY", context))
