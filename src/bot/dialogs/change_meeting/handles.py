@@ -5,11 +5,12 @@ from aiogram.types import CallbackQuery, InaccessibleMessage, Message, SharedUse
 from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.input import MessageInput
 
-from src.bot.dialog_extension import extend_dialog
+from src.bot.dialog_extension import extend_dialog, require_status
 from src.bot.logging_ import log_error, log_info, log_warning
 from src.bot.user_errors import *
 from src.bot.utils import *
 from src.domain.models import Discipline, MeetingStatus, MeetingUpdate
+from src.domain.models import UserStatus as US
 
 from .getters import *
 from .keyboards import *
@@ -17,6 +18,7 @@ from .logic import *
 from .states import *
 
 
+@require_status(US.admin)
 async def open_assign_tutor(query: CallbackQuery, __, manager: DialogManager):
     manager = extend_dialog(manager)
     _ = manager.tr
@@ -28,6 +30,7 @@ async def open_assign_tutor(query: CallbackQuery, __, manager: DialogManager):
     await manager.answer_and_track(_("ASSIGN_TUTOR_ADDITIONAL_PROMPT"), reply_markup=_choose_from_contacts_kb(_))
 
 
+@require_status(US.admin)
 async def get_assigned_tutor(message: Message, __, manager: DialogManager):
     manager = extend_dialog(manager)
     _ = manager.tr
@@ -182,6 +185,7 @@ async def get_meeting_duration(message: Message, __: MessageInput, manager: Dial
     await manager.switch_to(state=ChangeStates.init, show_mode=ShowMode.DELETE_AND_SEND)
 
 
+@require_status(US.admin)
 async def on_tutor_assign(query: CallbackQuery, __: Any, manager: DialogManager, item_id: str):
     manager = extend_dialog(manager)
     _ = manager.tr

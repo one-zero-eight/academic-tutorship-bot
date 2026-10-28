@@ -16,7 +16,9 @@ from aiogram_dialog import DialogManager, setup_dialogs
 from aiogram_dialog.api.exceptions import UnknownIntent, UnknownState
 
 from src.bot import bot_container
+from src.bot.dialog_extension import extend_dialog
 from src.bot.dispatcher import CustomDispatcher
+from src.bot.exceptions import AuthorityException
 from src.bot.i18n import make_i18n_middleware
 from src.bot.logging_ import logger
 from src.bot.middlewares import AutoAuthMiddleware
@@ -68,6 +70,30 @@ dp.error.middleware(auto_auth_middleware)
 @dp.error(ExceptionTypeFilter(UnknownIntent), F.update.callback_query.as_("callback_query"))
 async def unknown_intent_handler(event: ErrorEvent, callback_query: types.CallbackQuery):
     await callback_query.answer("Unknown intent: Please, try to restart the action.")
+
+
+@dp.error(ExceptionTypeFilter(AuthorityException))
+async def on_authority_denied(event: ErrorEvent, dialog_manager: DialogManager | None = None):
+    logger.warning("Authority denied: %s", event.exception)
+
+    manager = extend_dialog(dialog_manager) if dialog_manager is not None else None
+    text = "You are not authorized to perform this action. Please, use /start command."
+    if manager is not None:
+        text = manager.tr("Q_NOT_AUTHORIZED")
+
+    try:
+        if (callback_query := event.update.callback_query) is not None:
+            await callback_query.answer(text, show_alert=True)
+        elif manager is not None:
+            await manager.bot.send_message(manager.chat.id, text)
+    except Exception:
+        logger.exception("authority.denied.notification_failed")
+
+    if manager is not None:
+        try:
+            await manager.reset_stack()
+        except Exception:
+            logger.exception("authority.denied.reset_failed")
 
 
 @dp.error(ExceptionTypeFilter(UnknownState))

@@ -1,12 +1,13 @@
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager, ShowMode
 
-from src.bot.dialog_extension import extend_dialog
+from src.bot.dialog_extension import extend_dialog, require_status
 from src.bot.logging_ import log_error, log_info, log_warning
 from src.bot.user_errors import *
 from src.bot.utils import *
 from src.db.repositories import tutor_repo
 from src.domain.models import Discipline
+from src.domain.models import UserStatus as US
 
 from .getters import *
 from .states import *
@@ -26,6 +27,7 @@ async def on_tutor_selected(query: CallbackQuery, __, manager: DialogManager, it
     await manager.switch_to(TutorProfileStates.profile_after_list)
 
 
+@require_status(US.tutor)
 async def on_open_disciplines(query: CallbackQuery, __, manager: DialogManager):
     manager = extend_dialog(manager)
     try:
@@ -41,6 +43,7 @@ async def on_open_disciplines(query: CallbackQuery, __, manager: DialogManager):
         raise
 
 
+@require_status(US.tutor)
 async def on_submit_disciplines(query: CallbackQuery, __, manager: DialogManager):
     manager = extend_dialog(manager)
     try:
@@ -59,6 +62,7 @@ async def on_submit_disciplines(query: CallbackQuery, __, manager: DialogManager
         raise
 
 
+@require_status(US.tutor)
 async def get_profile_name(message: Message, __, manager: DialogManager):
     manager = extend_dialog(manager)
     _ = manager.tr
@@ -82,6 +86,7 @@ async def get_profile_name(message: Message, __, manager: DialogManager):
     await manager.switch_to(state=TutorProfileStates.profile_control, show_mode=ShowMode.DELETE_AND_SEND)
 
 
+@require_status(US.tutor)
 async def get_about_text(message: Message, __, manager: DialogManager):
     manager = extend_dialog(manager)
     _ = manager.tr

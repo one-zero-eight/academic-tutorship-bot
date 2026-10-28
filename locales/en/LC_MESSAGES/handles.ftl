@@ -1,5 +1,6 @@
 Q_AUTH_FAIL = You are not authenticated yet, try again 🔄
 Q_AUTH_SUCCESS = Authentication Success ✅
+Q_NOT_AUTHORIZED = You are not authorized to perform this action. Please, use /start command ⛔
 
 
 Q_SETTINGS_NOTIF_ON = Thanks! Notifications set up 🔔

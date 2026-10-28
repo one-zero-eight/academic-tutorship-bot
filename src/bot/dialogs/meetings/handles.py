@@ -4,12 +4,13 @@ from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import DialogManager, ShowMode
 from aiogram_dialog.widgets.kbd import Button
 
-from src.bot.dialog_extension import extend_dialog
+from src.bot.dialog_extension import extend_dialog, require_status
 from src.bot.logging_ import log_error, log_info, log_warning
 from src.bot.user_errors import *
 from src.bot.utils import *
 from src.db.repositories import meeting_repo
 from src.domain.models import MeetingStatus
+from src.domain.models import UserStatus as US
 
 from .logic import *
 from .states import *
@@ -55,6 +56,7 @@ async def get_new_title(message: Message, _, manager: DialogManager):
     await manager.switch_to(MeetingStates.create, show_mode=ShowMode.DELETE_AND_SEND)
 
 
+@require_status(US.admin)
 async def open_announce_confirm(query: CallbackQuery, _, manager: DialogManager):
     manager = extend_dialog(manager)
     _ = manager.tr
@@ -71,6 +73,7 @@ async def open_announce_confirm(query: CallbackQuery, _, manager: DialogManager)
     await manager.switch_to(state=MeetingStates.announce_confirm)
 
 
+@require_status(US.admin)
 async def on_announce_confirmed(query: CallbackQuery, _, manager: DialogManager):
     manager = extend_dialog(manager)
     _ = manager.tr
@@ -161,6 +164,7 @@ async def on_create_submit(query: CallbackQuery, button: Button, manager: Dialog
     await manager.switch_to(state=MeetingStates.info)
 
 
+@require_status(US.tutor, forbidden=(US.admin,))
 async def open_send_for_approval_confirm(query: CallbackQuery, button: Button, manager: DialogManager):
     manager = extend_dialog(manager)
     _ = manager.tr
@@ -177,6 +181,7 @@ async def open_send_for_approval_confirm(query: CallbackQuery, button: Button, m
     await manager.switch_to(state=MeetingStates.send_for_approval_confirm)
 
 
+@require_status(US.tutor, forbidden=(US.admin,))
 async def on_send_for_approval_confirmed(query: CallbackQuery, button: Button, manager: DialogManager):
     manager = extend_dialog(manager)
     _ = manager.tr

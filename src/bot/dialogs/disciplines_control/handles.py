@@ -2,14 +2,16 @@ from aiogram.types import CallbackQuery
 from aiogram_dialog import DialogManager, ShowMode
 
 from src.bot.custom_widgets.disciplines_control_list_text import DisciplinesControlListText
-from src.bot.dialog_extension import extend_dialog
+from src.bot.dialog_extension import extend_dialog, require_status
 from src.bot.logging_ import log_info
+from src.domain.models import UserStatus as US
 
 from .getters import disciplines_getter
 
 MAX_MESSAGE_LENGTH = 4095
 
 
+@require_status(US.admin)
 async def send_multimessage_disciplines_list(query: CallbackQuery, _, manager: DialogManager):
     log_info("admin.disciplines_control.send_multimessage_disciplines_list.requested", user_id=query.from_user.id)
 
@@ -44,6 +46,7 @@ async def clear_multimessage_disciplines_list(query: CallbackQuery, _, manager: 
     log_info("disciplines_control.clear_multimessage_disciplines_list.done", user_id=query.from_user.id)
 
 
+@require_status(US.admin)
 async def update_multimessage_disciplines_list(query: CallbackQuery, _, manager: DialogManager):
     log_info("disciplines_control.update_multimessage_disciplines_list.requested", user_id=query.from_user.id)
     manager = extend_dialog(manager)
