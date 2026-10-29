@@ -95,16 +95,16 @@ class FullSpreadsheetData:
             self.recap_points_per_tutor.append(recap_points)
             self.tentative_points_per_tutor.append(tentative_points)
 
-        self.mean_meetings_count = sum(self.meetings_count_per_tutor) / len(self.tutors)
+        self.mean_meetings_count = sum(self.meetings_count_per_tutor) / len(self.tutors) if self.tutors else 0.0
         self.sus_list = [t for i, t in enumerate(self.tutors) if self.meetings_count_per_tutor[i] == 0]
 
         attendance_counts = [len(a) for a in self.attendance]
         all_attendees = [email for meeting_attendance in self.attendance for email in meeting_attendance]
         unique_attendees = list(set(all_attendees))
-        self.avg_attendance = sum(attendance_counts) / len(attendance_counts)
+        self.avg_attendance = sum(attendance_counts) / len(attendance_counts) if attendance_counts else 0.0
         self.total_involved_students = sum(attendance_counts)
         self.unique_involved_students = len(unique_attendees)
-        self.maximal_attendance = max(attendance_counts)
+        self.maximal_attendance = max(attendance_counts, default=0)
 
         self.involved_tutors = len(self.tutors) - len(self.sus_list)
 
@@ -125,12 +125,12 @@ class FullSpreadsheetData:
 
         for i, t in enumerate(self.tutors):
             meetings_count = self.meetings_count_per_tutor[i]
-            if meetings_count >= self.mean_meetings_count:
-                ipts = round(self.max_ipts)
-            elif meetings_count > 0:
-                ipts = round(meetings_count / self.mean_meetings_count * self.max_ipts)
-            else:
+            if meetings_count == 0:
                 ipts = 0
+            elif meetings_count >= self.mean_meetings_count:
+                ipts = round(self.max_ipts)
+            else:
+                ipts = round(meetings_count / self.mean_meetings_count * self.max_ipts)
             self.ipts_per_tutor.append(ipts)
             self.scaled_points_per_tutor.append(round(ipts / ratio))
 
@@ -188,6 +188,10 @@ def create_full_spreadsheet(
 
     Returns the xlsx file in `io.BytesIO`
     """
+
+    filtered = [(m, a) for m, a in zip(meetings, attendance, strict=True) if m.discipline is not None]
+    meetings = [m for m, _ in filtered]
+    attendance = [a for _, a in filtered]
 
     data = FullSpreadsheetData(tutors, meetings, attendance, max_ipts, max_pts)
 
@@ -455,6 +459,8 @@ def create_minimal_spreadsheet(tutors: list[Tutor], meetings: list[Meeting]) -> 
 
     Returns the xlsx file in `io.BytesIO`
     """
+
+    meetings = [m for m in meetings if m.discipline is not None]
 
     tutor_usernames = [f"@{t.username}" if t.username else "-" for t in tutors]
     tutor_full_names = [t.full_name for t in tutors]

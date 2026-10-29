@@ -8,7 +8,7 @@ from src.bot.dialog_extension import extend_dialog, require_status
 from src.bot.logging_ import log_error, log_info, log_warning
 from src.bot.user_errors import *
 from src.bot.utils import *
-from src.db.repositories import meeting_repo
+from src.db.repositories import discipline_repo, meeting_repo
 from src.domain.models import MeetingStatus
 from src.domain.models import UserStatus as US
 
@@ -145,8 +145,19 @@ async def on_finish_confirmed(query: CallbackQuery, button: Button, manager: Dia
 async def on_create_submit(query: CallbackQuery, button: Button, manager: DialogManager):
     manager = extend_dialog(manager)
     _ = manager.tr
-    assert (discipline_dict := await manager.state.get_value("discipline"))
-    assert (title := await manager.state.get_value("title"))
+    discipline_dict = await manager.state.get_value("discipline", None)
+    title = await manager.state.get_value("title", None)
+    if not discipline_dict or not title:
+        log_warning("meeting.create.missing_input", user_id=query.from_user.id)
+        return await query.answer(_("Q_MEETING_ERROR", error="title and discipline are required"), show_alert=True)
+    if not await discipline_repo.exists(discipline_dict["id"]):
+        log_warning(
+            "meeting.create.discipline_stale",
+            user_id=query.from_user.id,
+            discipline_id=discipline_dict["id"],
+        )
+        await manager.state.update_data({"discipline": None})
+        return await query.answer(_("Q_MEETING_DISCIPLINE_NOT_FOUND"), show_alert=True)
     log_info(
         "meeting.create.requested",
         user_id=query.from_user.id,

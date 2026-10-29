@@ -136,8 +136,14 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
             "can_be_changed": is_authorized
             and meeting.status < MeetingStatus.CLOSED
             and meeting.status != MeetingStatus.APPROVING,
-            "can_be_sent_for_approval": is_authorized and meeting.status == MeetingStatus.CREATED and not is_admin,
-            "can_be_announced": is_authorized and meeting.status == MeetingStatus.CREATED and is_admin,
+            "can_be_sent_for_approval": is_authorized
+            and meeting.status == MeetingStatus.CREATED
+            and meeting.discipline is not None
+            and not is_admin,
+            "can_be_announced": is_authorized
+            and meeting.status == MeetingStatus.CREATED
+            and meeting.discipline is not None
+            and is_admin,
             "can_be_finished": is_authorized and meeting.status == MeetingStatus.CONDUCTING,
             "can_be_closed": is_authorized and meeting.status == MeetingStatus.FINISHED,
             "can_be_deleted": is_authorized,

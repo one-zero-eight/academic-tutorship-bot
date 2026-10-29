@@ -224,9 +224,9 @@ async def on_del_discipline(message: types.Message, dialog_manager: DialogManage
     i18n_func = get_i18n_translate_func(dialog_manager)
     try:
         to_delete = disciplines.parse_del_discipline_command(message.text)
-        deleted = await disciplines.delete_disciplines(to_delete)
+        deleted, blocked = await disciplines.delete_disciplines(to_delete)
 
-        await message.answer(disciplines.build_disciplines_deleted_message(deleted, i18n_func))
+        await message.answer(disciplines.build_disciplines_deleted_message(deleted, blocked, i18n_func))
     except Exception as e:
         await message.answer(i18n_func("DISCIPLINES_DELETED_ERROR", {"err": str(e)}))
 

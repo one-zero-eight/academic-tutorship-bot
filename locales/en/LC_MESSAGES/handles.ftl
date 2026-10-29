@@ -17,6 +17,7 @@ Q_DISCIPLINE_PICKER_INVALID_DISCIPLINE = Error: Invalid discipline
 
 Q_MEETING_NOT_FOUND = Meeting not found
 Q_MEETING_NO_TEXT_IN_MESSAGE = There is no text in your message
+Q_MEETING_DISCIPLINE_NOT_FOUND = The selected discipline no longer exists. Please choose another one.
 Q_MEETING_ERROR = Error: {$error}
 Q_MEETING_ANNOUNCED = Meeting announced 🚀
 Q_MEETING_CANCELLED = Meeting cancelled 🚮

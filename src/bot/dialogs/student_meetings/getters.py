@@ -59,7 +59,9 @@ async def meeting_info_getter(dialog_manager: DialogManager, **kwargs):
             "attendance_count": len(emails) if emails else None,
             "tutor_username": html.escape(tutor.username) if tutor and tutor.username else None,
             "can_be_changed": is_authorized and meeting.status < MeetingStatus.CLOSED,
-            "can_be_announced": is_authorized and meeting.status == MeetingStatus.CREATED,
+            "can_be_announced": is_authorized
+            and meeting.status == MeetingStatus.CREATED
+            and meeting.discipline is not None,
             "can_be_finished": is_authorized and meeting.status == MeetingStatus.CONDUCTING,
             "can_be_closed": is_authorized and meeting.status == MeetingStatus.FINISHED,
             "can_be_deleted": is_authorized,

@@ -9,6 +9,7 @@ from src.bot.dialog_extension import extend_dialog, require_status
 from src.bot.logging_ import log_error, log_info, log_warning
 from src.bot.user_errors import *
 from src.bot.utils import *
+from src.db.repositories import discipline_repo
 from src.domain.models import Discipline, MeetingStatus, MeetingUpdate
 from src.domain.models import UserStatus as US
 
@@ -307,11 +308,21 @@ async def on_date_room_save_rightaway(query: CallbackQuery, _, manager: DialogMa
 
 async def on_back_from_title_discipline_btn(query: CallbackQuery, _, manager: DialogManager):
     manager = extend_dialog(manager)
+    _ = manager.tr
     discipline = await manager.state.get_value("discipline", None)
-    if discipline:
-        async with manager.state.sync_meeting() as meeting:
-            meeting.discipline = Discipline.model_validate(discipline)
-            await meeting_repo.set_discipline(meeting.id, meeting.discipline.id)
+    if not discipline:
+        return
+    if not await discipline_repo.exists(discipline["id"]):
+        log_warning(
+            "meeting.change.discipline_stale",
+            user_id=query.from_user.id,
+            discipline_id=discipline["id"],
+        )
+        await manager.state.update_data({"discipline": None})
+        return await query.answer(_("Q_MEETING_DISCIPLINE_NOT_FOUND"), show_alert=True)
+    async with manager.state.sync_meeting() as meeting:
+        meeting.discipline = Discipline.model_validate(discipline)
+        await meeting_repo.set_discipline(meeting.id, meeting.discipline.id)
 
 
 # region: helpers

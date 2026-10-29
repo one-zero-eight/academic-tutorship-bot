@@ -118,6 +118,7 @@ MEETING_CREATE_ENTER_TITLE_TITLE =
 MEETING_INFO_HEADER = ℹ️ Meeting Information
 MEETING_INFO_TITLE_LINE = <b>{$title}</b>
 MEETING_INFO_DISCIPLINE_LINE = [{$d_lang} {$d_year}y] {$d_name}
+MEETING_INFO_DISCIPLINE_LINE_NONE = — no discipline —
 MEETING_INFO_DATE_LINE = 📆 Date: <b>{$date}</b>
 MEETING_INFO_DURATION_LINE = ⏱️ Duration: <b>{$duration}</b>
 MEETING_INFO_ROOM_LINE = 📍 Room: <b>{$room}</b>
@@ -258,9 +259,19 @@ DISCIPLINES_CONTROL_INIT_INSTRUCTIONS =
     (delete case insensitive)
     <code>/del-discipline mathematical analysis 2</code>
 
+    A discipline cannot be deleted while an APPROVING–FINISHED meeting uses it; remove it from those meetings first.
+
 DISCIPLINES_ADDED_TITLE = Disciplines Added:
+DISCIPLINES_ADDED_NONE = No disciplines were added.
 DISCIPLINES_ADDED_ERROR = Disciplines not added: {$err}
 DISCIPLINES_DELETED_TITLE = Disciplines Deleted:
+DISCIPLINES_DELETED_NONE = No disciplines were deleted.
+DISCIPLINES_DELETED_NOT_FOUND = No disciplines were deleted: no matching disciplines found.
 DISCIPLINES_DELETED_ERROR = Disciplines not deleted: {$err}
+DISCIPLINES_DELETION_ERRORS_TITLE = Deletion Errors:
+DISCIPLINES_DELETED_IN_USE_HEADER = ⚠️  {$d_id}. {$d_name} is used in meetings:
+DISCIPLINES_DELETED_IN_USE_MEETING = - {$m_id}. {$m_title}, {$m_status} ({$m_comment})
+DISCIPLINES_IN_USE_COMMENT_APPROVING = disapprove + change/delete
+DISCIPLINES_IN_USE_COMMENT_DEFAULT = change/delete
 
 DISCIPLINES_SUBMIT_ERROR = Error, try to clear

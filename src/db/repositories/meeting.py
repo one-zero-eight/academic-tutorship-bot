@@ -90,7 +90,7 @@ class MeetingRepository(Repository):
                 disc.c.language.label("d_language"),
                 disc.c.semester.label("d_semester"),
             )
-            .select_from(meeting.join(discipline, meeting.c.discipline_id == discipline.c.id))
+            .select_from(meeting.outerjoin(discipline, meeting.c.discipline_id == discipline.c.id))
             .where(meeting.c.id == id)
         )
         async with self._db.engine.connect() as conn:
@@ -110,7 +110,7 @@ class MeetingRepository(Repository):
             disc.c.year.label("d_year"),
             disc.c.language.label("d_language"),
             disc.c.semester.label("d_semester"),
-        ).select_from(meeting.join(discipline, meeting.c.discipline_id == discipline.c.id))
+        ).select_from(meeting.outerjoin(discipline, meeting.c.discipline_id == discipline.c.id))
         if isinstance(status_range, MeetingStatus):
             status = status_range
             stmt = stmt.where(meeting.c.status == status.value)
@@ -183,7 +183,10 @@ class MeetingRepository(Repository):
 
     async def get_interested_student_ids(self, id: int, *, notifications_only: bool = True) -> list[int]:
         sd = student_discipline
-        discipline_id = (await self.get(id)).discipline.id
+        meeting_ = await self.get(id)
+        if meeting_.discipline is None:
+            return []
+        discipline_id = meeting_.discipline.id
         stmt = select(sd.c.student_id).where(sd.c.discipline_id == discipline_id)
         if notifications_only:
             stmt = (
@@ -224,8 +227,12 @@ class MeetingRepository(Repository):
         return Meeting(
             id=row.id,
             title=row.title,
-            discipline=Discipline(
-                id=row.d_id, name=row.d_name, year=row.d_year, language=row.d_language, semester=row.d_semester
+            discipline=(
+                Discipline(
+                    id=row.d_id, name=row.d_name, year=row.d_year, language=row.d_language, semester=row.d_semester
+                )
+                if row.d_id is not None
+                else None
             ),
             creator_id=row.creator_id,
             created_at=row.created_datetime,

@@ -107,7 +107,7 @@ meeting = Table(
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("status", SmallInteger, nullable=False, default=0, server_default="0"),
     Column("title", String(256), nullable=False),
-    Column("discipline_id", ForeignKey("discipline.id", ondelete="SET NULL"), nullable=False),
+    Column("discipline_id", ForeignKey("discipline.id", ondelete="SET NULL"), nullable=True),
     Column("created_datetime", DateTime, nullable=False, default=datetime.datetime.now),
     Column("creator_id", Integer, ForeignKey("student.id", ondelete="SET NULL"), nullable=True),
     Column("duration", Integer, nullable=False, default=5400),

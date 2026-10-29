@@ -1,8 +1,10 @@
+import html
 from collections.abc import Callable
 
 from src.bot.logging_ import log_debug, log_info
 from src.db.repositories import discipline_repo
-from src.domain.models import Discipline
+from src.db.repositories.discipline import DisciplineInUseError
+from src.domain.models import Discipline, MeetingStatus
 
 
 class ParseError(Exception): ...
@@ -96,8 +98,9 @@ async def add_disciplines(to_add: list[Discipline]) -> list[Discipline]:
     return added
 
 
-async def delete_disciplines(to_del: list[int | str]) -> list[Discipline]:
+async def delete_disciplines(to_del: list[int | str]) -> tuple[list[Discipline], list[DisciplineInUseError]]:
     deleted = []
+    blocked = []
     for id_or_name in to_del:
         try:
             if isinstance(id_or_name, str):
@@ -108,38 +111,82 @@ async def delete_disciplines(to_del: list[int | str]) -> list[Discipline]:
                 raise ValueError("id_or_name is not of type str or int")
             if deleted_d:
                 deleted.append(deleted_d)
+        except DisciplineInUseError as e:
+            log_info(
+                "del-disciplines.in_use",
+                discipline_id=e.discipline.id,
+                meeting_ids=[meeting.id for meeting in e.meetings],
+            )
+            blocked.append(e)
         except Exception as e:
             log_info("del-disciplines.error", err=str(e))
-    return deleted
+    return deleted, blocked
+
+
+def _build_discipline_entries(disciplines: list[Discipline], i18n_func: Callable[[str, dict], str]) -> str:
+    return "\n".join(
+        i18n_func(
+            "DISCIPLINES_CONTROL_LIST_ENTRY",
+            {
+                "d_id": d.id,
+                "d_lang": d.language,
+                "d_year": d.year,
+                "d_semester": d.semester,
+                "d_name": d.name,
+            },
+        )
+        for d in disciplines
+    )
+
+
+def _build_deletion_errors(blocked: list[DisciplineInUseError], i18n_func: Callable[[str, dict], str]) -> str:
+    lines = [i18n_func("DISCIPLINES_DELETION_ERRORS_TITLE", {})]
+    for error in blocked:
+        lines.append(
+            i18n_func(
+                "DISCIPLINES_DELETED_IN_USE_HEADER",
+                {"d_id": error.discipline.id, "d_name": html.escape(error.discipline.name)},
+            )
+        )
+        for meeting in error.meetings:
+            comment_key = (
+                "DISCIPLINES_IN_USE_COMMENT_APPROVING"
+                if meeting.status == MeetingStatus.APPROVING
+                else "DISCIPLINES_IN_USE_COMMENT_DEFAULT"
+            )
+            lines.append(
+                i18n_func(
+                    "DISCIPLINES_DELETED_IN_USE_MEETING",
+                    {
+                        "m_id": meeting.id,
+                        "m_title": html.escape(meeting.title),
+                        "m_status": meeting.status.name,
+                        "m_comment": i18n_func(comment_key, {}),
+                    },
+                )
+            )
+    return "\n".join(lines)
 
 
 def build_disciplines_added_message(added: list[Discipline], i18n_func: Callable[[str, dict], str]) -> str:
-    _ = i18n_func
-    output = ""
-    output += _("DISCIPLINES_ADDED_TITLE", {}) + "\n"
-    for d in added:
-        context = {
-            "d_id": d.id,
-            "d_lang": d.language,
-            "d_year": d.year,
-            "d_semester": d.semester,
-            "d_name": d.name,
-        }
-        output += _("DISCIPLINES_CONTROL_LIST_ENTRY", context) + "\n"
-    return output
+    if not added:
+        return i18n_func("DISCIPLINES_ADDED_NONE", {})
+    return "\n".join([i18n_func("DISCIPLINES_ADDED_TITLE", {}), _build_discipline_entries(added, i18n_func)])
 
 
-def build_disciplines_deleted_message(deleted: list[Discipline], i18n_func: Callable[[str, dict], str]) -> str:
-    _ = i18n_func
-    output = ""
-    output += _("DISCIPLINES_DELETED_TITLE", {}) + "\n"
-    for d in deleted:
-        context = {
-            "d_id": d.id,
-            "d_lang": d.language,
-            "d_year": d.year,
-            "d_semester": d.semester,
-            "d_name": d.name,
-        }
-        output += _("DISCIPLINES_CONTROL_LIST_ENTRY", context) + "\n"
-    return output
+def build_disciplines_deleted_message(
+    deleted: list[Discipline],
+    blocked: list[DisciplineInUseError],
+    i18n_func: Callable[[str, dict], str],
+) -> str:
+    sections = []
+    if deleted:
+        sections.append(
+            "\n".join([i18n_func("DISCIPLINES_DELETED_TITLE", {}), _build_discipline_entries(deleted, i18n_func)])
+        )
+    else:
+        none_key = "DISCIPLINES_DELETED_NONE" if blocked else "DISCIPLINES_DELETED_NOT_FOUND"
+        sections.append(i18n_func(none_key, {}))
+    if blocked:
+        sections.append(_build_deletion_errors(blocked, i18n_func))
+    return "\n\n".join(sections)

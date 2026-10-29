@@ -33,6 +33,9 @@ class MeetingInfoText(Text):
         payload["d_lang"] = html.escape(str(getattr(discipline, "language", "")))
         payload["d_year"] = getattr(discipline, "year", "")
         payload["d_name"] = html.escape(str(getattr(discipline, "name", "")))
+        discipline_line_key = (
+            "MEETING_INFO_DISCIPLINE_LINE" if discipline is not None else "MEETING_INFO_DISCIPLINE_LINE_NONE"
+        )
         payload["status_name"] = getattr(payload.get("status"), "name", "")
         payload["date"] = normalize_l10n_value(payload["date"]) if payload.get("date") else "N/A"
         payload["attendance_count"] = (
@@ -45,7 +48,7 @@ class MeetingInfoText(Text):
                 format_text("MEETING_INFO_HEADER", payload),
                 "",
                 format_text("MEETING_INFO_TITLE_LINE", payload),
-                format_text("MEETING_INFO_DISCIPLINE_LINE", payload),
+                format_text(discipline_line_key, payload),
             ]
         )
 

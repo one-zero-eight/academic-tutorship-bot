@@ -1,9 +1,26 @@
-from sqlalchemy import Row, delete, insert, select
+from typing import NamedTuple
 
-from src.db.schema import discipline
-from src.domain.models import Discipline
+from sqlalchemy import Row, delete, exists, insert, select, update
+
+from src.db.schema import discipline, meeting, student_discipline, tutor_discipline
+from src.domain.models import DISCIPLINE_DELETE_BLOCKED_STATUSES, Discipline, MeetingStatus
 
 from .sql import Repository
+
+
+class BlockingMeeting(NamedTuple):
+    id: int
+    title: str
+    status: MeetingStatus
+
+
+class DisciplineInUseError(Exception):
+    def __init__(self, discipline: Discipline, meetings: list[BlockingMeeting]):
+        self.discipline = discipline
+        self.meetings = meetings
+        super().__init__(
+            f"Discipline {discipline.id} is used in meetings: {', '.join(str(meeting.id) for meeting in meetings)}"
+        )
 
 
 class DisciplineRepository(Repository):
@@ -53,6 +70,12 @@ class DisciplineRepository(Repository):
             result = await conn.execute(stmt)
             return [self._row_to_discipline(row) for row in result.all()]
 
+    async def exists(self, id: int) -> bool:
+        stmt = select(exists().where(discipline.c.id == id))
+        async with self._db.engine.connect() as conn:
+            result = await conn.execute(stmt)
+            return bool(result.scalar())
+
     async def create(self, language: str, year: int, semester: int, name: str) -> Discipline:
         stmt = (
             insert(discipline).values(language=language, year=year, semester=semester, name=name).returning(discipline)
@@ -75,8 +98,27 @@ class DisciplineRepository(Repository):
             if not (row := result.first()):
                 return None
             found_discipline = self._row_to_discipline(row)
-            delete_stmt = delete(discipline).where(discipline.c.id == found_discipline.id)
-            await conn.execute(delete_stmt)
+
+            blocking_meetings_stmt = select(meeting.c.id, meeting.c.title, meeting.c.status).where(
+                meeting.c.discipline_id == found_discipline.id,
+                meeting.c.status.in_([status.value for status in DISCIPLINE_DELETE_BLOCKED_STATUSES]),
+            )
+            result = await conn.execute(blocking_meetings_stmt)
+            blocking_meetings = [
+                BlockingMeeting(id=row.id, title=row.title, status=MeetingStatus(row.status)) for row in result.all()
+            ]
+            if blocking_meetings:
+                raise DisciplineInUseError(found_discipline, blocking_meetings)
+
+            detach_stmt = (
+                update(meeting).where(meeting.c.discipline_id == found_discipline.id).values(discipline_id=None)
+            )
+            await conn.execute(detach_stmt)
+            await conn.execute(
+                delete(student_discipline).where(student_discipline.c.discipline_id == found_discipline.id)
+            )
+            await conn.execute(delete(tutor_discipline).where(tutor_discipline.c.discipline_id == found_discipline.id))
+            await conn.execute(delete(discipline).where(discipline.c.id == found_discipline.id))
         return found_discipline
 
     def _row_to_discipline(self, row: Row) -> Discipline:

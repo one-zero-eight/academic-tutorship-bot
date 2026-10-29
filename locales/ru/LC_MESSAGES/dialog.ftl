@@ -117,6 +117,7 @@ MEETING_CREATE_ENTER_TITLE_TITLE =
 MEETING_INFO_HEADER = ℹ️ Информация о встрече
 MEETING_INFO_TITLE_LINE = <b>{$title}</b>
 MEETING_INFO_DISCIPLINE_LINE = [{$d_lang} {$d_year}г] {$d_name}
+MEETING_INFO_DISCIPLINE_LINE_NONE = — дисциплина не указана —
 MEETING_INFO_DATE_LINE = 📆 Дата: <b>{$date}</b>
 MEETING_INFO_DURATION_LINE = ⏱️ Длительность: <b>{$duration}</b>
 MEETING_INFO_ROOM_LINE = 📍 Аудитория: <b>{$room}</b>
@@ -258,9 +259,19 @@ DISCIPLINES_CONTROL_INIT_INSTRUCTIONS =
     (удаление не чуствительно к регистру)
     <code>/del-discipline математический анализ 2</code>
 
+    Дисциплину нельзя удалить, пока её использует встреча в состоянии APPROVING–FINISHED; сначала уберите её из таких встреч.
+
 DISCIPLINES_ADDED_TITLE = Добавлены дисциплины:
+DISCIPLINES_ADDED_NONE = Ни одна дисциплина не добавлена.
 DISCIPLINES_ADDED_ERROR = Дисциплины не добавлены: {$err}
 DISCIPLINES_DELETED_TITLE = Удалены дисциплины:
+DISCIPLINES_DELETED_NONE = Ни одна дисциплина не удалена.
+DISCIPLINES_DELETED_NOT_FOUND = Ни одна дисциплина не удалена: совпадений не найдено.
 DISCIPLINES_DELETED_ERROR = Дисциплины не удалены: {$err}
+DISCIPLINES_DELETION_ERRORS_TITLE = Ошибки удаления:
+DISCIPLINES_DELETED_IN_USE_HEADER = ⚠️  {$d_id}. {$d_name} используется во встречах:
+DISCIPLINES_DELETED_IN_USE_MEETING = - {$m_id}. {$m_title}, {$m_status} ({$m_comment})
+DISCIPLINES_IN_USE_COMMENT_APPROVING = отклонить + изменить/удалить
+DISCIPLINES_IN_USE_COMMENT_DEFAULT = изменить/удалить
 
 DISCIPLINES_SUBMIT_ERROR = Ошибка, попробуйте очистить

@@ -17,6 +17,7 @@ Q_DISCIPLINE_PICKER_INVALID_DISCIPLINE = Ошибка: Неправильная 
 
 Q_MEETING_NOT_FOUND = Встреча не найдена
 Q_MEETING_NO_TEXT_IN_MESSAGE = В вашем сообщении нет текста
+Q_MEETING_DISCIPLINE_NOT_FOUND = Выбранная дисциплина больше не существует. Пожалуйста, выберите другую.
 Q_MEETING_ERROR = Ошибка: {$error}
 Q_MEETING_ANNOUNCED = Встреча объявлена 🚀
 Q_MEETING_CANCELLED = Встреча отменена 🚮

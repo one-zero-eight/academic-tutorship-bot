@@ -20,6 +20,14 @@ class MeetingStatus(IntEnum):
     CLOSED = 5
 
 
+DISCIPLINE_DELETE_BLOCKED_STATUSES = (
+    MeetingStatus.APPROVING,
+    MeetingStatus.ANNOUNCED,
+    MeetingStatus.CONDUCTING,
+    MeetingStatus.FINISHED,
+)
+
+
 class NotificationBotStatus(IntEnum):
     ACTIVATED = 0
     UNACTIVATED = 1
@@ -105,7 +113,7 @@ class TutorWithEmail(BaseModel):
 class Meeting(BaseModel):
     id: int
     title: str
-    discipline: Discipline
+    discipline: Discipline | None = None
     creator_id: int | None
     created_at: datetime = Field(default_factory=datetime.now)
     status: MeetingStatus = MeetingStatus.CREATED
@@ -184,6 +192,8 @@ class Meeting(BaseModel):
     def _check_for_announce(self):
         if self.status != MeetingStatus.CREATED:
             raise ValueError("Cannot Announce Meeting: it is not in CREATED status")
+        if self.discipline is None:
+            raise ValueError("Cannot Announce Meeting: discipline is not set")
         if self.room is None:
             raise ValueError("Cannot Announce Meeting: room is not set")
         if self.datetime_ is None:
@@ -196,6 +206,8 @@ class Meeting(BaseModel):
     def _check_for_approval(self):
         if self.status != MeetingStatus.CREATED:
             raise ValueError("Cannot Send for Approval: it is not in CREATED status")
+        if self.discipline is None:
+            raise ValueError("Cannot Send for Approval: discipline is not set")
         if self.room is None:
             raise ValueError("Cannot Send for Approval: room is not set")
         if self.datetime_ is None:
