@@ -60,6 +60,10 @@ Q_ATTENDANCE_NO_ATTENDANCE = У этой встречи нет данных о �
 Q_ATTENDANCE_ERROR = Ошибка: {$error}
 Q_ATTENDANCE_NO_TEXT_ADD_EMAIL = В сообщении нет текста, введите email человека, которого нужно добавить
 Q_ATTENDANCE_NO_ATTENDANCE_RESEND = Для этой встречи нет данных о посещаемости, попробуй отправить файл снова
+Q_ATTENDANCE_INVALID_EMAIL = Электронная почта должна принадлежать домену innopolis.university или innopolis.ru ‼️
+Q_ATTENDANCE_FILE_NO_EMAILS = В файле нет электронных почт для посещаемости, встреча не была закрыта ‼️
+Q_ATTENDANCE_FILE_INVALID_EMAILS_ALL = В файле нет почт с домена innopolis.university или innopolis.ru, посещаемость не была сохранена ‼️
+Q_ATTENDANCE_FILE_INVALID_EMAILS = Следующие почты не относятся к домену innopolis.university или innopolis.ru и не были добавлены ({$count}):
 
 
 Q_TUTOR_NOT_FOUND = Academic Tutor не найден

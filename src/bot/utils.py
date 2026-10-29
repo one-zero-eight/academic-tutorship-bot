@@ -142,6 +142,21 @@ def _is_email(text: str) -> bool:
         return False
 
 
+ALLOWED_EMAIL_PATTERN = re.compile(r".+@(innopolis\.university|innopolis\.ru)")
+
+
+def is_allowed_email(text: str) -> bool:
+    return bool(ALLOWED_EMAIL_PATTERN.fullmatch(text))
+
+
+def split_attendance_emails(emails: list[str]) -> tuple[list[str], list[str]]:
+    """Splits emails into (allowed, invalid), preserving order and dropping duplicates."""
+    unique = dict.fromkeys(emails)
+    valid = [e for e in unique if is_allowed_email(e)]
+    invalid = [e for e in unique if not is_allowed_email(e)]
+    return valid, invalid
+
+
 def _parse_attendance_csv(content: str) -> list[str]:
     attendance = []
     content_io = io.StringIO(content)

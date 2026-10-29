@@ -26,6 +26,10 @@ class NoMeetingAttendance(Exception):
     pass
 
 
+class InvalidEmail(Exception):
+    pass
+
+
 class EmailAlreadyPresent(Exception):
     pass
 

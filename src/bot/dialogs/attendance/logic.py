@@ -1,3 +1,5 @@
+import html
+
 from aiogram.types import BufferedInputFile, InputFile
 
 from src.bot.logging_ import log_error, log_info, log_warning
@@ -36,6 +38,9 @@ async def get_attendance_file_to_download(meeting: Meeting) -> InputFile:
 
 
 async def add_email_to_attendance(email: str, meeting: Meeting):
+    if not is_allowed_email(email):
+        log_warning("attendance.logic.add_email.invalid", meeting_id=meeting.id, reason="invalid_email")
+        raise InvalidEmail()
     if not await meeting_repo.has_attendance(meeting.id):
         log_warning("attendance.logic.add_email.blocked", meeting_id=meeting.id, reason="no_attendance")
         raise NoMeetingAttendance()
@@ -58,3 +63,7 @@ async def meeting_close(meeting: Meeting, emails: list[str], closed_by_telegram_
         log_error("attendance.logic.close.failed", meeting_id=meeting.id, reason=str(e))
         raise
     log_info("attendance.logic.close.persisted_notified", meeting_id=meeting.id, by_admin=by_admin)
+
+
+def format_invalid_emails(emails: list[str]) -> str:
+    return "\n".join(html.escape(email) for email in emails)

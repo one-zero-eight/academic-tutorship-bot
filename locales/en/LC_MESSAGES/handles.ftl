@@ -61,6 +61,10 @@ Q_ATTENDANCE_NO_ATTENDANCE = This meeting has no attendance somehow
 Q_ATTENDANCE_ERROR = Error: {$error}
 Q_ATTENDANCE_NO_TEXT_ADD_EMAIL = There's no text in your message, enter email of a person to add
 Q_ATTENDANCE_NO_ATTENDANCE_RESEND = Somehow there is no attendance for this meeting, resend the file maybe
+Q_ATTENDANCE_INVALID_EMAIL = Email must belong to innopolis.university or innopolis.ru domain ‼️
+Q_ATTENDANCE_FILE_NO_EMAILS = Your file contains no attendance emails, the meeting was not closed ‼️
+Q_ATTENDANCE_FILE_INVALID_EMAILS_ALL = Your file contains no emails from innopolis.university or innopolis.ru, the attendance was not saved ‼️
+Q_ATTENDANCE_FILE_INVALID_EMAILS = The following emails are not from innopolis.university or innopolis.ru and were not added ({$count}):
 
 
 Q_TUTOR_NOT_FOUND = Academic Tutor not found
