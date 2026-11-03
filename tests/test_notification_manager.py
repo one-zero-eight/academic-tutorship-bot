@@ -310,7 +310,7 @@ async def test_send_meeting_approve_request(notification_manager, mock_bot, test
             assert mock_bot.send_message.called
             call_args = mock_bot.send_message.call_args
             assert call_args[1]["chat_id"] == TELEGRAM_ID
-            assert test_meeting.datetime_.isoformat(sep=" ", timespec="minutes") in call_args[1]["text"]
+            assert test_meeting.datetime_.strftime("%d.%m.%Y %H:%M") in call_args[1]["text"]
             # Verify that reply_markup is sent (buttons)
             assert call_args[1]["reply_markup"] is not None
 
@@ -425,9 +425,7 @@ async def test_send_meeting_reminder(
                     assert mock_bot.send_message.called
                     call_args = mock_bot.send_message.call_args
                     assert expected_phrase in call_args[1]["text"].lower()
-                    assert (
-                        test_meeting_announced.datetime_.isoformat(sep=" ", timespec="minutes") in call_args[1]["text"]
-                    )
+                    assert test_meeting_announced.datetime_.strftime("%d.%m.%Y %H:%M") in call_args[1]["text"]
 
 
 @pytest.mark.asyncio

@@ -6,7 +6,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from src.bot.i18n import NOTIFICATION_L10NS, normalize_l10n_kwargs
+from src.bot.i18n import NOTIFICATION_L10NS, format_datetime, normalize_l10n_kwargs
 from src.bot.logging_ import log_error, log_info
 from src.db.repositories import admin_repo, meeting_repo, student_repo, tutor_repo
 from src.domain.models import Meeting, MeetingStatus, MeetingUpdate, Tutor
@@ -257,8 +257,8 @@ class NotificationManager:
         if meeting_update.room:
             lines.append(_txt("NOTIF_MEETING_UPDATE_ROOM", old_room=meeting.room, room=meeting_update.room))
         if meeting_update.datetime_:
-            old_dt = meeting.datetime_.isoformat(sep=" ", timespec="minutes") if meeting.datetime_ else "-"
-            new_dt = meeting_update.datetime_.isoformat(sep=" ", timespec="minutes")
+            old_dt = format_datetime(meeting.datetime_)
+            new_dt = format_datetime(meeting_update.datetime_, default=old_dt)
             lines.append(_txt("NOTIF_MEETING_UPDATE_DATETIME", old_datetime=old_dt, datetime=new_dt))
         lines.append(_txt("NOTIF_MEETING_LINK", link=self.gen_meeting_link(meeting_update.id)))
         return lines

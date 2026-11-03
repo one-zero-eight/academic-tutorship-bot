@@ -5,6 +5,7 @@ from aiogram_dialog import DialogManager
 from src.bot.dialog_extension import extend_dialog
 from src.bot.exceptions import AuthorityException
 from src.bot.filters import *
+from src.bot.i18n import format_datetime
 from src.bot.utils import *
 from src.db.repositories import meeting_repo, tutor_repo
 from src.domain.models import MeetingStatus
@@ -94,7 +95,7 @@ async def meetings_list_getter(dialog_manager: DialogManager, **kwargs):
     meeting_items = [
         {
             "id": meeting.id,
-            "display": f"[{meeting.datetime_}] {html.escape(meeting.title)}",
+            "display": f"[{format_datetime(meeting.datetime_, default='__.__.____ __:__')}] {html.escape(meeting.title)}",
         }
         for meeting in meetings
     ]

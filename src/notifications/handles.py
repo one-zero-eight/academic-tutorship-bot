@@ -7,7 +7,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import ErrorEvent
 
 from src.bot.filters import StatusFilter, UserStatus
-from src.bot.i18n import NOTIFICATION_L10NS, normalize_l10n_kwargs
+from src.bot.i18n import NOTIFICATION_L10NS, format_datetime, normalize_l10n_kwargs
 from src.db.repositories import meeting_repo, student_repo, tutor_repo
 from src.domain.models import MeetingStatus
 from src.notifications import notification_dp, notification_manager
@@ -87,10 +87,8 @@ async def text_update_approve_request(meeting_id: int, lang: str):
     assert meeting.tutor_id
     meeting_update = await meeting_repo.get_update(meeting_id)
     link = notification_manager.gen_meeting_link(meeting.id)
-    old_datetime = meeting.datetime_.isoformat(sep=" ", timespec="minutes") if meeting.datetime_ else "-"
-    new_datetime = (
-        meeting_update.datetime_.isoformat(sep=" ", timespec="minutes") if meeting_update.datetime_ else old_datetime
-    )
+    old_datetime = format_datetime(meeting.datetime_)
+    new_datetime = format_datetime(meeting_update.datetime_, default=old_datetime)
     data = {
         "old_datetime": old_datetime,
         "datetime": new_datetime,

@@ -14,6 +14,19 @@ from src.prepare import BASE_DIR
 
 LOCALES_DIR = BASE_DIR / "locales"
 
+DATE_FORMAT = "%d.%m.%Y"
+DATETIME_FORMAT = "%d.%m.%Y %H:%M"
+
+
+def format_date(value: date) -> str:
+    return value.strftime(DATE_FORMAT)
+
+
+def format_datetime(value: datetime | None, default: str = "-") -> str:
+    if value is None:
+        return default
+    return value.strftime(DATETIME_FORMAT)
+
 
 def get_i18n_translate_func(manager: DialogManager) -> Callable[[str, dict], str]:
     format_text = manager.middleware_data.get(
@@ -57,9 +70,9 @@ def default_format_text(text: str, data: Values) -> str:
 
 def normalize_l10n_value(value: Any) -> Any:
     if isinstance(value, datetime):
-        return value.isoformat(sep=" ", timespec="minutes")
+        return format_datetime(value)
     if isinstance(value, date):
-        return value.isoformat()
+        return format_date(value)
     if isinstance(value, dict):
         return {key: normalize_l10n_value(item) for key, item in value.items()}
     if isinstance(value, list):
