@@ -25,6 +25,7 @@ NOTIF_TUTOR_DISMISSED_FOR_TUTOR =
 NOTIF_TUTOR_ASSIGNED_FOR_TUTOR =
     Ты был(-а) назначен(-а) на встречу "{$title}"!
 
+    - Дисциплина: {$discipline}
     - Дата и время: {$datetime}
     - Аудитория: {$room}
 
@@ -32,6 +33,7 @@ NOTIF_TUTOR_ASSIGNED_FOR_TUTOR =
 NOTIF_TUTOR_CHANGED_FOR_NEW_TUTOR =
     Ты был(-а) назначен(-а) в качестве нового Academic Tutor на встречу "{$title}"!
 
+    - Дисциплина: {$discipline}
     - Дата и время: {$datetime}
     - Аудитория: {$room}
 
@@ -74,6 +76,7 @@ NOTIF_TUTOR_PROMOTED_FOR_ADMINS = Студент {$full_name} @{$username} бы�
 NOTIF_TUTOR_DISMISSED_FOR_ADMINS = Студент {$full_name} @{$username} был освобожден от позиции Academic Tutor
 NOTIF_TUTOR_ASSIGNED_FOR_ADMINS =
     Academic Tutor @{$username} назначен на встречу "{$title}"
+    - Дисциплина: {$discipline}
     - Дата и время: {$datetime}
     - Аудитория: {$room}
 
@@ -91,6 +94,7 @@ NOTIF_MEETING_CLOSED_FOR_ADMINS =
     👥 Кол-во студентов: {$attendance_count}
 NOTIF_MEETING_APPROVE_REQUEST =
     Встреча "{$title}" ожидает подтверждения.
+    - Дисциплина: {$discipline}
     - Дата и время: {$datetime}
     - Аудитория: {$room}
     - Academic Tutor: @{$username}
@@ -112,6 +116,7 @@ NOTIF_MEETING_CANCELLED_FOR_USERS =
     Приносим извинения за доставленные неудобства. Ждем тебя на других наших встречах!
 NOTIF_MEETING_REMINDER_24H =
     Напоминание: Встреча "{$title}" начнется через 24 часа!
+    - Дисциплина: {$discipline}
     - Дата и время: {$datetime}
     - Аудитория: {$room}
     - Academic Tutor: @{$username}
@@ -119,6 +124,7 @@ NOTIF_MEETING_REMINDER_24H =
     🔗 <a href="{$link}">Нажми сюда для просмотра деталей</a>
 NOTIF_MEETING_REMINDER_1H =
     Напоминание: Встреча "{$title}" начнется через 1 час!
+    - Дисциплина: {$discipline}
     - Дата и время: {$datetime}
     - Аудитория: {$room}
     - Academic Tutor: @{$username}
@@ -127,6 +133,7 @@ NOTIF_MEETING_REMINDER_1H =
 NOTIF_MEETING_ANNOUNCED =
     Предстоит новая встреча!
     "{$title}"
+    - Дисциплина: {$discipline}
     - Дата и время: {$datetime}
     - Аудитория: {$room}
     - Academic Tutor: @{$username}

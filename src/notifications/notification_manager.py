@@ -9,7 +9,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from src.bot.i18n import NOTIFICATION_L10NS, format_datetime, normalize_l10n_kwargs
 from src.bot.logging_ import log_error, log_info
 from src.db.repositories import admin_repo, meeting_repo, student_repo, tutor_repo
-from src.domain.models import Meeting, MeetingStatus, MeetingUpdate, Tutor
+from src.domain.models import Discipline, Meeting, MeetingStatus, MeetingUpdate, Tutor
 
 type TextIDForm = tuple[str, dict]
 "Represents a text_id message (for fluent l10n) and its formatting arguments"
@@ -21,6 +21,12 @@ type ReminderKind = Literal["24h", "1h"]
 
 def _txt(_text_id_: str, **kwargs) -> TextIDForm:
     return _text_id_, kwargs
+
+
+def _discipline_text(discipline: Discipline | None) -> str:
+    if discipline is None:
+        return "N/A"
+    return f"[{discipline.language} {discipline.year}y] {discipline.name}"
 
 
 class NotificationManager:
@@ -78,7 +84,12 @@ class NotificationManager:
     async def send_meeting_tutor_assigned(self, meeting: Meeting, tutor: Tutor):
         tutor_data = tutor.model_dump()
         meeting_data = meeting.model_dump(by_alias=True)
-        data = {**tutor_data, **meeting_data, "link": self.gen_meeting_link(meeting.id)}
+        data = {
+            **tutor_data,
+            **meeting_data,
+            "discipline": _discipline_text(meeting.discipline),
+            "link": self.gen_meeting_link(meeting.id),
+        }
         admins_text = _txt("NOTIF_TUTOR_ASSIGNED_FOR_ADMINS", **data)
         tutor_text = _txt("NOTIF_TUTOR_ASSIGNED_FOR_TUTOR", **data)
         sent = await self._send_admins(text=admins_text)
@@ -88,6 +99,7 @@ class NotificationManager:
     async def send_meeting_tutor_changed(self, meeting: Meeting, old_tutor: Tutor, new_tutor: Tutor):
         meeting_data = meeting.model_dump(by_alias=True)
         data = {**meeting_data}
+        data["discipline"] = _discipline_text(meeting.discipline)
         data["old_username"] = old_tutor.username
         data["new_username"] = new_tutor.username
         data["link"] = self.gen_meeting_link(meeting.id)
@@ -119,9 +131,10 @@ class NotificationManager:
     async def send_meeting_approve_request(self, meeting: Meeting, tutor: Tutor):
         """Sends approval request to the head of AT with approve/discard buttons"""
         meeting_data = meeting.model_dump(by_alias=True)
+        data = {**meeting_data, "discipline": _discipline_text(meeting.discipline)}
         text = _txt(
             "NOTIF_MEETING_APPROVE_REQUEST",
-            **meeting_data,
+            **data,
             username=tutor.username,
             link=self.gen_meeting_link(meeting.id),
         )
@@ -147,7 +160,12 @@ class NotificationManager:
 
     async def send_meeting_announced(self, meeting: Meeting, tutor: Tutor):
         meeting_data = meeting.model_dump(by_alias=True)
-        data = {**meeting_data, "username": tutor.username, "link": self.gen_meeting_link(meeting.id)}
+        data = {
+            **meeting_data,
+            "discipline": _discipline_text(meeting.discipline),
+            "username": tutor.username,
+            "link": self.gen_meeting_link(meeting.id),
+        }
         text = _txt("NOTIF_MEETING_ANNOUNCED", **data)
         sent = await self._send_admins(text=text)
         sent.extend(await self._send_telegram_ids(tutor.telegram_id, exclude=sent, text=text))
@@ -169,6 +187,7 @@ class NotificationManager:
         tutor = await tutor_repo.get(id=meeting.tutor_id) if meeting.tutor_id else None
         data = {
             **meeting.model_dump(by_alias=True),
+            "discipline": _discipline_text(meeting.discipline),
             "link": self.gen_meeting_link(meeting.id),
             "username": tutor.username if tutor else None,
         }

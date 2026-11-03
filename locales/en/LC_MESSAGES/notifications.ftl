@@ -23,12 +23,14 @@ NOTIF_TUTOR_DISMISSED_FOR_TUTOR =
 NOTIF_TUTOR_ASSIGNED_FOR_TUTOR =
     You have been assigned to meeting "{$title}"!
 
+    - Discipline: {$discipline}
     - Date & time: {$datetime}
     - Room: {$room}
 
     🔗 <a href="{$link}">Click to see the details</a>
 NOTIF_TUTOR_CHANGED_FOR_NEW_TUTOR =
     You have been assigned as the new Academic Tutor for meeting "{$title}".
+    - Discipline: {$discipline}
     - Date & time: {$datetime}
     - Room: {$room}
 
@@ -71,6 +73,7 @@ NOTIF_TUTOR_PROMOTED_FOR_ADMINS = The student {$full_name} @{$username} was prom
 NOTIF_TUTOR_DISMISSED_FOR_ADMINS = The student {$full_name} @{$username} is dismissed from being an Academic Tutor
 NOTIF_TUTOR_ASSIGNED_FOR_ADMINS =
     Academic Tutor @{$username} assigned to meeting "{$title}"
+    - Discipline: {$discipline}
     - Date & time: {$datetime}
     - Room: {$room}
 
@@ -88,6 +91,7 @@ NOTIF_MEETING_CLOSED_FOR_ADMINS =
     👥 Attendance count: {$attendance_count}
 NOTIF_MEETING_APPROVE_REQUEST =
     Meeting "{$title}" is awaiting approval.
+    - Discipline: {$discipline}
     - Date & time: {$datetime}
     - Room: {$room}
     - Academic Tutor: @{$username}
@@ -109,6 +113,7 @@ NOTIF_MEETING_CANCELLED_FOR_USERS =
     Sorry for the inconvenience. We hope to see you in other meetings!
 NOTIF_MEETING_REMINDER_24H =
     Reminder: Meeting "{$title}" starts in 24 hours!
+    - Discipline: {$discipline}
     - Date & time: {$datetime}
     - Room: {$room}
     - Academic Tutor: @{$username}
@@ -116,6 +121,7 @@ NOTIF_MEETING_REMINDER_24H =
     🔗 <a href="{$link}">Click to see the details</a>
 NOTIF_MEETING_REMINDER_1H =
     Reminder: Meeting "{$title}" starts in 1 hour!
+    - Discipline: {$discipline}
     - Date & time: {$datetime}
     - Room: {$room}
     - Academic Tutor: @{$username}
@@ -124,6 +130,7 @@ NOTIF_MEETING_REMINDER_1H =
 NOTIF_MEETING_ANNOUNCED =
     New meeting upcoming!
     "{$title}"
+    - Discipline: {$discipline}
     - Date & time: {$datetime}
     - Room: {$room}
     - Academic Tutor: @{$username}
