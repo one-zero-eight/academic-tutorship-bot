@@ -8,7 +8,6 @@ from src.db.repositories import DisciplineRepository, MeetingRepository, Student
 from src.db.repositories.discipline import DisciplineInUseError
 from src.db.schema import meeting
 from src.domain.models import Meeting, MeetingStatus
-from tests.fixtures import *
 
 
 async def _create_meeting(db, discipline_id: int, status: MeetingStatus) -> int:

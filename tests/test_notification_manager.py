@@ -97,6 +97,7 @@ def test_discipline():
         name="Advanced Programming",
         year=2,
         language="en",
+        semester=2,
     )
 
 

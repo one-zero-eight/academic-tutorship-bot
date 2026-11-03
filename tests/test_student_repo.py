@@ -2,7 +2,6 @@ import pytest
 
 from src.config import settings as app_settings
 from src.db.repositories import StudentRepository
-from tests.fixtures import *
 
 
 @pytest.mark.asyncio

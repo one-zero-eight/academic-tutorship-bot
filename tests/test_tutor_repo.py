@@ -2,7 +2,6 @@ import pytest
 
 from src.db.repositories import DisciplineRepository, StudentRepository, TutorRepository
 from src.domain.models import Tutor
-from tests.fixtures import *
 
 
 @pytest.mark.asyncio

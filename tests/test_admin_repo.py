@@ -1,7 +1,6 @@
 import pytest
 
 from src.db.repositories import AdminRepository, StudentRepository
-from tests.fixtures import *
 
 
 @pytest.mark.asyncio

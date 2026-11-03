@@ -1,4 +1,5 @@
 import pytest_asyncio
+from module_fix import *
 
 from src.db.repositories import (
     AdminRepository,
