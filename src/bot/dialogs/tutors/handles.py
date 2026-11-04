@@ -32,6 +32,15 @@ async def on_tutor_selected(query: CallbackQuery, __, manager: DialogManager, it
     await manager.switch_to(TutorsStates.info)
 
 
+async def on_dismiss_requested(query: CallbackQuery, __, manager: DialogManager):
+    manager = extend_dialog(manager)
+    _ = manager.tr
+    tutor = await manager.state.get_tutor()
+    log_info("tutor.dismiss.requested", user_id=query.from_user.id, tutor_id=tutor.id)
+    await query.answer(_("Q_TUTOR_DISMISS_CONFIRM"), show_alert=True)
+    await manager.switch_to(TutorsStates.delete)
+
+
 async def on_remove_tutor(query: CallbackQuery, __, manager: DialogManager):
     manager = extend_dialog(manager)
     _ = manager.tr

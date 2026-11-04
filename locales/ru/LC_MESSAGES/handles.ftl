@@ -75,6 +75,9 @@ Q_ATTENDANCE_FILE_INVALID_EMAILS = Следующие почты не относ
 
 Q_TUTOR_NOT_FOUND = Academic Tutor не найден
 Q_TUTOR_REMOVED = @{$username} больше не Academic Tutor
+Q_TUTOR_DISMISS_CONFIRM =
+    ⚠️ Ты правда хочешь удалить тутора?
+    Нажми "Оставить" если мискликнул.
 Q_TUTOR_REMOVE_BLOCKED_ASSIGNED =
     Этот Academic Tutor назначен на встречи в статусе CREATED или ANNOUNCED.
     Сначала назначь на эти встречи другого преподавателя.

@@ -76,6 +76,9 @@ Q_ATTENDANCE_FILE_INVALID_EMAILS = The following emails are not from innopolis.u
 
 Q_TUTOR_NOT_FOUND = Academic Tutor not found
 Q_TUTOR_REMOVED = @{$username} is no longer an Academic Tutor
+Q_TUTOR_DISMISS_CONFIRM =
+    ⚠️ You realy want to delete tutor?.
+    Press "Keep" if misclicked.
 Q_TUTOR_REMOVE_BLOCKED_ASSIGNED =
     This Academic Tutor is assigned to meetings in CREATED or ANNOUNCED state.
     Assign another tutor to those meetings first.

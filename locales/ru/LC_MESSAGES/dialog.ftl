@@ -199,6 +199,8 @@ TUTORS_ADMIN_BTN_ADD_NEW = Добавить
 TUTORS_ADMIN_BTN_DISMISS = Удалить
 TUTORS_ADMIN_BTN_PROFILE = Профиль
 TUTORS_ADMIN_BTN_EDIT_PROFILE = Изменить профиль
+TUTORS_CONFIRM_DELETE_BTN = Удалить
+TUTORS_CONFIRM_KEEP_BTN = Оставить
 TUTORS_ADMIN_ADD_PROMPT = Поделись контактом нового Academic Tutor
 
 
