@@ -42,6 +42,28 @@ async def update_meeting_duration(meeting: Meeting, selected_time: time):
     # NOTE: do not notify on changed duration (that's irrelevant)
 
 
+async def update_meeting_date_room(meeting: Meeting, meeting_update: dict) -> bool:
+    """Apply date/room changes, persist them and keep the scheduler in sync.
+
+    Returns whether the meeting schedule was updated.
+    """
+    if meeting.status == MeetingStatus.APPROVING:
+        log_warning("meeting.change.logic.date_room.blocked", meeting_id=meeting.id, reason="approving")
+        raise MeetingIsApproving("Cannot change meeting while in APPROVING status")
+    schedule_updated = False
+    try:
+        meeting.update_from_dict(meeting_update)
+        await meeting_repo.update(meeting, ["datetime", "room"])
+        if "datetime" in meeting_update and meeting.status >= MeetingStatus.ANNOUNCED:
+            await update_meeting_schedule(meeting)
+            schedule_updated = True
+    except Exception as e:
+        log_error("meeting.change.logic.date_room.failed", meeting_id=meeting.id, reason=str(e))
+        raise
+    log_info("meeting.change.logic.date_room.persisted", meeting_id=meeting.id, schedule_updated=schedule_updated)
+    return schedule_updated
+
+
 async def update_meeting_description(meeting: Meeting, description: str):
     if meeting.status == MeetingStatus.APPROVING:
         log_warning("meeting.change.logic.description.blocked", meeting_id=meeting.id, reason="approving")

@@ -11,7 +11,18 @@ from src.notifications import notification_manager
 from .scheduler import scheduler
 
 
+def meeting_job_ids(meeting_id: int) -> list[str]:
+    return [
+        f"remind_24h_meeting_{meeting_id}",
+        f"remind_1h_meeting_{meeting_id}",
+        f"conduct_meeting_{meeting_id}",
+        f"finish_meeting_{meeting_id}",
+    ]
+
+
 async def update_meeting_schedule(meeting: Meeting):
+    # rescheduling is authoritative: jobs that no longer apply must not survive
+    await wipe_meeting_schedule(meeting)
     if meeting.status < MeetingStatus.ANNOUNCED:
         return  # schedule only when announced
     if meeting.datetime_ and meeting.status < MeetingStatus.CONDUCTING:
@@ -60,18 +71,20 @@ async def update_meeting_schedule(meeting: Meeting):
 
 
 async def wipe_meeting_schedule(meeting: Meeting):
-    possible_job_ids = [
-        f"remind_24h_meeting_{meeting.id}",
-        f"remind_1h_meeting_{meeting.id}",
-        f"conduct_meeting_{meeting.id}",
-        f"finish_meeting_{meeting.id}",
-    ]
-
-    for job_id in possible_job_ids:
+    for job_id in meeting_job_ids(meeting.id):
+        if scheduler.get_job(job_id) is None:
+            continue
         try:
             scheduler.remove_job(job_id)
         except Exception as e:
             logger.info(f'Scheduler could not remove job "{job_id}", {e}')
+
+
+async def restore_meeting_schedules():
+    meetings = await meeting_repo.get_list((MeetingStatus.ANNOUNCED, MeetingStatus.FINISHED))
+    for meeting in meetings:
+        await update_meeting_schedule(meeting)
+    logger.info(f"Restored schedules for {len(meetings)} meetings")
 
 
 async def _job_meeting_conduct(meeting_id: int):

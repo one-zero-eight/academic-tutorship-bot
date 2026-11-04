@@ -28,6 +28,7 @@ from src.db.repositories import admin_repo, db
 from src.notifications import init_handlers, notification_manager
 from src.prepare import BASE_DIR
 from src.scheduling.scheduler import scheduler
+from src.scheduling.scheduling import restore_meeting_schedules
 
 _time1 = perf_counter()
 
@@ -179,6 +180,11 @@ async def on_startup():
 
     logger.info("Starting Scheduler...")
     scheduler.start()
+    logger.info("Restoring meeting schedules...")
+    try:
+        await restore_meeting_schedules()
+    except Exception as e:
+        logger.error(f"Failed to restore meeting schedules: {e}")
     logger.info("Starting Notification Bot Polling...")
     await notification_manager.start_polling()
     logger.info("Sending startup notification...")
