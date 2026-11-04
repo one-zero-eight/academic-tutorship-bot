@@ -1,6 +1,7 @@
 import calendar
 import io
 from collections.abc import Callable
+from datetime import date, datetime
 
 import pandas as pd
 import xlsxwriter
@@ -12,6 +13,29 @@ from src.domain.models import Meeting, MeetingStatus, Tutor, TutorWithEmail
 ORDINAL = {1: "st", 2: "nd", 3: "rd", 4: "th"}
 
 MONTH_COLORS = []
+
+# Inclusive (month, day) bounds of every semester, all within the semester's year
+SEMESTER_BOUNDARIES: dict[int, tuple[tuple[int, int], tuple[int, int]]] = {
+    1: ((8, 15), (12, 31)),
+    2: ((1, 1), (5, 30)),
+    3: ((5, 31), (8, 15)),
+}
+
+
+def semester_date_range(year: int, semester: int) -> tuple[datetime, datetime]:
+    """Inclusive datetime bounds of the given semester"""
+    (start_month, start_day), (end_month, end_day) = SEMESTER_BOUNDARIES[semester]
+    return datetime(year, start_month, start_day), datetime(year, end_month, end_day, 23, 59, 59, 999999)
+
+
+def current_year_semester(today: date | None = None) -> tuple[int, int]:
+    """Year and semester the given (or current) date belongs to"""
+    today = today or date.today()
+    month_day = (today.month, today.day)
+    for semester, (start, end) in SEMESTER_BOUNDARIES.items():
+        if start <= month_day <= end:
+            return today.year, semester
+    raise ValueError(f"No semester covers {today}")  # boundaries cover the whole year
 
 
 class FullSpreadsheetData:

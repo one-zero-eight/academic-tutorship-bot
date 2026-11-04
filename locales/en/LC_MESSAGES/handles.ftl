@@ -15,6 +15,13 @@ Q_DISCIPLINE_PICKER_INVALID_YEAR = Error: Invalid academic year
 Q_DISCIPLINE_PICKER_INVALID_SEMESTER = Error: Invalid semester
 Q_DISCIPLINE_PICKER_INVALID_DISCIPLINE = Error: Invalid discipline
 
+Q_EXCEL_USAGE =
+    Usage:
+    <pre>/excel &lt;MAX_IPTS&gt; &lt;MAX_PTS&gt; [YEAR-SEM]</pre>
+    Use integer arguments, YEAR-SEM is optional, e.g. 2026-1
+Q_EXCEL_NO_MEETINGS = No meetings were conducted in semester {$semester} of {$year}
+Q_EXCEL_SUCCESS = Spreadsheet for semester {$semester} of {$year} is ready ✅
+
 Q_MEETING_NOT_FOUND = Meeting not found
 Q_MEETING_NO_TEXT_IN_MESSAGE = There is no text in your message
 Q_MEETING_DISCIPLINE_NOT_FOUND = The selected discipline no longer exists. Please choose another one.

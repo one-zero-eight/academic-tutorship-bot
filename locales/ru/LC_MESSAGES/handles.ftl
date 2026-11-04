@@ -15,6 +15,13 @@ Q_DISCIPLINE_PICKER_INVALID_YEAR = Ошибка: Неправильный кур
 Q_DISCIPLINE_PICKER_INVALID_SEMESTER = Ошибка: Неправильный семестр
 Q_DISCIPLINE_PICKER_INVALID_DISCIPLINE = Ошибка: Неправильная дисциплина
 
+Q_EXCEL_USAGE =
+    Использование:
+    <pre>/excel &lt;MAX_IPTS&gt; &lt;MAX_PTS&gt; [YEAR-SEM]</pre>
+    Аргументы — целые числа, YEAR-SEM необязателен, например 2026-1
+Q_EXCEL_NO_MEETINGS = В {$semester} семестре {$year} года не было проведено ни одной встречи
+Q_EXCEL_SUCCESS = Таблица за {$semester} семестр {$year} года готова ✅
+
 Q_MEETING_NOT_FOUND = Встреча не найдена
 Q_MEETING_NO_TEXT_IN_MESSAGE = В вашем сообщении нет текста
 Q_MEETING_DISCIPLINE_NOT_FOUND = Выбранная дисциплина больше не существует. Пожалуйста, выберите другую.

@@ -1,7 +1,7 @@
 import io
 import re
 import zipfile
-from datetime import datetime
+from datetime import date, datetime
 
 import pytest
 
@@ -29,7 +29,7 @@ def _meeting(meeting_id: int, discipline: Discipline | None, tutor_id: int = 1) 
         discipline=discipline,
         creator_id=None,
         status=MeetingStatus.CLOSED,
-        **{"datetime": datetime(2026, 3, 10, 12, 0)},
+        datetime=datetime(2026, 3, 10, 12, 0),
         room="101",
         tutor_id=tutor_id,
     )
@@ -85,3 +85,31 @@ def test_export_without_usable_meetings(meetings):
     buffer = excel.create_full_spreadsheet([_tutor()], meetings, attendance, max_ipts=10, max_pts=10)
 
     assert buffer.getvalue()
+
+
+@pytest.mark.parametrize(
+    ("semester", "expected"),
+    [
+        (1, (datetime(2026, 8, 15), datetime(2026, 12, 31, 23, 59, 59, 999999))),
+        (2, (datetime(2026, 1, 1), datetime(2026, 5, 30, 23, 59, 59, 999999))),
+        (3, (datetime(2026, 5, 31), datetime(2026, 8, 15, 23, 59, 59, 999999))),
+    ],
+)
+def test_semester_date_range(semester: int, expected: tuple[datetime, datetime]):
+    assert excel.semester_date_range(2026, semester) == expected
+
+
+@pytest.mark.parametrize(
+    ("today", "expected"),
+    [
+        (date(2026, 1, 1), (2026, 2)),
+        (date(2026, 5, 30), (2026, 2)),
+        (date(2026, 5, 31), (2026, 3)),
+        (date(2026, 8, 14), (2026, 3)),
+        (date(2026, 8, 15), (2026, 1)),
+        (date(2026, 12, 31), (2026, 1)),
+        (date(2027, 2, 1), (2027, 2)),
+    ],
+)
+def test_current_year_semester(today: date, expected: tuple[int, int]):
+    assert excel.current_year_semester(today) == expected

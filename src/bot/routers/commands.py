@@ -26,6 +26,20 @@ from src.utils import disciplines, excel
 router = Router(name="commands")
 
 
+def _parse_year_semester(value: str) -> tuple[int, int] | None:
+    """Parses `YYYY-S` or `YY-S` (S is 1|2|3) into (year, semester)"""
+    year_text, _, semester_text = value.partition("-")
+    if not year_text.isdigit() or not semester_text.isdigit() or len(year_text) not in (2, 4):
+        return None
+    if len(semester_text) != 1:
+        return None
+    semester = int(semester_text)
+    if semester not in excel.SEMESTER_BOUNDARIES:
+        return None
+    year = int(year_text) + (2000 if len(year_text) == 2 else 0)
+    return year, semester
+
+
 def _extract_start_payload(message: types.Message) -> str | None:
     if not message.text:
         return None
@@ -170,33 +184,54 @@ async def get_full_excel_data(message: types.Message, dialog_manager: DialogMana
     assert message.text
 
     command, *args = message.text.split()
+    i18n_func = get_i18n_translate_func(dialog_manager)
+    usage_message = i18n_func("Q_EXCEL_USAGE", {})
 
-    if len(args) != 2:
-        await message.answer(
-            "Usage:\n```\n/excel <MAX_IPTS> <MAX_PTS>```\nUse integer arguments", parse_mode="MarkdownV2"
-        )
+    year_semester = None
+    if len(args) not in (2, 3):
+        await message.answer(usage_message)
         return
 
-    max_ipts, max_pts = args
+    max_ipts, max_pts = args[0], args[1]
     try:
         max_ipts = int(max_ipts)
         max_pts = int(max_pts)
     except ValueError:
-        await message.answer(
-            "Usage:\n```\n/excel <MAX_IPTS> <MAX_PTS>```\nUse integer arguments", parse_mode="MarkdownV2"
-        )
+        await message.answer(usage_message)
         return
 
-    all_tutors_with_emails = await tutor_repo.get_list_with_emails()
-    all_meetings = await meeting_repo.get_list(status_range=MS.CLOSED)
-    all_attendance = [await meeting_repo.get_attendance(m.id) for m in all_meetings]
+    if len(args) == 3:
+        year_semester = _parse_year_semester(args[2])
+        if year_semester is None:
+            await message.answer(usage_message)
+            return
+
+    year, semester = year_semester or excel.current_year_semester()
+    semester_label = {"year": str(year), "semester": semester}
+    datetime_from, datetime_to = excel.semester_date_range(year, semester)
+
+    meetings_of_this_semester = await meeting_repo.get_list(
+        status_range=MS.CLOSED, datetime_from=datetime_from, datetime_to=datetime_to
+    )
+    if not meetings_of_this_semester:
+        await message.answer(i18n_func("Q_EXCEL_NO_MEETINGS", semester_label))
+        log_info("command.excel.no_meetings", user_id=message.chat.id, year=year, semester=semester)
+        return
+
+    tutors_with_emails = await tutor_repo.get_list_with_emails()
+    attendance_for_meetings = [await meeting_repo.get_attendance(m.id) for m in meetings_of_this_semester]
+
     spreadsheet = excel.create_full_spreadsheet(
-        all_tutors_with_emails, all_meetings, all_attendance, max_ipts=max_ipts, max_pts=max_pts
+        tutors=tutors_with_emails,
+        meetings=meetings_of_this_semester,
+        attendance=attendance_for_meetings,
+        max_ipts=max_ipts,
+        max_pts=max_pts,
     )
     file_date = datetime.date.today().strftime("%d_%m_%Y")
-    input_file = types.BufferedInputFile(spreadsheet.getvalue(), f"ATB_Dump_{file_date}.xlsx")
-    await message.answer_document(input_file)
-    log_info("command.excel.success", user_id=message.chat.id)
+    input_file = types.BufferedInputFile(spreadsheet.getvalue(), f"ATB_Dump_{year}-{semester}_{file_date}.xlsx")
+    await message.answer_document(input_file, caption=i18n_func("Q_EXCEL_SUCCESS", semester_label))
+    log_info("command.excel.success", user_id=message.chat.id, year=year, semester=semester)
 
 
 @router.message(Command("add-discipline"), StatusFilter(US.admin))

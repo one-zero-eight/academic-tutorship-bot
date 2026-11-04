@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from datetime import datetime
 
 from sqlalchemy import (
     Row,
@@ -100,7 +101,11 @@ class MeetingRepository(Repository):
             return self._row_to_meeting(row)
 
     async def get_list(
-        self, status_range: MeetingStatus | tuple[MeetingStatus, MeetingStatus], tutor_id: int | None = None
+        self,
+        status_range: MeetingStatus | tuple[MeetingStatus, MeetingStatus],
+        tutor_id: int | None = None,
+        datetime_from: datetime | None = None,
+        datetime_to: datetime | None = None,
     ) -> list[Meeting]:
         disc = discipline
         stmt = select(
@@ -119,6 +124,10 @@ class MeetingRepository(Repository):
             stmt = stmt.where(and_(meeting.c.status >= status_from, meeting.c.status <= status_to))
         if tutor_id:
             stmt = stmt.where(meeting.c.tutor_id == tutor_id)
+        if datetime_from is not None:
+            stmt = stmt.where(meeting.c.datetime >= datetime_from)
+        if datetime_to is not None:
+            stmt = stmt.where(meeting.c.datetime <= datetime_to)
         async with self._db.engine.connect() as conn:
             result = await conn.execute(stmt)
             return [self._row_to_meeting(r) for r in result.all()]
