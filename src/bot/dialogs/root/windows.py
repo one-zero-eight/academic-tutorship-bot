@@ -71,7 +71,12 @@ settings_ww = Window(
     I18N("SETTINGS_NOTIF_UNACTIVATED", when="notification_bot_unactivated"),
     I18N("SETTINGS_NOTIF_BLOCKED", when="notification_bot_blocked"),
     Button(I18N("SETTINGS_NOTIF_TOGGLE"), id="toggle_notif", on_click=on_toggle_notifications),
-    SwitchTo(I18N("SETTINGS_BTN_CHANGE_DISCIPLINES"), id="open_disciplines", state=RootStates.settings_disciplines),
+    SwitchTo(
+        I18N("SETTINGS_BTN_CHANGE_DISCIPLINES"),
+        id="open_disciplines",
+        state=RootStates.settings_disciplines,
+        on_click=on_open_disciplines,
+    ),
     Row(SwitchTo(I18N("COMMON_BTN_BACK"), id="to_start", state=RootStates.start), BLANK_BTN),
     getter=student_settings_getter,
     state=RootStates.settings,
